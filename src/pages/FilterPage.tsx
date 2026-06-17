@@ -20,7 +20,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
         <Paragraph as="h1" typography="t1" style={s.title}>
           지원금 찾기
         </Paragraph>
-        <Paragraph typography="t4" color="secondary" style={s.subtitle}>
+        <Paragraph typography="t4" color="#6B7684" style={s.subtitle}>
           {'연령대와 성별을 선택하면\n딱 맞는 지원금을 찾아드려요'}
         </Paragraph>
       </header>
@@ -59,7 +59,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
             <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
               성별
             </Paragraph>
-            <Paragraph typography="t5" color="tertiary">
+            <Paragraph typography="t5" color="#B0B8C1">
               미선택 시 전체 조회
             </Paragraph>
           </div>
@@ -79,7 +79,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
         {/* 선택 요약 */}
         {selectedAge && (
           <div style={s.summaryBox}>
-            <Paragraph typography="t4" color="primary">
+            <Paragraph typography="t4" color="#3182F6">
               <strong>{selectedAge}</strong> · <strong>{selectedGender}</strong>에 해당하는 지원금을 검색합니다
             </Paragraph>
           </div>
@@ -98,7 +98,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
         >
           지원금 검색하기
         </Button>
-        <Paragraph typography="t5" color="tertiary" style={s.footerNote}>
+        <Paragraph typography="t5" color="#B0B8C1" style={s.footerNote}>
           복지로·공공데이터 기준 최신 정보 제공
         </Paragraph>
       </div>
@@ -118,7 +118,6 @@ const s: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     minHeight: '100dvh',
     backgroundColor: '#F2F4F6',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
   header: {
     display: 'flex',

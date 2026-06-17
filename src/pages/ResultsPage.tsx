@@ -3,12 +3,12 @@ import { Badge, Button, Paragraph } from '@toss/tds-mobile';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
-  filterSubsidies,
   type AgeGroup,
   type Category,
   type Gender,
   type Subsidy,
 } from '../data/subsidies';
+import { fetchSubsidies, fetchSubsidiesFallback } from '../data/api';
 
 const BANNER_AD_ID = 'ait.v2.live.81fc627450514ce2';
 
@@ -23,7 +23,23 @@ interface ResultsPageProps {
 export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [sort, setSort] = useState<SortKey>('default');
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
+  const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetchSubsidies(ageGroup, gender)
+      .then(setSubsidies)
+      .catch((err) => {
+        console.warn('[API 폴백]', err.message);
+        setSubsidies(fetchSubsidiesFallback(ageGroup, gender));
+        setError('공공 API에 연결하지 못해 기본 데이터를 표시해요.');
+      })
+      .finally(() => setLoading(false));
+  }, [ageGroup, gender]);
 
   useEffect(() => {
     const el = bannerRef.current;
@@ -36,16 +52,15 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     return () => result?.destroy();
   }, []);
 
-  const base = filterSubsidies(ageGroup, gender);
   const categoryFiltered = activeCategory
-    ? base.filter((s) => s.category === activeCategory)
-    : base;
+    ? subsidies.filter((s) => s.category === activeCategory)
+    : subsidies;
   const sorted = [...categoryFiltered].sort((a, b) => {
     if (sort === 'amount') return parseAmount(b.amount) - parseAmount(a.amount);
     return (b.isUrgent ? 1 : 0) - (a.isUrgent ? 1 : 0);
   });
 
-  const urgentCount = base.filter((s) => s.isUrgent).length;
+  const urgentCount = subsidies.filter((s) => s.isUrgent).length;
 
   return (
     <div style={s.container}>
@@ -60,8 +75,8 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           <Paragraph typography="t3" fontWeight="bold" style={s.headerTitle}>
             {ageGroup ?? '전체'} · {gender}
           </Paragraph>
-          <Paragraph typography="t5" color="primary">
-            {base.length}개 지원금
+          <Paragraph typography="t5" color="#3182F6">
+            {loading ? '불러오는 중...' : `${subsidies.length}개 지원금`}
           </Paragraph>
         </div>
         <div style={{ width: 40 }} />
@@ -69,6 +84,24 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
       {/* 배너 광고 */}
       <div ref={bannerRef} style={s.banner} />
+
+      {/* 로딩 */}
+      {loading && (
+        <div style={s.loadingWrap}>
+          <Paragraph typography="t4" color="#6B7684">
+            지원금 정보를 불러오고 있어요...
+          </Paragraph>
+        </div>
+      )}
+
+      {/* API 폴백 안내 */}
+      {!loading && error && (
+        <div style={s.errorBanner}>
+          <Paragraph typography="t5" color="#B45309">
+            ⚠️ {error}
+          </Paragraph>
+        </div>
+      )}
 
       {/* 마감 임박 알림 */}
       {urgentCount > 0 && (
@@ -112,7 +145,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
       {/* 정렬 + 결과 수 */}
       <div style={s.sortRow}>
-        <Paragraph typography="t5" color="secondary">
+        <Paragraph typography="t5" color="#6B7684">
           {activeCategory
             ? `${CATEGORY_EMOJI[activeCategory]} ${activeCategory} `
             : '전체 '}
@@ -148,7 +181,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           as="a"
           display="full"
           size="xlarge"
-          color="primary"
+          color="#3182F6"
           variant="weak"
           href="https://www.bokjiro.go.kr"
           target="_blank"
@@ -167,17 +200,17 @@ function SubsidyCard({ item }: { item: Subsidy }) {
     <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
       <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
         {item.isUrgent && (
-          <Badge size="small" style={s.urgentBadge}>
+          <Badge size="small" variant="fill" color="yellow" style={s.urgentBadge}>
             🔥 마감 임박
           </Badge>
         )}
 
         {/* 카테고리 + 마감일 */}
         <div style={s.cardMeta}>
-          <Badge size="xsmall" style={s.categoryBadge}>
+          <Badge size="xsmall" variant="weak" color="blue">
             {CATEGORY_EMOJI[item.category]} {item.category}
           </Badge>
-          <Paragraph typography="t6" color="tertiary">
+          <Paragraph typography="t6" color="#B0B8C1">
             {item.deadline}
           </Paragraph>
         </div>
@@ -188,16 +221,16 @@ function SubsidyCard({ item }: { item: Subsidy }) {
         </Paragraph>
 
         {/* 설명 */}
-        <Paragraph typography="t5" color="secondary" style={s.cardDesc}>
+        <Paragraph typography="t5" color="#6B7684" style={s.cardDesc}>
           {item.description}
         </Paragraph>
 
         {/* 금액 + 출처 */}
         <div style={s.cardBottom}>
-          <Badge size="medium" style={s.amountBadge}>
+          <Badge size="medium" variant="fill" color="blue">
             {item.amount}
           </Badge>
-          <Paragraph typography="t6" color="tertiary">
+          <Paragraph typography="t6" color="#B0B8C1">
             {item.source}
           </Paragraph>
         </div>
@@ -214,7 +247,7 @@ function EmptyState() {
       <Paragraph typography="t3" fontWeight="bold">
         해당 조건의 지원금이 없어요
       </Paragraph>
-      <Paragraph typography="t5" color="tertiary">
+      <Paragraph typography="t5" color="#B0B8C1">
         다른 카테고리를 선택해보세요
       </Paragraph>
     </div>
@@ -279,6 +312,15 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%',
     minHeight: '60px',
   },
+  loadingWrap: {
+    padding: '32px 16px',
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  errorBanner: {
+    backgroundColor: '#FFF4E5',
+    padding: '10px 16px',
+  },
   urgentBanner: {
     display: 'flex',
     alignItems: 'center',
@@ -334,17 +376,11 @@ const s: Record<string, React.CSSProperties> = {
   urgentBadge: {
     display: 'inline-flex',
     alignSelf: 'flex-start',
-    backgroundColor: '#FEF3C7',
-    color: '#B45309',
   },
   cardMeta: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  categoryBadge: {
-    backgroundColor: '#EBF3FE',
-    color: '#3182F6',
   },
   cardTitle: {
     letterSpacing: '-0.3px',
@@ -358,10 +394,6 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: '4px',
-  },
-  amountBadge: {
-    backgroundColor: '#3182F6',
-    color: '#FFFFFF',
   },
   empty: {
     display: 'flex',
