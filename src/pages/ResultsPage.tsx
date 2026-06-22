@@ -8,9 +8,9 @@ import {
   type Gender,
   type Subsidy,
 } from '../data/subsidies';
-import { fetchSubsidies, fetchSubsidiesFallback } from '../data/api';
+import { fetchSubsidiesFallback } from '../data/api';
 
-const BANNER_AD_ID = 'ait.v2.live.81fc627450514ce2';
+const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 
 type SortKey = 'default' | 'amount';
 
@@ -25,20 +25,12 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoading(true);
-    setError(null);
-    fetchSubsidies(ageGroup, gender)
-      .then(setSubsidies)
-      .catch((err) => {
-        console.warn('[API 폴백]', err.message);
-        setSubsidies(fetchSubsidiesFallback(ageGroup, gender));
-        setError('공공 API에 연결하지 못해 기본 데이터를 표시해요.');
-      })
-      .finally(() => setLoading(false));
+    setSubsidies(fetchSubsidiesFallback(ageGroup, gender));
+    setLoading(false);
   }, [ageGroup, gender]);
 
   useEffect(() => {
@@ -94,15 +86,6 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
         </div>
       )}
 
-      {/* API 폴백 안내 */}
-      {!loading && error && (
-        <div style={s.errorBanner}>
-          <Paragraph typography="t5" color="#B45309">
-            ⚠️ {error}
-          </Paragraph>
-        </div>
-      )}
-
       {/* 마감 임박 알림 */}
       {urgentCount > 0 && (
         <div style={s.urgentBanner}>
@@ -125,7 +108,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           전체
         </Button>
         {CATEGORIES.map((cat) => {
-          const count = base.filter((item) => item.category === cat).length;
+          const count = subsidies.filter((item) => item.category === cat).length;
           if (count === 0) return null;
           const isActive = activeCategory === cat;
           return (
@@ -156,7 +139,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
             <Button
               key={key}
               size="small"
-              color={sort === key ? 'primary' : 'dark'}
+              color="primary"
               variant={sort === key ? 'fill' : 'weak'}
               onClick={() => setSort(key)}
             >
@@ -181,7 +164,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           as="a"
           display="full"
           size="xlarge"
-          color="#3182F6"
+          color="primary"
           variant="weak"
           href="https://www.bokjiro.go.kr"
           target="_blank"
@@ -316,10 +299,6 @@ const s: Record<string, React.CSSProperties> = {
     padding: '32px 16px',
     display: 'flex',
     justifyContent: 'center',
-  },
-  errorBanner: {
-    backgroundColor: '#FFF4E5',
-    padding: '10px 16px',
   },
   urgentBanner: {
     display: 'flex',
