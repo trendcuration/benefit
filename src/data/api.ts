@@ -1,7 +1,7 @@
 import type { AgeGroup, Gender, Subsidy } from './subsidies';
 import { filterSubsidies } from './subsidies';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://62.238.1.230:3001';
+const API_URL = import.meta.env.VITE_API_URL ?? 'https://benefit-production.up.railway.app';
 
 export async function fetchSubsidies(
   ageGroup: AgeGroup | null,
