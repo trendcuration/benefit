@@ -3,6 +3,8 @@ import { FilterPage } from './pages/FilterPage';
 import { ResultsPage } from './pages/ResultsPage';
 import type { AgeGroup, Gender } from './data/subsidies';
 
+const INTERSTITIAL_AD_ID = 'ait.v2.live.f7c40079c7494d4f';
+
 type Page = 'filter' | 'results';
 
 interface SearchParams {
@@ -16,6 +18,11 @@ export function App() {
 
   const handleSearch = (ageGroup: AgeGroup | null, gender: Gender) => {
     setParams({ ageGroup, gender });
+    import('@apps-in-toss/web-framework').then(({ TossAds }) => {
+      if (TossAds.showInterstitial?.isSupported?.()) {
+        TossAds.showInterstitial(INTERSTITIAL_AD_ID);
+      }
+    }).catch(() => {});
     setPage('results');
   };
 

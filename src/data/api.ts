@@ -11,7 +11,9 @@ export async function fetchSubsidies(
   if (ageGroup) params.set('ageGroup', ageGroup);
   params.set('gender', gender);
 
-  const res = await fetch(`${API_URL}/api/subsidies?${params.toString()}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  const res = await fetch(`${API_URL}/api/subsidies?${params.toString()}`, { signal: controller.signal }).finally(() => clearTimeout(timer));
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({ error: '알 수 없는 오류' }));
     throw new Error(error || `서버 오류 (${res.status})`);
