@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: '지원금 찾기',
     primaryColor: '#3182F6',
-    icon: '',
+    icon: './benefit.png',
   },
   web: {
     host: 'localhost',
