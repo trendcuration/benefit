@@ -97,33 +97,36 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       )}
 
       {/* 카테고리 필터 */}
-      <div style={s.categoryRow}>
-        <Button
-          size="small"
-          color="primary"
-          variant={activeCategory === null ? 'fill' : 'weak'}
-          onClick={() => setActiveCategory(null)}
-          style={s.chipBtn}
-        >
-          전체
-        </Button>
-        {CATEGORIES.map((cat) => {
-          const count = subsidies.filter((item) => item.category === cat).length;
-          if (count === 0) return null;
-          const isActive = activeCategory === cat;
-          return (
-            <Button
-              key={cat}
-              size="small"
-              color="primary"
-              variant={isActive ? 'fill' : 'weak'}
-              onClick={() => setActiveCategory(isActive ? null : cat)}
-              style={s.chipBtn}
-            >
-              {CATEGORY_EMOJI[cat]} {cat}
-            </Button>
-          );
-        })}
+      <div style={s.categoryRowWrap}>
+        <div style={s.categoryRow}>
+          <Button
+            size="small"
+            color="primary"
+            variant={activeCategory === null ? 'fill' : 'weak'}
+            onClick={() => setActiveCategory(null)}
+            style={s.chipBtn}
+          >
+            전체
+          </Button>
+          {CATEGORIES.map((cat) => {
+            const count = subsidies.filter((item) => item.category === cat).length;
+            if (count === 0) return null;
+            const isActive = activeCategory === cat;
+            return (
+              <Button
+                key={cat}
+                size="small"
+                color="primary"
+                variant={isActive ? 'fill' : 'weak'}
+                onClick={() => setActiveCategory(isActive ? null : cat)}
+                style={s.chipBtn}
+              >
+                {CATEGORY_EMOJI[cat]} {cat}
+              </Button>
+            );
+          })}
+        </div>
+        <div style={s.categoryFade} />
       </div>
 
       {/* 정렬 + 결과 수 */}
@@ -152,7 +155,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       {/* 결과 목록 */}
       <div style={s.list}>
         {sorted.length === 0 ? (
-          <EmptyState />
+          <EmptyState onBack={onBack} />
         ) : (
           sorted.map((item) => <SubsidyCard key={item.id} item={item} />)
         )}
@@ -179,23 +182,25 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
 // ── 지원금 카드 ──
 function SubsidyCard({ item }: { item: Subsidy }) {
+  const dday = item.isUrgent ? getDday(item.deadline) : null;
+
   return (
     <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
       <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
-        {item.isUrgent && (
-          <Badge size="small" variant="fill" color="yellow" style={s.urgentBadge}>
-            🔥 마감 임박
-          </Badge>
-        )}
-
         {/* 카테고리 + 마감일 */}
         <div style={s.cardMeta}>
           <Badge size="xsmall" variant="weak" color="blue">
             {CATEGORY_EMOJI[item.category]} {item.category}
           </Badge>
-          <Paragraph typography="t6" color="#B0B8C1">
-            {item.deadline}
-          </Paragraph>
+          {item.isUrgent ? (
+            <Badge size="xsmall" variant="fill" color="yellow">
+              🔥 {dday ?? '마감 임박'}
+            </Badge>
+          ) : (
+            <Paragraph typography="t6" color="#8B95A1">
+              {item.deadline}
+            </Paragraph>
+          )}
         </div>
 
         {/* 제목 */}
@@ -210,10 +215,10 @@ function SubsidyCard({ item }: { item: Subsidy }) {
 
         {/* 금액 + 출처 */}
         <div style={s.cardBottom}>
-          <Badge size="medium" variant="fill" color="blue">
+          <Badge size="large" variant="fill" color="blue">
             {item.amount}
           </Badge>
-          <Paragraph typography="t6" color="#B0B8C1">
+          <Paragraph typography="t6" color="#8B95A1">
             {item.source}
           </Paragraph>
         </div>
@@ -223,29 +228,45 @@ function SubsidyCard({ item }: { item: Subsidy }) {
 }
 
 // ── 빈 상태 ──
-function EmptyState() {
+function EmptyState({ onBack }: { onBack: () => void }) {
   return (
     <div style={s.empty}>
       <span style={s.emptyIcon}>🔍</span>
       <Paragraph typography="t3" fontWeight="bold">
         해당 조건의 지원금이 없어요
       </Paragraph>
-      <Paragraph typography="t5" color="#B0B8C1">
-        다른 카테고리를 선택해보세요
+      <Paragraph typography="t5" color="#8B95A1">
+        연령대나 성별을 다시 선택해보세요
       </Paragraph>
+      <Button size="medium" color="primary" variant="weak" onClick={onBack} style={s.emptyResetBtn}>
+        필터 다시 선택하기
+      </Button>
     </div>
   );
 }
 
 // ── 유틸 ──
+function getDday(deadline: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return null;
+  const diffMs = new Date(`${deadline}T23:59:59`).getTime() - Date.now();
+  const days = Math.ceil(diffMs / 86_400_000);
+  if (days < 0) return null;
+  return days === 0 ? 'D-day' : `D-${days}`;
+}
+
 function parseAmount(str: string): number {
+  const eokMatch = str.match(/([\d,.]+)\s*억/);
+  if (eokMatch) return parseFloat(eokMatch[1].replace(/,/g, '')) * 100_000_000;
+
+  const manMatch = str.match(/([\d,]+)\s*만(?:\s*([\d,]+))?/);
+  if (manMatch) {
+    const manPart = parseInt(manMatch[1].replace(/,/g, ''), 10) || 0;
+    const restPart = manMatch[2] ? parseInt(manMatch[2].replace(/,/g, ''), 10) || 0 : 0;
+    return manPart * 10_000 + restPart;
+  }
+
   const nums = str.replace(/[^0-9]/g, '');
-  if (!nums) return 0;
-  let n = parseInt(nums, 10);
-  if (str.includes('억')) n *= 100_000_000;
-  else if (str.includes('천만')) n *= 10_000_000;
-  else if (str.includes('만')) n *= 10_000;
-  return n;
+  return nums ? parseInt(nums, 10) : 0;
 }
 
 const SORT_LABEL: Record<SortKey, string> = {
@@ -307,13 +328,25 @@ const s: Record<string, React.CSSProperties> = {
     backgroundColor: '#FFF4E5',
     padding: '12px 16px',
   },
+  categoryRowWrap: {
+    position: 'relative',
+    backgroundColor: '#FFFFFF',
+  },
   categoryRow: {
     display: 'flex',
     gap: '8px',
     padding: '12px 16px',
     overflowX: 'auto',
-    backgroundColor: '#FFFFFF',
     scrollbarWidth: 'none',
+  },
+  categoryFade: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: '28px',
+    background: 'linear-gradient(to right, rgba(255,255,255,0), #FFFFFF)',
+    pointerEvents: 'none',
   },
   chipBtn: {
     flexShrink: 0,
@@ -352,10 +385,6 @@ const s: Record<string, React.CSSProperties> = {
   cardUrgent: {
     borderLeft: '4px solid #F59E0B',
   },
-  urgentBadge: {
-    display: 'inline-flex',
-    alignSelf: 'flex-start',
-  },
   cardMeta: {
     display: 'flex',
     alignItems: 'center',
@@ -367,6 +396,10 @@ const s: Record<string, React.CSSProperties> = {
   },
   cardDesc: {
     lineHeight: 1.6,
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
   },
   cardBottom: {
     display: 'flex',
@@ -380,6 +413,9 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     padding: '60px 0',
     gap: '12px',
+  },
+  emptyResetBtn: {
+    marginTop: '8px',
   },
   emptyIcon: {
     fontSize: '48px',
