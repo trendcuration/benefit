@@ -18,10 +18,21 @@ export function App() {
 
   const handleSearch = (ageGroup: AgeGroup | null, gender: Gender) => {
     setParams({ ageGroup, gender });
-    import('@apps-in-toss/web-framework').then(({ TossAds }) => {
-      if (TossAds.showInterstitial?.isSupported?.()) {
-        TossAds.showInterstitial(INTERSTITIAL_AD_ID);
-      }
+    import('@apps-in-toss/web-framework').then(({ loadFullScreenAd, showFullScreenAd }) => {
+      if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) return;
+      loadFullScreenAd({
+        options: { adGroupId: INTERSTITIAL_AD_ID },
+        onEvent: (event) => {
+          if (event.type === 'loaded') {
+            showFullScreenAd({
+              options: { adGroupId: INTERSTITIAL_AD_ID },
+              onEvent: () => {},
+              onError: () => {},
+            });
+          }
+        },
+        onError: () => {},
+      });
     }).catch(() => {});
     setPage('results');
   };
