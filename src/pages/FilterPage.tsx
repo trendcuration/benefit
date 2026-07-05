@@ -40,7 +40,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
               return (
                 <Button
                   key={age}
-                  size="medium"
+                  size="large"
                   color="primary"
                   variant={isActive ? 'fill' : 'weak'}
                   onClick={() => setSelectedAge(isActive ? null : age)}
