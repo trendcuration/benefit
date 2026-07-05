@@ -3,7 +3,7 @@ import { defineConfig } from '@apps-in-toss/web-framework/config';
 export default defineConfig({
   appName: 'benefit',
   brand: {
-    displayName: '지원금 찾기',
+    displayName: '나의 지원금',
     primaryColor: '#3182F6',
     icon: './benefit.png',
   },
