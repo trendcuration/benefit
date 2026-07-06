@@ -18,7 +18,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
       <header style={s.header}>
         <div style={s.iconWrap}>💰</div>
         <Paragraph as="h1" typography="t1" style={s.title}>
-          지원금 찾기
+          나의 지원금
         </Paragraph>
         <Paragraph typography="t4" color="#6B7684" style={s.subtitle}>
           {'연령대와 성별을 선택하면\n딱 맞는 지원금을 찾아드려요'}
