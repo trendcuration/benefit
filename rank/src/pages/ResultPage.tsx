@@ -18,8 +18,7 @@ import {
 import { getTier } from '../data/tiers';
 import type { JudgeParams } from '../App';
 
-// TODO: 토스 개발자센터에서 rank 앱 등록 후 실제 광고 그룹 ID로 교체
-const BANNER_AD_ID = 'ait.v2.live.RANK_BANNER_TODO';
+const BANNER_AD_ID = 'ait.v2.live.7a2979a194e84754';
 
 interface ResultPageProps {
   params: JudgeParams;
