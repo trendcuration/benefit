@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1024px; height: 1024px; overflow: hidden; }
+  .icon {
+    width: 1024px;
+    height: 1024px;
+    background: linear-gradient(135deg, #4196FD 0%, #3182F6 45%, #1B64DA 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  }
+  /* 상승 바차트 */
+  .bars {
+    position: absolute;
+    left: 132px;
+    bottom: 170px;
+    display: flex;
+    align-items: flex-end;
+    gap: 44px;
+  }
+  .bar {
+    width: 96px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.32);
+  }
+  .bar1 { height: 190px; }
+  .bar2 { height: 310px; }
+  .bar3 { height: 450px; background: rgba(255, 255, 255, 0.5); }
+  /* % 심볼 */
+  .percent {
+    position: absolute;
+    right: 110px;
+    top: 120px;
+    font-size: 470px;
+    font-weight: 800;
+    color: #FFFFFF;
+    letter-spacing: -20px;
+    text-shadow: 0 24px 60px rgba(11, 55, 122, 0.35);
+  }
+  /* 왕관 포인트 */
+  .crown {
+    position: absolute;
+    left: 415px;
+    bottom: 630px;
+    font-size: 150px;
+    transform: rotate(12deg);
+  }
+</style>
+</head>
+<body>
+  <div class="icon">
+    <div class="bars">
+      <div class="bar bar1"></div>
+      <div class="bar bar2"></div>
+      <div class="bar bar3"></div>
+    </div>
+    <div class="crown">👑</div>
+    <div class="percent">%</div>
+  </div>
+</body>
+</html>
