@@ -1,0 +1,24 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #F2F4F6;
+}
+
+#root {
+  height: 100%;
+}
+
+/* TDS 스크롤바 숨김 */
+::-webkit-scrollbar {
+  display: none;
+}
