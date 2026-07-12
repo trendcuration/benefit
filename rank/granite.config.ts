@@ -1,9 +1,9 @@
 import { defineConfig } from '@apps-in-toss/web-framework/config';
 
 export default defineConfig({
-  appName: 'rank',
+  appName: 'income-rank',
   brand: {
-    displayName: '내 월급·자산 상위 몇 %',
+    displayName: '소득수준 판별기',
     primaryColor: '#3182F6',
     icon: './rank.png',
   },
