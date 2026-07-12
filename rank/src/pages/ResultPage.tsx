@@ -62,7 +62,7 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
   const handleShare = () => {
     import('@apps-in-toss/web-framework')
       .then(async ({ share, getTossShareLink }) => {
-        const link = await getTossShareLink('intoss://rank').catch(() => '');
+        const link = await getTossShareLink('intoss://income-rank').catch(() => '');
         await share({
           message: `나 대한민국 ${meta.label} 상위 ${formatPercentile(pAll)}래요 ${tier.emoji} 너도 확인해봐! ${link}`.trim(),
         });
@@ -117,7 +117,7 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
             {tier.oneLiner}
           </Paragraph>
           <DistributionBar p={pAll} />
-          <span style={s.watermark}>나는 상위 몇 %? · 토스 앱인토스</span>
+          <span style={s.watermark}>소득수준 판별기 · 토스 앱인토스</span>
         </div>
 
         {/* 동년배 비교 */}
