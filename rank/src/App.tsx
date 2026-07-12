@@ -3,8 +3,7 @@ import { InputPage } from './pages/InputPage';
 import { ResultPage } from './pages/ResultPage';
 import type { AgeGroup, Metric } from './data/percentiles';
 
-// TODO: 토스 개발자센터에서 rank 앱 등록 후 실제 광고 그룹 ID로 교체
-const INTERSTITIAL_AD_ID = 'ait.v2.live.RANK_INTERSTITIAL_TODO';
+const INTERSTITIAL_AD_ID = 'ait.v2.live.b8ff888fe7524f5c';
 
 type Page = 'input' | 'result';
 
