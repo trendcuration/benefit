@@ -22,3 +22,55 @@ body {
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* ── 마이크로 인터랙션 ── */
+@keyframes benefit-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.benefit-fade-up {
+  animation: benefit-fade-up 0.35s ease-out both;
+}
+
+@keyframes benefit-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.benefit-pop {
+  animation: benefit-pop 0.35s ease-out;
+}
+
+@keyframes benefit-shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+
+.benefit-shimmer {
+  animation: benefit-shimmer 1.2s ease-in-out infinite;
+}
+
+.benefit-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.benefit-card:active {
+  transform: scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .benefit-fade-up,
+  .benefit-pop,
+  .benefit-shimmer {
+    animation: none;
+  }
+}
