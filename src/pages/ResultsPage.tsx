@@ -85,7 +85,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const handleShare = async () => {
     const total = totalAmount > 0 ? ` 다 받으면 최대 ${formatKoreanAmount(totalAmount)} 규모!` : '';
     const result = await shareMessage(
-      `💰 ${ageGroup ?? '전체'}·${gender} 조건으로 받을 수 있는 지원금 ${subsidies.length}개를 찾았어요!${total}\n토스 '지원금 찾기'에서 확인해보세요.`,
+      `💰 ${ageGroup ?? '전체'}·${gender} 조건으로 받을 수 있는 지원금 ${subsidies.length}개를 찾았어요!${total}\n토스 '나의 지원금'에서 확인해보세요.`,
     );
     if (result === 'copied') {
       setShareNotice('공유 메시지를 복사했어요');
