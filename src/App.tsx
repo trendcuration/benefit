@@ -17,10 +17,21 @@ export function App() {
   const [page, setPage] = useState<Page>('filter');
   const [params, setParams] = useState<SearchParams>({ ageGroup: null, gender: '전체' });
   const [savedSearch] = useState(loadSavedSearch);
+  const [searchCount, setSearchCount] = useState(0);
 
   const handleSearch = (ageGroup: AgeGroup | null, gender: Gender) => {
     setParams({ ageGroup, gender });
     if (ageGroup) saveSearch({ ageGroup, gender });
+
+    const isFirstSearchOfSession = searchCount === 0;
+    setSearchCount((c) => c + 1);
+
+    // 세션 첫 검색은 광고 없이 결과를 바로 보여주고, 재검색부터 매번 노출
+    if (isFirstSearchOfSession) {
+      setPage('results');
+      return;
+    }
+
     import('@apps-in-toss/web-framework').then((mod) => {
       const { loadFullScreenAd, showFullScreenAd } = mod;
       if (loadFullScreenAd?.isSupported?.() && showFullScreenAd?.isSupported?.()) {
