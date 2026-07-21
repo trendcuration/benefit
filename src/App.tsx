@@ -17,21 +17,15 @@ export function App() {
   const [page, setPage] = useState<Page>('filter');
   const [params, setParams] = useState<SearchParams>({ ageGroup: null, gender: '전체' });
   const [savedSearch] = useState(loadSavedSearch);
-  const [searchCount, setSearchCount] = useState(0);
 
   const handleSearch = (ageGroup: AgeGroup | null, gender: Gender) => {
     setParams({ ageGroup, gender });
     if (ageGroup) saveSearch({ ageGroup, gender });
 
-    const isFirstSearchOfSession = searchCount === 0;
-    setSearchCount((c) => c + 1);
-
-    // 세션 첫 검색은 광고 없이 결과를 바로 보여주고, 재검색부터 매번 노출
-    if (isFirstSearchOfSession) {
-      setPage('results');
-      return;
-    }
-
+    // 검색할 때마다 매번 전면광고 노출 (세션/횟수 기반 스킵 로직 없음)
+    // 참고: 이 앱은 한 세션당 검색 1회로 끝나는 사용자가 대부분이라
+    // "세션당 1회 스킵" 같은 조건은 사실상 "거의 항상 스킵"과 같아져
+    // 광고 요청 자체가 급감하는 사고로 이어진 적이 있음 (2026-07-20)
     import('@apps-in-toss/web-framework').then((mod) => {
       const { loadFullScreenAd, showFullScreenAd } = mod;
       if (loadFullScreenAd?.isSupported?.() && showFullScreenAd?.isSupported?.()) {
