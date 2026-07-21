@@ -3,6 +3,8 @@ import { Badge, Button, Paragraph } from '@toss/tds-mobile';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
+  getDaysLeft,
+  getDeadlineStatus,
   type AgeGroup,
   type Category,
   type Gender,
@@ -40,7 +42,13 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     fetchSubsidies(ageGroup, gender)
       .then((data) => {
         if (cancelled) return;
-        if (data.length > 0) {
+        // 서버(공공데이터) 응답이 실제 금액 정보를 담고 있을 때만 라이브로 채택한다.
+        // 현재 연동된 odcloud 데이터셋은 금액·마감일 필드가 없어 전부 '지원'/'상시'로
+        // 내려오는데, 이 경우 큐레이션된 정적 데이터가 훨씬 정보량이 많으므로 그쪽을 쓴다.
+        const hasRealAmounts = data.some(
+          (d) => d.amount && d.amount !== '지원' && parseAmount(d.amount) > 0,
+        );
+        if (data.length > 0 && hasRealAmounts) {
           setSubsidies(data);
           setIsLive(true);
         } else {
@@ -100,12 +108,19 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     if (normalizedKeyword && !`${item.title} ${item.description}`.includes(normalizedKeyword)) return false;
     return true;
   });
+  const statusRank: Record<string, number> = { urgent: 0, ongoing: 1, expired: 2 };
   const sorted = [...filtered].sort((a, b) => {
-    if (sort === 'amount') return parseAmount(b.amount) - parseAmount(a.amount);
-    return (b.isUrgent ? 1 : 0) - (a.isUrgent ? 1 : 0);
+    // 마감된 항목은 항상 맨 아래로
+    const rankA = statusRank[getDeadlineStatus(a.deadline)];
+    const rankB = statusRank[getDeadlineStatus(b.deadline)];
+    if (sort === 'amount') {
+      if (rankA !== rankB) return rankA - rankB;
+      return parseAmount(b.amount) - parseAmount(a.amount);
+    }
+    return rankA - rankB;
   });
 
-  const urgentCount = subsidies.filter((s) => s.isUrgent).length;
+  const urgentCount = subsidies.filter((sb) => getDeadlineStatus(sb.deadline) === 'urgent').length;
   const totalAmount = useMemo(
     () => subsidies.reduce((sum, item) => sum + parseAmount(item.amount), 0),
     [subsidies],
@@ -347,9 +362,19 @@ function SubsidyCard({
   bookmarked: boolean;
   onToggleBookmark: () => void;
 }) {
+  const status = getDeadlineStatus(item.deadline);
+  const daysLeft = getDaysLeft(item.deadline);
+  const isExpired = status === 'expired';
+  const isUrgent = status === 'urgent';
+
   return (
     <div
-      style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}), animationDelay: `${Math.min(index, 8) * 50}ms` }}
+      style={{
+        ...s.card,
+        ...(isUrgent ? s.cardUrgent : {}),
+        ...(isExpired ? s.cardExpired : {}),
+        animationDelay: `${Math.min(index, 8) * 50}ms`,
+      }}
       className="benefit-fade-up benefit-card"
     >
       <button
@@ -362,9 +387,14 @@ function SubsidyCard({
       </button>
 
       <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
-        {item.isUrgent && (
+        {isUrgent && (
           <Badge size="small" variant="fill" color="yellow" style={s.urgentBadge}>
-            🔥 마감 임박
+            🔥 마감 임박{daysLeft !== null ? ` · D-${daysLeft}` : ''}
+          </Badge>
+        )}
+        {isExpired && (
+          <Badge size="small" variant="weak" color="elephant" style={s.urgentBadge}>
+            지원 종료
           </Badge>
         )}
 
@@ -374,7 +404,7 @@ function SubsidyCard({
             {CATEGORY_EMOJI[item.category]} {item.category}
           </Badge>
           <Paragraph typography="t6" color="#B0B8C1">
-            {item.deadline}
+            {isExpired ? `마감 (${item.deadline})` : item.deadline}
           </Paragraph>
         </div>
 
@@ -612,6 +642,9 @@ const s: Record<string, React.CSSProperties> = {
   },
   cardUrgent: {
     borderLeft: '4px solid #F59E0B',
+  },
+  cardExpired: {
+    opacity: 0.6,
   },
   bookmarkBtn: {
     position: 'absolute',
