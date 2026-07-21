@@ -505,3 +505,37 @@ export function filterSubsidies(
     return ageMatch && genderMatch;
   });
 }
+
+// ── 마감 상태 자동 계산 ──────────────────────────────────────────
+// isUrgent를 데이터에 수동으로 박아두면 마감일이 지나도 계속 "마감 임박"으로
+// 표시되는 문제가 있어(예: 청년미래적금 2026-07-03), deadline 문자열에서
+// 실제 날짜를 파싱해 상태를 그때그때 계산한다. 날짜가 없으면('상시' 등) 'ongoing'.
+export type DeadlineStatus = 'ongoing' | 'urgent' | 'expired';
+
+// 마감 임박으로 간주하는 기준(일). 마감일까지 이 일수 이내면 'urgent'.
+const URGENT_WINDOW_DAYS = 30;
+
+export function getDeadlineStatus(deadline: string, now: Date = new Date()): DeadlineStatus {
+  const match = deadline.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return 'ongoing'; // '상시', '상시 (정기신청 매년 5월)' 등 날짜 없음
+
+  const due = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  due.setHours(23, 59, 59, 999);
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.floor((due.getTime() - startOfToday.getTime()) / 86_400_000);
+
+  if (diffDays < 0) return 'expired';
+  if (diffDays <= URGENT_WINDOW_DAYS) return 'urgent';
+  return 'ongoing';
+}
+
+// urgent일 때 남은 일수(D-day). urgent가 아니면 null.
+export function getDaysLeft(deadline: string, now: Date = new Date()): number | null {
+  if (getDeadlineStatus(deadline, now) !== 'urgent') return null;
+  const match = deadline.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  const due = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  due.setHours(23, 59, 59, 999);
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.floor((due.getTime() - startOfToday.getTime()) / 86_400_000);
+}
