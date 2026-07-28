@@ -13,7 +13,6 @@ export interface Subsidy {
   genders: Gender[];
   source: string;
   url: string;
-  isUrgent?: boolean;
 }
 
 export const subsidies: Subsidy[] = [
@@ -435,7 +434,6 @@ export const subsidies: Subsidy[] = [
     genders: ['전체'],
     source: '국민건강보험공단',
     url: 'https://www.nhis.or.kr/nhis/healthin/wbhaca04500m01.do',
-    isUrgent: true,
   },
   {
     id: 35,
