@@ -9,8 +9,10 @@ import {
   type Subsidy,
 } from '../data/subsidies';
 import { fetchSubsidiesFallback } from '../data/api';
+import { showInterstitialAd } from '../data/ads';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
+const URGENT_THRESHOLD_DAYS = 30;
 
 type SortKey = 'default' | 'amount';
 
@@ -25,12 +27,17 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalRevealed, setTotalRevealed] = useState(false);
+  const [adReady, setAdReady] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
+  const categoryRowRef = useRef<HTMLDivElement>(null);
+  const [chipScroll, setChipScroll] = useState({ atStart: true, atEnd: true });
 
   useEffect(() => {
     setLoading(true);
     setSubsidies(fetchSubsidiesFallback(ageGroup, gender));
     setLoading(false);
+    setTotalRevealed(false);
   }, [ageGroup, gender]);
 
   useEffect(() => {
@@ -40,19 +47,44 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     import('@apps-in-toss/web-framework').then(({ TossAds }) => {
       if (!TossAds.attachBanner.isSupported()) return;
       result = TossAds.attachBanner(BANNER_AD_ID, el);
+      setAdReady(true);
     }).catch(() => {});
     return () => result?.destroy();
   }, []);
+
+  useEffect(() => {
+    const el = categoryRowRef.current;
+    if (!el) return;
+    const updateScroll = () => {
+      setChipScroll({
+        atStart: el.scrollLeft <= 0,
+        atEnd: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1,
+      });
+    };
+    updateScroll();
+    el.addEventListener('scroll', updateScroll, { passive: true });
+    window.addEventListener('resize', updateScroll);
+    return () => {
+      el.removeEventListener('scroll', updateScroll);
+      window.removeEventListener('resize', updateScroll);
+    };
+  }, [subsidies]);
 
   const categoryFiltered = activeCategory
     ? subsidies.filter((s) => s.category === activeCategory)
     : subsidies;
   const sorted = [...categoryFiltered].sort((a, b) => {
     if (sort === 'amount') return parseAmount(b.amount) - parseAmount(a.amount);
-    return (b.isUrgent ? 1 : 0) - (a.isUrgent ? 1 : 0);
+    return (isNearDeadline(b.deadline) ? 1 : 0) - (isNearDeadline(a.deadline) ? 1 : 0);
   });
 
-  const urgentCount = subsidies.filter((s) => s.isUrgent).length;
+  const urgentCount = subsidies.filter((s) => isNearDeadline(s.deadline)).length;
+  const totalAmount = subsidies.reduce((sum, item) => sum + parseAmount(item.amount), 0);
+
+  const handleRevealTotal = () => {
+    showInterstitialAd();
+    setTotalRevealed(true);
+  };
 
   return (
     <div style={s.container}>
@@ -75,7 +107,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       </header>
 
       {/* 배너 광고 */}
-      <div ref={bannerRef} style={s.banner} />
+      <div ref={bannerRef} style={{ ...s.banner, minHeight: adReady ? '60px' : 0 }} />
 
       {/* 로딩 */}
       {loading && (
@@ -98,7 +130,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
       {/* 카테고리 필터 */}
       <div style={s.categoryRowWrap}>
-        <div style={s.categoryRow}>
+        <div ref={categoryRowRef} style={s.categoryRow}>
           <Button
             size="small"
             color="primary"
@@ -126,8 +158,32 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
             );
           })}
         </div>
-        <div style={s.categoryFade} />
+        {!chipScroll.atStart && <div style={s.categoryFadeLeft} />}
+        {!chipScroll.atEnd && <div style={s.categoryFadeRight} />}
       </div>
+
+      {/* 총액 확인 CTA */}
+      {!loading && subsidies.length > 0 && (
+        <div style={s.totalCtaWrap}>
+          {totalRevealed ? (
+            <div style={s.totalRevealBox}>
+              <Paragraph typography="t4" fontWeight="bold" style={{ color: '#191F28' }}>
+                💰 지금 조건으로 최대 <span style={{ color: '#3182F6' }}>{formatTotal(totalAmount)}</span>까지 받을 수 있어요!
+              </Paragraph>
+            </div>
+          ) : (
+            <Button
+              display="full"
+              size="large"
+              color="primary"
+              variant="fill"
+              onClick={handleRevealTotal}
+            >
+              💰 내가 받을 수 있는 지원금 총액 확인하기
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* 정렬 + 결과 수 */}
       <div style={s.sortRow}>
@@ -182,19 +238,20 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
 // ── 지원금 카드 ──
 function SubsidyCard({ item }: { item: Subsidy }) {
-  const dday = item.isUrgent ? getDday(item.deadline) : null;
+  const ddayInfo = getDdayInfo(item.deadline);
+  const urgent = ddayInfo !== null && ddayInfo.days <= URGENT_THRESHOLD_DAYS;
 
   return (
     <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
-      <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
+      <div style={{ ...s.card, ...(urgent ? s.cardUrgent : {}) }}>
         {/* 카테고리 + 마감일 */}
         <div style={s.cardMeta}>
           <Badge size="xsmall" variant="weak" color="blue">
             {CATEGORY_EMOJI[item.category]} {item.category}
           </Badge>
-          {item.isUrgent ? (
+          {urgent ? (
             <Badge size="xsmall" variant="fill" color="yellow">
-              🔥 {dday ?? '마감 임박'}
+              🔥 {ddayInfo?.label}
             </Badge>
           ) : (
             <Paragraph typography="t6" color="#8B95A1">
@@ -218,7 +275,7 @@ function SubsidyCard({ item }: { item: Subsidy }) {
           <Badge size="large" variant="fill" color="blue">
             {item.amount}
           </Badge>
-          <Paragraph typography="t6" color="#8B95A1">
+          <Paragraph typography="t6" color="#8B95A1" style={s.cardSource}>
             {item.source}
           </Paragraph>
         </div>
@@ -246,12 +303,17 @@ function EmptyState({ onBack }: { onBack: () => void }) {
 }
 
 // ── 유틸 ──
-function getDday(deadline: string): string | null {
+function getDdayInfo(deadline: string): { label: string; days: number } | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return null;
   const diffMs = new Date(`${deadline}T23:59:59`).getTime() - Date.now();
   const days = Math.ceil(diffMs / 86_400_000);
   if (days < 0) return null;
-  return days === 0 ? 'D-day' : `D-${days}`;
+  return { label: days === 0 ? 'D-day' : `D-${days}`, days };
+}
+
+function isNearDeadline(deadline: string): boolean {
+  const info = getDdayInfo(deadline);
+  return info !== null && info.days <= URGENT_THRESHOLD_DAYS;
 }
 
 function parseAmount(str: string): number {
@@ -267,6 +329,14 @@ function parseAmount(str: string): number {
 
   const nums = str.replace(/[^0-9]/g, '');
   return nums ? parseInt(nums, 10) : 0;
+}
+
+function formatTotal(amount: number): string {
+  if (amount <= 0) return '0원';
+  const eok = Math.floor(amount / 100_000_000);
+  const man = Math.round((amount % 100_000_000) / 10_000);
+  if (eok > 0) return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
+  return `${man.toLocaleString()}만원`;
 }
 
 const SORT_LABEL: Record<SortKey, string> = {
@@ -314,7 +384,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   banner: {
     width: '100%',
-    minHeight: '60px',
+    overflow: 'hidden',
   },
   loadingWrap: {
     padding: '32px 16px',
@@ -339,7 +409,16 @@ const s: Record<string, React.CSSProperties> = {
     overflowX: 'auto',
     scrollbarWidth: 'none',
   },
-  categoryFade: {
+  categoryFadeLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: '28px',
+    background: 'linear-gradient(to left, rgba(255,255,255,0), #FFFFFF)',
+    pointerEvents: 'none',
+  },
+  categoryFadeRight: {
     position: 'absolute',
     top: 0,
     right: 0,
@@ -351,6 +430,14 @@ const s: Record<string, React.CSSProperties> = {
   chipBtn: {
     flexShrink: 0,
     whiteSpace: 'nowrap',
+  },
+  totalCtaWrap: {
+    padding: '4px 16px 8px',
+  },
+  totalRevealBox: {
+    backgroundColor: '#EBF3FE',
+    borderRadius: '12px',
+    padding: '14px 16px',
   },
   sortRow: {
     display: 'flex',
@@ -405,7 +492,14 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '4px 8px',
     paddingTop: '4px',
+  },
+  cardSource: {
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+    marginLeft: 'auto',
   },
   empty: {
     display: 'flex',
