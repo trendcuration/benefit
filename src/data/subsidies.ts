@@ -152,12 +152,24 @@ export const subsidies: Subsidy[] = [
     source: '고용노동부',
     url: 'https://www.work.go.kr',
   },
+  {
+    id: 12,
+    title: '청년내일채움공제',
+    description: '5인 이상 50인 미만 제조업·건설업 중소기업에 정규직 취업한 만 15~34세 청년이 2년간 매월 약 16.7만원(총 400만원)을 적립하면, 기업과 정부가 각 400만원을 함께 적립해 만기 시 1,200만원을 수령합니다. 정규직 채용일로부터 6개월 이내 청약 신청 필요.',
+    amount: '만기 시 1,200만원 (본인 400만원 + 기업 400만원 + 정부 400만원)',
+    deadline: '상시 (채용일로부터 6개월 이내 신청)',
+    category: '취업·창업',
+    ageGroups: ['10대', '20대', '30대'],
+    genders: ['전체'],
+    source: '고용노동부 (중소벤처기업진흥공단)',
+    url: 'https://www.work.go.kr/youngtomorrow',
+  },
 
   // ── 금융 ──
   {
-    id: 12,
+    id: 13,
     title: '청년미래적금',
-    description: '만 19~34세 청년이 3년간 매월 최대 50만원 납입 시 정부 기여금(6~12%)과 비과세 혜택으로 최대 2,255만원 마련 가능. 1차 모집(6~7월)은 마감되었으며, 2차 모집은 2026년 12월 예정입니다.',
+    description: '만 19~34세 청년이 3년간 매월 최대 50만원 납입 시 정부 기여금(6~12%)과 비과세 혜택으로 최대 2,255만원 마련 가능. 1차 모집 신청은 7월 3일 마감되었고, 대상자 계좌개설은 8월 7일까지 진행됩니다. 2차 모집은 2026년 12월 예정입니다.',
     amount: '최대 2,255만원 (3년 만기)',
     deadline: '2026년 12월 (2차 모집 예정)',
     category: '금융',
@@ -167,7 +179,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://lifeinfos.com/%EC%B2%AD%EB%85%84%EB%AF%B8%EB%9E%98%EC%A0%81%EA%B8%88-%EC%B4%9D%EC%A0%95%EB%A6%AC/',
   },
   {
-    id: 13,
+    id: 14,
     title: '청년도약계좌',
     description: '만 19~34세 청년이 5년간 매월 최대 70만원 납입 시 정부 기여금과 비과세 혜택 제공. 2026년 청년미래적금으로의 전환도 가능.',
     amount: '최대 5,000만원 (5년 만기)',
@@ -179,9 +191,9 @@ export const subsidies: Subsidy[] = [
     url: 'https://ylaccount.kinfa.or.kr/',
   },
   {
-    id: 14,
+    id: 15,
     title: '근로장려금 (EITC)',
-    description: '저소득 근로자·사업자 가구에 근로 의욕을 높이기 위해 장려금을 지급합니다. 2026년 맞벌이 소득 기준 4,400만원으로 상향.',
+    description: '저소득 근로자·사업자 가구에 근로 의욕을 높이기 위해 장려금을 지급합니다. 2026년 맞벌이 소득 기준 4,400만원으로 상향. 5월 정기신청분은 8월에 지급됩니다.',
     amount: '단독 최대 165만원 / 홑벌이 285만원 / 맞벌이 330만원',
     deadline: '상시 (정기신청 매년 5월)',
     category: '금융',
@@ -191,9 +203,9 @@ export const subsidies: Subsidy[] = [
     url: 'https://hometax.go.kr',
   },
   {
-    id: 15,
+    id: 16,
     title: '자녀장려금',
-    description: '18세 미만 자녀를 양육하는 저소득 가구에 자녀 1인당 최대 100만원의 장려금을 지급합니다.',
+    description: '18세 미만 자녀를 양육하는 저소득 가구에 자녀 1인당 최대 100만원의 장려금을 지급합니다. 5월 정기신청분은 8월에 지급됩니다.',
     amount: '자녀 1인당 최대 100만원',
     deadline: '상시 (정기신청 매년 5월)',
     category: '금융',
@@ -203,7 +215,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://hometax.go.kr',
   },
   {
-    id: 16,
+    id: 17,
     title: '소상공인 정책자금 대출',
     description: '소상공인의 사업 운전·시설자금을 저금리(연 2~3%)로 최대 7천만원까지 지원합니다.',
     amount: '최대 7,000만원 (연 2~3% 저금리)',
@@ -217,7 +229,7 @@ export const subsidies: Subsidy[] = [
 
   // ── 복지·돌봄 ──
   {
-    id: 17,
+    id: 18,
     title: '기초연금',
     description: '만 65세 이상 소득 하위 70% 어르신에게 매월 최대 34만 9,700원을 지급합니다. 2026년 선정기준액은 단독가구 247만원, 부부가구 395만 2천원.',
     amount: '월 최대 34만 9,700원',
@@ -229,7 +241,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.bokjiro.go.kr/ssis-tbu/twataa/wlfareInfo/moveTWAT52011M.do?wlfareInfoId=WLF00001164',
   },
   {
-    id: 18,
+    id: 19,
     title: '부모급여',
     description: '만 0~23개월 아동 양육 가구에 지급. 0~11개월 월 100만원, 12~23개월 월 50만원 지원(소득무관).',
     amount: '월 50~100만원 (총 최대 1,800만원)',
@@ -241,7 +253,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.bokjiro.go.kr/ssis-tbu/twataa/wlfareInfo/moveTWAT52011M.do?wlfareInfoId=WLF00004657',
   },
   {
-    id: 19,
+    id: 20,
     title: '첫만남이용권',
     description: '출생 직후 첫째 200만원, 둘째 이상 300만원을 국민행복카드 바우처로 지급합니다(소득무관).',
     amount: '첫째 200만원 / 둘째 이상 300만원',
@@ -253,7 +265,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://welfare-mom.com/korea-child-benefit-guide-2026/',
   },
   {
-    id: 20,
+    id: 21,
     title: '아동수당',
     description: '2026년부터 만 9세 미만(0~107개월) 아동에게 월 10만원(비수도권 최대 12만원)을 지급합니다.',
     amount: '월 10~12만원',
@@ -265,7 +277,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.bokjiro.go.kr/ssis-tbu/twataa/wlfareInfo/moveTWAT52011M.do?wlfareInfoId=WLF00001171',
   },
   {
-    id: 21,
+    id: 22,
     title: '한부모가족 아동양육비',
     description: '기준 중위소득 65% 이하 한부모가족 만 18세 미만 아동 1인당 월 양육비를 지원합니다.',
     amount: '아동 1인당 월 양육비 지원',
@@ -277,7 +289,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.mogef.go.kr/io/ind/io_ind_s005d.do?mid=old919&bbtSn=15',
   },
   {
-    id: 22,
+    id: 23,
     title: '장애인연금',
     description: '18세 이상 중증장애인 중 소득 하위 70%에게 매월 최대 43만 9,700원(기초급여+부가급여)을 지급합니다.',
     amount: '월 최대 43만 9,700원',
@@ -289,7 +301,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.bokjiro.go.kr/pension',
   },
   {
-    id: 23,
+    id: 24,
     title: '노인일자리 및 사회활동 지원',
     description: '2026년 역대 최대 115만 2천 개 일자리 제공. 만 60세 이상 어르신에게 월 최대 76만원의 활동비를 지원합니다.',
     amount: '월 최대 76만원',
@@ -301,7 +313,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.mohw.go.kr/menu.es?mid=a10712020100',
   },
   {
-    id: 24,
+    id: 25,
     title: '노인 장기요양보험',
     description: '신체 활동 및 가사 지원이 필요한 65세 이상 어르신에게 등급 판정 후 요양서비스 비용의 최대 85%를 지원합니다.',
     amount: '서비스 비용의 85% 지원',
@@ -313,7 +325,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.nhis.or.kr',
   },
   {
-    id: 25,
+    id: 26,
     title: '기초생활보장 생계급여',
     description: '기준 중위소득 32% 이하 가구에 최저 생계비를 지급합니다. 2026년 1인가구 기준 월 82만 556원.',
     amount: '1인가구 월 82만원 / 2인가구 134만원',
@@ -325,7 +337,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.mohw.go.kr/menu.es?mid=a10708010300',
   },
   {
-    id: 26,
+    id: 27,
     title: '임신·출산 진료비 지원 (국민행복카드)',
     description: '임신 확인 후 단태아 100만원, 다태아 140만원의 진료비 바우처를 지원합니다.',
     amount: '단태아 100만원 / 다태아 140만원',
@@ -336,10 +348,22 @@ export const subsidies: Subsidy[] = [
     source: '보건복지부',
     url: 'https://www.nhis.or.kr',
   },
+  {
+    id: 28,
+    title: '에너지바우처',
+    description: '생계·의료급여 수급 가구 중 노인(65세↑)·영유아(6세 미만)·장애인·임산부·중증질환자·한부모가족이 포함된 가구에 냉난방비를 지원합니다. 2026년부터 하절기·동절기 구분 없이 사용기간(7/1~익년 5/31) 내 자유롭게 사용 가능.',
+    amount: '연 29만 5,200원~70만 1,300원 (가구원 수별 차등)',
+    deadline: '2027-05-31 (사용기간)',
+    category: '복지·돌봄',
+    ageGroups: ['10대', '20대', '30대', '40대', '50대', '60대', '70대이상'],
+    genders: ['전체'],
+    source: '산업통상자원부 (한국에너지공단)',
+    url: 'https://www.energyv.or.kr',
+  },
 
   // ── 교육 ──
   {
-    id: 27,
+    id: 29,
     title: '국가장학금 (I·II 유형)',
     description: '소득 9구간 이하 대학생에게 소득분위별 연간 최대 570만원의 등록금을 지원합니다. 2026년 지원 대상 9구간으로 확대.',
     amount: '연 최대 570만원 (기초·차상위 전액)',
@@ -351,7 +375,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.kosaf.go.kr/',
   },
   {
-    id: 28,
+    id: 30,
     title: '국민내일배움카드',
     description: '만 15세 이상 재직자·구직자 누구나 5년간 300~500만원 한도 훈련비 바우처를 통해 직업훈련을 받을 수 있습니다.',
     amount: '300~500만원 (바우처, 5년)',
@@ -363,7 +387,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.hrd.go.kr',
   },
   {
-    id: 29,
+    id: 31,
     title: 'K-디지털 트레이닝',
     description: 'AI·빅데이터·클라우드 등 신기술 분야 집중 훈련 과정에 최대 200만원의 훈련비를 지원합니다.',
     amount: '최대 200만원',
@@ -375,7 +399,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.hrd.go.kr',
   },
   {
-    id: 30,
+    id: 32,
     title: '청년창업 세액감면',
     description: '만 15~34세 청년이 창업한 경우 최초 소득 발생 연도부터 최대 5년간 소득세·법인세 50% 이상 감면 혜택을 받습니다.',
     amount: '소득세·법인세 50~100% 감면 (최대 5년)',
@@ -389,7 +413,7 @@ export const subsidies: Subsidy[] = [
 
   // ── 건강 ──
   {
-    id: 31,
+    id: 33,
     title: '정신건강 심리상담 바우처',
     description: '우울·불안 등 정서적 어려움이 있는 국민 누구나 전문 심리상담 8회를 무료 또는 낮은 본인부담으로 지원받습니다.',
     amount: '8회 심리상담 (무료 또는 소액 자부담)',
@@ -401,7 +425,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.bokjiro.go.kr/ssis-tbu/twataa/wlfareInfo/moveTWAT52011M.do?wlfareInfoId=WLF00005567',
   },
   {
-    id: 32,
+    id: 34,
     title: '일반건강검진 (국가건강검진)',
     description: '2026년은 짝수년으로 짝수 출생연도 해당자 대상. 2년마다 기본 건강검진 무료 제공, 40세·66세 생애전환기 검진 추가.',
     amount: '무료',
@@ -414,7 +438,7 @@ export const subsidies: Subsidy[] = [
     isUrgent: true,
   },
   {
-    id: 33,
+    id: 35,
     title: '국가암검진 지원',
     description: '의료급여수급자 및 건강보험료 하위 50% 가구 대상 위암(40세↑)·대장암(50세↑)·간암·폐암·유방암·자궁경부암 무료 검진.',
     amount: '무료 (건강보험 하위 50%) 또는 본인부담 10%',
@@ -426,7 +450,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.cancer.go.kr/lay1/S1T549C553/sublink.do',
   },
   {
-    id: 34,
+    id: 36,
     title: '여성 암 검진 지원',
     description: '자궁경부암(20세↑)·유방암(40세↑) 정기 검진을 건강보험 적용 또는 무료로 지원합니다.',
     amount: '무료 또는 검진비 90% 지원',
@@ -440,7 +464,7 @@ export const subsidies: Subsidy[] = [
 
   // ── 문화·여가 ──
   {
-    id: 35,
+    id: 37,
     title: '문화누리카드',
     description: '기초수급자 및 차상위계층에게 공연·영화·스포츠·여행 등 문화생활비로 연간 15만원(청소년 16만원)을 지원합니다.',
     amount: '연 15만원 (청소년 16만원)',
@@ -452,7 +476,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.mnuri.kr/munhwa/cardIssueGuide.do',
   },
   {
-    id: 36,
+    id: 38,
     title: '어르신 문화프로그램',
     description: '60세 이상 어르신을 위한 문화예술 교육프로그램을 전국 문화원·복지관에서 무료로 제공합니다.',
     amount: '무료',
@@ -464,7 +488,7 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.culture.go.kr',
   },
   {
-    id: 37,
+    id: 39,
     title: '청소년 문화·여가 활동 지원',
     description: '저소득 가정 청소년에게 문화·예술·체육 활동 참여 비용을 바우처 형태로 지원합니다.',
     amount: '연 최대 40만원 (바우처)',
@@ -474,6 +498,18 @@ export const subsidies: Subsidy[] = [
     genders: ['전체'],
     source: '여성가족부',
     url: 'https://www.youth.go.kr',
+  },
+  {
+    id: 40,
+    title: '청년문화예술패스',
+    description: '만 19~20세(2006~2007년생) 청년에게 공연·전시·영화 관람료로 쓸 수 있는 포인트를 지급합니다. 2026년 지원 대상이 19세에서 19~20세로 확대되고 비수도권 지원금이 20만원으로 인상. 신청 후 미사용 시 포인트가 전액 회수되니 유의하세요.',
+    amount: '비수도권 20만원 / 수도권 15만원',
+    deadline: '상시',
+    category: '문화·여가',
+    ageGroups: ['10대', '20대'],
+    genders: ['전체'],
+    source: '문화체육관광부 (한국문화예술위원회)',
+    url: 'https://www.youthculturepass.or.kr',
   },
 ];
 
