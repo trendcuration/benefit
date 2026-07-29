@@ -28,7 +28,6 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalRevealed, setTotalRevealed] = useState(false);
-  const [adReady, setAdReady] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
   const categoryRowRef = useRef<HTMLDivElement>(null);
   const [chipScroll, setChipScroll] = useState({ atStart: true, atEnd: true });
@@ -46,8 +45,10 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     let result: { destroy: () => void } | undefined;
     import('@apps-in-toss/web-framework').then(({ TossAds }) => {
       if (!TossAds.attachBanner.isSupported()) return;
+      // 광고 SDK가 노출을 정상 집계하려면 attach 시점에 컨테이너가 이미 실제 크기를
+      // 갖고 있어야 하므로, React state가 아니라 DOM에 동기적으로 먼저 적용한다.
+      el.style.minHeight = '60px';
       result = TossAds.attachBanner(BANNER_AD_ID, el);
-      setAdReady(true);
     }).catch(() => {});
     return () => result?.destroy();
   }, []);
@@ -107,7 +108,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       </header>
 
       {/* 배너 광고 */}
-      <div ref={bannerRef} style={{ ...s.banner, minHeight: adReady ? '60px' : 0 }} />
+      <div ref={bannerRef} style={s.banner} />
 
       {/* 로딩 */}
       {loading && (
