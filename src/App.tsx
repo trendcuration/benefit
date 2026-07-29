@@ -17,8 +17,7 @@ export function App() {
 
   const handleSearch = (ageGroup: AgeGroup | null, gender: Gender) => {
     setParams({ ageGroup, gender });
-    showInterstitialAd();
-    setPage('results');
+    showInterstitialAd(() => setPage('results'));
   };
 
   return (
