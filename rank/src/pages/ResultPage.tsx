@@ -11,9 +11,9 @@ import {
   formatCount,
   formatManwon,
   formatPercentile,
+  formatPercentileParts,
   getRank,
   valueAtPercentile,
-  TOP_CAP,
 } from '../data/rank';
 import { getTier } from '../data/tiers';
 import type { JudgeParams } from '../App';
@@ -70,9 +70,12 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
   };
 
   const belowCount = ((100 - pAll) / 100) * POPULATION[metric];
+  const aboveCount = (pAll / 100) * POPULATION[metric];
   const top10Line = valueAtPercentile(metric, '전체', 10);
   const top10Diff = value - top10Line;
   const yearPrefix = metric === 'income' ? '연 ' : '';
+  const heroParts = formatPercentileParts(pAll);
+  const isElite = pAll <= 1;
 
   return (
     <div style={s.container}>
@@ -106,8 +109,8 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
           </Paragraph>
           <div style={s.heroNumberRow}>
             <span style={s.heroPrefix}>상위</span>
-            <span style={s.heroNumber}>{pAll <= TOP_CAP ? TOP_CAP.toFixed(1) : pAll.toFixed(1)}</span>
-            <span style={s.heroUnit}>%{pAll <= TOP_CAP && ' 이내'}</span>
+            <span style={s.heroNumber}>{heroParts.number}</span>
+            <span style={s.heroUnit}>{heroParts.suffix}</span>
           </div>
           <Badge size="large" variant="weak" color="blue">
             {tier.title}
@@ -116,7 +119,7 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
             {tier.oneLiner}
           </Paragraph>
           <DistributionBar p={pAll} />
-          <span style={s.watermark}>소득수준 판별기 · 토스 앱인토스</span>
+          <span style={s.watermark}>내소득은 상위 몇프로 · 토스 앱인토스</span>
         </div>
 
         {/* 동년배 비교 */}
@@ -145,6 +148,13 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
           <Paragraph typography="t3" fontWeight="bold" style={s.cardTitle}>
             숫자로 보면
           </Paragraph>
+          {isElite && (
+            <StatRow
+              label="나보다 위엔 딱"
+              value={`${formatCount(aboveCount)} ${meta.countUnit}`}
+              highlight
+            />
+          )}
           <StatRow
             label={`나보다 ${meta.label} 아래`}
             value={`${formatCount(belowCount)} ${meta.countUnit}`}
@@ -189,6 +199,7 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
         <Paragraph typography="t6" color="#8B95A1" style={s.disclaimer}>
           {SOURCE_NOTE}
           {pAge !== null && ' · 연령대별 순위는 공표 통계 기반 근사치예요'}
+          {pAll < 0.1 && ' · 0.1% 미만 구간은 파레토 분포 추정치예요'}
         </Paragraph>
       </div>
 
@@ -217,7 +228,7 @@ function DistributionBar({ p, compact = false }: { p: number; compact?: boolean 
         <div style={s.distLabels}>
           <span>하위</span>
           <span>상위 50%</span>
-          <span>상위 0.1%</span>
+          <span>상위 0.01%</span>
         </div>
       )}
     </div>

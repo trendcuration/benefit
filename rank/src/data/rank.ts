@@ -1,6 +1,6 @@
 import { TABLES, type AgeGroup, type Metric } from './percentiles';
 
-export const TOP_CAP = 0.1;
+export const TOP_CAP = 0.001;
 export const BOTTOM_CAP = 99.9;
 
 /**
@@ -48,10 +48,23 @@ function clampPercentile(p: number): number {
   return Math.min(Math.max(p, TOP_CAP), BOTTOM_CAP);
 }
 
-/** 상위 % 표시 문자열: 0.1% 캡은 "0.1% 이내"로 */
+/** "0.10" → "0.1", "0.030" → "0.03" 처럼 불필요한 꼬리 0 제거 */
+function trimZeros(s: string): string {
+  return s.includes('.') ? s.replace(/0+$/, '').replace(/\.$/, '') : s;
+}
+
+/** 히어로 숫자처럼 정수부/단위를 분리해서 써야 할 때 쓰는 파츠 버전 */
+export function formatPercentileParts(p: number): { number: string; suffix: string } {
+  if (p <= TOP_CAP) return { number: `${TOP_CAP}`, suffix: '% 이내' };
+  if (p < 0.1) return { number: trimZeros(p.toFixed(3)), suffix: '%' };
+  if (p < 1) return { number: trimZeros(p.toFixed(2)), suffix: '%' };
+  return { number: p.toFixed(1), suffix: '%' };
+}
+
+/** 상위 % 표시 문자열: 구간이 좁아질수록 소수 자릿수를 늘려 보여준다 */
 export function formatPercentile(p: number): string {
-  if (p <= TOP_CAP) return '0.1% 이내';
-  return `${p.toFixed(1)}%`;
+  const { number, suffix } = formatPercentileParts(p);
+  return `${number}${suffix}`;
 }
 
 /** 만원 단위 금액 → "3억 2,000만원" 한글 표기 */
@@ -65,8 +78,10 @@ export function formatManwon(manwon: number): string {
   return `${man.toLocaleString('ko-KR')}만원`;
 }
 
-/** 인원·가구 수 → "약 1,896만 명" 표기용 숫자 부분 */
+/** 인원·가구 수 → "약 1,896만" 표기용 숫자 부분. 1만 미만은 실수치 그대로("약 211") */
 export function formatCount(count: number): string {
+  const rounded = Math.round(count);
+  if (rounded < 10_000) return `약 ${rounded.toLocaleString('ko-KR')}`;
   const man = Math.round(count / 10_000);
   if (man >= 10_000) {
     const eok = man / 10_000;
