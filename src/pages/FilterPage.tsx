@@ -10,8 +10,6 @@ export function FilterPage({ onSearch }: FilterPageProps) {
   const [selectedAge, setSelectedAge] = useState<AgeGroup | null>(null);
   const [selectedGender, setSelectedGender] = useState<Gender>('전체');
 
-  const canSearch = selectedAge !== null;
-
   return (
     <div style={s.container}>
       {/* 헤더 */}
@@ -32,7 +30,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
             <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
               연령대
             </Paragraph>
-            <span style={s.requiredBadge}>필수</span>
+            <span style={s.optionalBadge}>선택, 안 고르면 전체 조회</span>
           </div>
           <div style={s.ageGrid}>
             {AGE_GROUPS.map((age) => {
@@ -77,13 +75,11 @@ export function FilterPage({ onSearch }: FilterPageProps) {
         </section>
 
         {/* 선택 요약 */}
-        {selectedAge && (
-          <div style={s.summaryBox}>
-            <Paragraph typography="t4" color="#3182F6">
-              <strong>{selectedAge}</strong> · <strong>{selectedGender}</strong>에 해당하는 지원금을 검색합니다
-            </Paragraph>
-          </div>
-        )}
+        <div style={s.summaryBox}>
+          <Paragraph typography="t4" color="#3182F6">
+            <strong>{selectedAge ?? '전체 연령'}</strong> · <strong>{selectedGender}</strong>에 해당하는 지원금을 검색합니다
+          </Paragraph>
+        </div>
       </div>
 
       {/* 하단 CTA */}
@@ -93,10 +89,9 @@ export function FilterPage({ onSearch }: FilterPageProps) {
           size="xlarge"
           color="primary"
           variant="fill"
-          disabled={!canSearch}
-          onClick={() => canSearch && onSearch(selectedAge, selectedGender)}
+          onClick={() => onSearch(selectedAge, selectedGender)}
         >
-          지원금 검색하기
+          {selectedAge ? '지원금 검색하기' : '전체 지원금 보기'}
         </Button>
         <Paragraph typography="t5" color="#B0B8C1" style={s.footerNote}>
           복지로·공공데이터 기준 최신 정보 제공 · {LAST_UPDATED} 업데이트
@@ -167,11 +162,11 @@ const s: Record<string, React.CSSProperties> = {
   sectionTitle: {
     letterSpacing: '-0.3px',
   },
-  requiredBadge: {
+  optionalBadge: {
     fontSize: '11px',
     fontWeight: 600,
-    color: '#3182F6',
-    backgroundColor: '#EBF3FE',
+    color: '#8B95A1',
+    backgroundColor: '#F2F4F6',
     padding: '2px 7px',
     borderRadius: '6px',
   },
