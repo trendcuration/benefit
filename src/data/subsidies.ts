@@ -568,27 +568,6 @@ export const CATEGORY_EMOJI: Record<Category, string> = {
   '문화·여가': '🎭',
 };
 
-/** TDS Badge color prop 값('blue'|'teal'|'green'|'red'|'yellow'|'elephant')과 카드 좌측 강조선 hex를 함께 관리합니다. */
-export const CATEGORY_BADGE_COLOR: Record<Category, 'blue' | 'teal' | 'green' | 'red' | 'yellow' | 'elephant'> = {
-  '주거': 'teal',
-  '취업·창업': 'blue',
-  '금융': 'green',
-  '복지·돌봄': 'elephant',
-  '교육': 'yellow',
-  '건강': 'red',
-  '문화·여가': 'elephant',
-};
-
-export const CATEGORY_ACCENT_HEX: Record<Category, string> = {
-  '주거': '#0F9C8B',
-  '취업·창업': '#3182F6',
-  '금융': '#1BA672',
-  '복지·돌봄': '#8B95A1',
-  '교육': '#F5A623',
-  '건강': '#F04452',
-  '문화·여가': '#8B95A1',
-};
-
 export function filterSubsidies(
   ageGroup: AgeGroup | null,
   gender: Gender,
