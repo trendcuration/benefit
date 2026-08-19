@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Badge, Button, Paragraph, TextField } from '@toss/tds-mobile';
 import {
   CATEGORIES,
-  CATEGORY_ACCENT_HEX,
-  CATEGORY_BADGE_COLOR,
   CATEGORY_EMOJI,
   LAST_UPDATED,
   type AgeGroup,
@@ -238,21 +236,13 @@ interface SubsidyCardProps {
 function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
   const dday = item.isUrgent ? getDday(item.deadline) : null;
 
-  const accentColor = CATEGORY_ACCENT_HEX[item.category];
-
   return (
     <div style={s.cardWrap}>
       <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
-        <div
-          style={{
-            ...s.card,
-            borderLeft: `4px solid ${accentColor}`,
-            ...(item.isUrgent ? s.cardUrgent : {}),
-          }}
-        >
+        <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
           {/* 카테고리 + 마감일 */}
           <div style={s.cardMeta}>
-            <Badge size="xsmall" variant="weak" color={CATEGORY_BADGE_COLOR[item.category]}>
+            <Badge size="xsmall" variant="weak" color="blue">
               {CATEGORY_EMOJI[item.category]} {item.category}
             </Badge>
             {item.isUrgent ? (
@@ -276,17 +266,15 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
             {item.description}
           </Paragraph>
 
-          {/* 금액 강조 */}
-          <div style={s.amountStrip}>
-            <Paragraph typography="t2" fontWeight="bold" style={{ color: '#3182F6', margin: 0 }}>
-              💸 {item.amount}
+          {/* 금액 + 출처 */}
+          <div style={s.cardBottom}>
+            <Badge size="large" variant="fill" color="blue">
+              {item.amount}
+            </Badge>
+            <Paragraph typography="t6" color="#8B95A1">
+              {item.source}
             </Paragraph>
           </div>
-
-          {/* 출처 */}
-          <Paragraph typography="t6" color="#8B95A1">
-            {item.source}
-          </Paragraph>
         </div>
       </a>
       <button
@@ -305,14 +293,12 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
 function EmptyState({ onBack }: { onBack: () => void }) {
   return (
     <div style={s.empty}>
-      <div style={s.emptyIconCircle}>
-        <span style={s.emptyIcon}>🔍</span>
-      </div>
+      <span style={s.emptyIcon}>🔍</span>
       <Paragraph typography="t3" fontWeight="bold">
         해당 조건의 지원금이 없어요
       </Paragraph>
       <Paragraph typography="t5" color="#8B95A1">
-        검색어·카테고리·찜 필터를 확인하거나 연령대·성별을 다시 선택해보세요
+        연령대나 성별을 다시 선택해보세요
       </Paragraph>
       <Button size="medium" color="primary" variant="weak" onClick={onBack} style={s.emptyResetBtn}>
         필터 다시 선택하기
@@ -512,11 +498,11 @@ const s: Record<string, React.CSSProperties> = {
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
   },
-  amountStrip: {
-    backgroundColor: '#EBF3FE',
-    borderRadius: '10px',
-    padding: '10px 12px',
-    marginTop: '2px',
+  cardBottom: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: '4px',
   },
   empty: {
     display: 'flex',
@@ -528,17 +514,8 @@ const s: Record<string, React.CSSProperties> = {
   emptyResetBtn: {
     marginTop: '8px',
   },
-  emptyIconCircle: {
-    width: '72px',
-    height: '72px',
-    borderRadius: '50%',
-    backgroundColor: '#EBF3FE',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   emptyIcon: {
-    fontSize: '32px',
+    fontSize: '48px',
   },
   moreWrap: {
     padding: '8px 16px 32px',
