@@ -4,9 +4,11 @@ import {
   CATEGORIES,
   CATEGORY_EMOJI,
   LAST_UPDATED,
+  REGIONS,
   type AgeGroup,
   type Category,
   type Gender,
+  type Region,
   type Subsidy,
 } from '../data/subsidies';
 import { fetchSubsidiesFallback } from '../data/api';
@@ -25,6 +27,7 @@ interface ResultsPageProps {
 export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [sort, setSort] = useState<SortKey>('default');
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
+  const [activeRegion, setActiveRegion] = useState<Region | null>(null);
   const [query, setQuery] = useState('');
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
   const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
@@ -52,9 +55,12 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const categoryFiltered = activeCategory
     ? subsidies.filter((s) => s.category === activeCategory)
     : subsidies;
-  const bookmarkFiltered = showBookmarkedOnly
-    ? categoryFiltered.filter((s) => isBookmarked(s.id))
+  const regionFiltered = activeRegion
+    ? categoryFiltered.filter((s) => s.regions.includes('전국') || s.regions.includes(activeRegion))
     : categoryFiltered;
+  const bookmarkFiltered = showBookmarkedOnly
+    ? regionFiltered.filter((s) => isBookmarked(s.id))
+    : regionFiltered;
   const trimmedQuery = query.trim().toLowerCase();
   const searchFiltered = trimmedQuery
     ? bookmarkFiltered.filter(
@@ -139,6 +145,37 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
                 style={s.chipBtn}
               >
                 {CATEGORY_EMOJI[cat]} {cat}
+              </Button>
+            );
+          })}
+        </div>
+        <div style={s.categoryFade} />
+      </div>
+
+      {/* 지역 필터 */}
+      <div style={s.categoryRowWrap}>
+        <div style={s.categoryRow}>
+          <Button
+            size="small"
+            color="primary"
+            variant={activeRegion === null ? 'fill' : 'weak'}
+            onClick={() => setActiveRegion(null)}
+            style={s.chipBtn}
+          >
+            전체 지역
+          </Button>
+          {REGIONS.map((region) => {
+            const isActive = activeRegion === region;
+            return (
+              <Button
+                key={region}
+                size="small"
+                color="primary"
+                variant={isActive ? 'fill' : 'weak'}
+                onClick={() => setActiveRegion(isActive ? null : region)}
+                style={s.chipBtn}
+              >
+                📍 {region}
               </Button>
             );
           })}
@@ -236,6 +273,12 @@ interface SubsidyCardProps {
 function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
   const dday = item.isUrgent ? getDday(item.deadline) : null;
 
+  const handleShare = () => {
+    import('@apps-in-toss/web-framework')
+      .then(({ share }) => share({ message: `[${item.title}]\n${item.amount}\n${item.url}` }))
+      .catch(() => {});
+  };
+
   return (
     <div style={s.cardWrap}>
       <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
@@ -257,7 +300,7 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
           </div>
 
           {/* 제목 */}
-          <Paragraph typography="t3" fontWeight="bold" style={{ ...s.cardTitle, paddingRight: '28px' }}>
+          <Paragraph typography="t3" fontWeight="bold" style={{ ...s.cardTitle, paddingRight: '60px' }}>
             {item.title}
           </Paragraph>
 
@@ -277,14 +320,19 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
           </div>
         </div>
       </a>
-      <button
-        type="button"
-        aria-label={bookmarked ? '찜 해제' : '찜하기'}
-        style={s.bookmarkBtn}
-        onClick={onToggleBookmark}
-      >
-        {bookmarked ? '💙' : '🤍'}
-      </button>
+      <div style={s.cardActions}>
+        <button type="button" aria-label="공유하기" style={s.cardActionBtn} onClick={handleShare}>
+          🔗
+        </button>
+        <button
+          type="button"
+          aria-label={bookmarked ? '찜 해제' : '찜하기'}
+          style={s.cardActionBtn}
+          onClick={onToggleBookmark}
+        >
+          {bookmarked ? '💙' : '🤍'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -454,10 +502,14 @@ const s: Record<string, React.CSSProperties> = {
     color: 'inherit',
     display: 'block',
   },
-  bookmarkBtn: {
+  cardActions: {
     position: 'absolute',
-    top: '16px',
-    right: '16px',
+    top: '12px',
+    right: '12px',
+    display: 'flex',
+    gap: '4px',
+  },
+  cardActionBtn: {
     width: '28px',
     height: '28px',
     display: 'flex',
@@ -466,7 +518,7 @@ const s: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '18px',
+    fontSize: '16px',
     padding: 0,
     WebkitTapHighlightColor: 'transparent',
   },
@@ -486,7 +538,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingRight: '36px',
+    paddingRight: '60px',
   },
   cardTitle: {
     letterSpacing: '-0.3px',
