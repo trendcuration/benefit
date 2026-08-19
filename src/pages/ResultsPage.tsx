@@ -271,7 +271,7 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
             <Badge size="large" variant="fill" color="blue">
               {item.amount}
             </Badge>
-            <Paragraph typography="t6" color="#8B95A1">
+            <Paragraph typography="t6" color="#8B95A1" style={s.cardSource}>
               {item.source}
             </Paragraph>
           </div>
@@ -486,6 +486,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingRight: '36px',
   },
   cardTitle: {
     letterSpacing: '-0.3px',
@@ -500,9 +501,13 @@ const s: Record<string, React.CSSProperties> = {
   },
   cardBottom: {
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '6px',
     paddingTop: '4px',
+  },
+  cardSource: {
+    margin: 0,
   },
   empty: {
     display: 'flex',
