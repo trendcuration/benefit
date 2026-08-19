@@ -16,6 +16,9 @@ export interface Subsidy {
   isUrgent?: boolean;
 }
 
+/** 이 데이터의 마지막 콘텐츠 갱신일(신규 항목 추가·금액/조건 재점검 기준일) */
+export const LAST_UPDATED = '2026-08-19';
+
 export const subsidies: Subsidy[] = [
   // ── 주거 ──
   {
@@ -157,9 +160,9 @@ export const subsidies: Subsidy[] = [
   {
     id: 12,
     title: '청년미래적금',
-    description: '만 19~34세 청년이 3년간 매월 최대 50만원 납입 시 정부 기여금(6~12%)과 비과세 혜택으로 최대 2,255만원 마련 가능. 1차 모집(6~7월)은 마감되었으며, 2차 모집은 2026년 12월 예정입니다.',
-    amount: '최대 2,255만원 (3년 만기)',
-    deadline: '2026년 12월 (2차 모집 예정)',
+    description: '만 19~34세 청년이 3년간 매월 최대 50만원 납입 시 정부 기여금(일반형 6%·우대형 12%)과 비과세 혜택으로 목돈 마련 가능. 1차 모집(6~7월)은 마감되었으며, 2차 모집은 2026년 하반기 중 시행 예정(정확한 일정은 취급 은행 공지 확인).',
+    amount: '월 최대 50만원 납입 (정부기여금 6~12%, 3년 만기)',
+    deadline: '2026년 하반기 (2차 모집 예정)',
     category: '금융',
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
@@ -168,10 +171,10 @@ export const subsidies: Subsidy[] = [
   },
   {
     id: 13,
-    title: '청년도약계좌',
-    description: '만 19~34세 청년이 5년간 매월 최대 70만원 납입 시 정부 기여금과 비과세 혜택 제공. 2026년 청년미래적금으로의 전환도 가능.',
-    amount: '최대 5,000만원 (5년 만기)',
-    deadline: '상시',
+    title: '청년도약계좌 (신규가입 종료·기존 가입자 유지)',
+    description: '만 19~34세 청년 대상 5년 만기 적금으로 정부 기여금과 비과세 혜택을 제공했으나, 신규 가입은 2025년 12월 31일부로 종료되었습니다. 기존 가입자는 만기까지 혜택이 그대로 유지되며, 신규 가입을 원하면 청년미래적금(위 항목)을 확인하세요.',
+    amount: '최대 5,000만원 (5년 만기, 기존 가입자 한정)',
+    deadline: '신규가입 마감(2025-12-31), 기존 가입자는 만기까지 유지',
     category: '금융',
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
@@ -475,6 +478,80 @@ export const subsidies: Subsidy[] = [
     source: '여성가족부',
     url: 'https://www.youth.go.kr',
   },
+
+  // ── 2026-08-19 추가 ──
+  {
+    id: 38,
+    title: '신생아 특례대출',
+    description: '대출 접수일 기준 2년 이내 출산(2023년 1월 1일 이후 출생아부터 적용)한 가구에 주택 구입·전세자금을 저금리로 지원합니다. 부부합산 연소득 2억원 이하(맞벌이 기준) 등 소득 요건이 있습니다.',
+    amount: '구입자금 최대 4억원 / 전세자금 최대 2억 4천만원',
+    deadline: '상시',
+    category: '주거',
+    ageGroups: ['20대', '30대', '40대'],
+    genders: ['전체'],
+    source: '국토교통부',
+    url: 'https://www.hf.go.kr',
+  },
+  {
+    id: 39,
+    title: '청년내일저축계좌',
+    description: '만 15~39세 청년이 매월 10만원을 저축하면 정부가 월 30만원을 함께 적립해줍니다. 가구소득 기준 중위소득 50% 이하이고 월 10만원 이상 근로·사업소득이 있어야 신청 가능. 2026년 신청기간은 5월 4~20일이었습니다(연 1회 모집, 다음 회차 일정은 복지로 공지 확인).',
+    amount: '3년 만기 시 총 1,440만원 이상 수령(본인납입 360만원+정부적립 1,080만원+이자)',
+    deadline: '상시 (연 1회 모집, 정확한 회차 일정은 복지로 확인)',
+    category: '금융',
+    ageGroups: ['10대', '20대', '30대'],
+    genders: ['전체'],
+    source: '보건복지부',
+    url: 'https://www.gov.kr/portal/rcvfvrSvc/dtlEx/135200005013',
+  },
+  {
+    id: 40,
+    title: '평생교육이용권(평생교육바우처)',
+    description: '만 19세 이상 성인 중 가구소득이 기준 중위소득 65% 이하(1인가구는 120% 이하)인 경우 온라인 강좌·학원 등 평생교육비를 지원합니다. 등록장애인, 65세 이상 어르신 등도 대상에 포함됩니다.',
+    amount: '연 35만원 (우수 이용자 선정 시 최대 70만원)',
+    deadline: '상시 (연 1회 모집)',
+    category: '교육',
+    ageGroups: ['20대', '30대', '40대', '50대', '60대', '70대이상'],
+    genders: ['전체'],
+    source: '국가평생교육진흥원',
+    url: 'https://www.class.moe.go.kr',
+  },
+  {
+    id: 41,
+    title: '노인맞춤돌봄서비스',
+    description: '65세 이상 기초생활수급자·차상위계층·기초연금수급자 중 독거·고령부부 가구 등 돌봄이 필요한 어르신에게 안부확인, 가사지원, 병원 동행, 문화활동 등을 제공합니다. 2026년부터 AI 센서·스마트워치 활용 디지털 돌봄이 강화되었습니다.',
+    amount: '방문·안전확인·생활교육 등 서비스 제공(본인부담 없음)',
+    deadline: '상시',
+    category: '복지·돌봄',
+    ageGroups: ['60대', '70대이상'],
+    genders: ['전체'],
+    source: '보건복지부',
+    url: 'https://www.bokjiro.go.kr',
+  },
+  {
+    id: 42,
+    title: '저소득층 기저귀·조제분유 지원',
+    description: '기초생활수급자·차상위·한부모가족의 만 0~24개월 영아에게 기저귀·조제분유 비용을 국민행복카드 바우처로 지원합니다. 2026년 7월부터 장애인 가구·2자녀 이상 다자녀 가구는 소득기준이 중위소득 100% 이하로 확대되었습니다.',
+    amount: '월 최대 20만원 (기저귀+조제분유 병행 시)',
+    deadline: '상시 (출생 후 만 2세 전날까지 신청)',
+    category: '복지·돌봄',
+    ageGroups: ['20대', '30대', '40대'],
+    genders: ['전체'],
+    source: '보건복지부',
+    url: 'https://www.bokjiro.go.kr',
+  },
+  {
+    id: 43,
+    title: '산모·신생아 건강관리 지원 (산후도우미)',
+    description: '가구의 건강보험료 본인부담금 합산액이 기준 중위소득 150% 이하인 출산가정에 산모·신생아 건강관리사(산후도우미) 서비스 비용을 지원합니다. 지원금액은 태아 유형·출산순위·소득수준·서비스기간에 따라 차등 산정됩니다.',
+    amount: '소득·서비스 유형별 차등 지원(바우처, 정확한 금액은 관할 보건소 확인)',
+    deadline: '상시',
+    category: '복지·돌봄',
+    ageGroups: ['20대', '30대', '40대'],
+    genders: ['여성'],
+    source: '보건복지부',
+    url: 'https://www.bokjiro.go.kr',
+  },
 ];
 
 export const AGE_GROUPS: AgeGroup[] = ['10대', '20대', '30대', '40대', '50대', '60대', '70대이상'];
@@ -489,6 +566,27 @@ export const CATEGORY_EMOJI: Record<Category, string> = {
   '교육': '📚',
   '건강': '❤️',
   '문화·여가': '🎭',
+};
+
+/** TDS Badge color prop 값('blue'|'teal'|'green'|'red'|'yellow'|'elephant')과 카드 좌측 강조선 hex를 함께 관리합니다. */
+export const CATEGORY_BADGE_COLOR: Record<Category, 'blue' | 'teal' | 'green' | 'red' | 'yellow' | 'elephant'> = {
+  '주거': 'teal',
+  '취업·창업': 'blue',
+  '금융': 'green',
+  '복지·돌봄': 'elephant',
+  '교육': 'yellow',
+  '건강': 'red',
+  '문화·여가': 'elephant',
+};
+
+export const CATEGORY_ACCENT_HEX: Record<Category, string> = {
+  '주거': '#0F9C8B',
+  '취업·창업': '#3182F6',
+  '금융': '#1BA672',
+  '복지·돌봄': '#8B95A1',
+  '교육': '#F5A623',
+  '건강': '#F04452',
+  '문화·여가': '#8B95A1',
 };
 
 export function filterSubsidies(

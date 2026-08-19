@@ -1,18 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
-import { Badge, Button, Paragraph } from '@toss/tds-mobile';
+import { Badge, Button, Paragraph, TextField } from '@toss/tds-mobile';
 import {
   CATEGORIES,
+  CATEGORY_ACCENT_HEX,
+  CATEGORY_BADGE_COLOR,
   CATEGORY_EMOJI,
+  LAST_UPDATED,
   type AgeGroup,
   type Category,
   type Gender,
   type Subsidy,
 } from '../data/subsidies';
 import { fetchSubsidiesFallback } from '../data/api';
+import { useBookmarks } from '../hooks/useBookmarks';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 
-type SortKey = 'default' | 'amount';
+type SortKey = 'default' | 'amount' | 'deadline';
 
 interface ResultsPageProps {
   ageGroup: AgeGroup | null;
@@ -23,9 +27,12 @@ interface ResultsPageProps {
 export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [sort, setSort] = useState<SortKey>('default');
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
+  const [query, setQuery] = useState('');
+  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
   const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
   const [loading, setLoading] = useState(true);
   const bannerRef = useRef<HTMLDivElement>(null);
+  const { isBookmarked, toggle: toggleBookmark, bookmarkedIds } = useBookmarks();
 
   useEffect(() => {
     setLoading(true);
@@ -47,8 +54,20 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const categoryFiltered = activeCategory
     ? subsidies.filter((s) => s.category === activeCategory)
     : subsidies;
-  const sorted = [...categoryFiltered].sort((a, b) => {
+  const bookmarkFiltered = showBookmarkedOnly
+    ? categoryFiltered.filter((s) => isBookmarked(s.id))
+    : categoryFiltered;
+  const trimmedQuery = query.trim().toLowerCase();
+  const searchFiltered = trimmedQuery
+    ? bookmarkFiltered.filter(
+        (s) =>
+          s.title.toLowerCase().includes(trimmedQuery) ||
+          s.description.toLowerCase().includes(trimmedQuery)
+      )
+    : bookmarkFiltered;
+  const sorted = [...searchFiltered].sort((a, b) => {
     if (sort === 'amount') return parseAmount(b.amount) - parseAmount(a.amount);
+    if (sort === 'deadline') return deadlineRank(a.deadline) - deadlineRank(b.deadline);
     return (b.isUrgent ? 1 : 0) - (a.isUrgent ? 1 : 0);
   });
 
@@ -68,7 +87,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
             {ageGroup ?? '전체'} · {gender}
           </Paragraph>
           <Paragraph typography="t5" color="#3182F6">
-            {loading ? '불러오는 중...' : `${subsidies.length}개 지원금`}
+            {loading ? '불러오는 중...' : `${subsidies.length}개 지원금 · ${LAST_UPDATED} 업데이트`}
           </Paragraph>
         </div>
         <div style={{ width: 40 }} />
@@ -129,6 +148,28 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
         <div style={s.categoryFade} />
       </div>
 
+      {/* 검색 */}
+      <div style={s.searchWrap}>
+        <TextField.Clearable
+          variant="box"
+          placeholder="지원금 검색 (예: 청년, 월세, 육아)"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
+      {/* 찜한 것만 보기 */}
+      <div style={s.bookmarkToggleWrap}>
+        <Button
+          size="small"
+          color="primary"
+          variant={showBookmarkedOnly ? 'fill' : 'weak'}
+          onClick={() => setShowBookmarkedOnly((v) => !v)}
+        >
+          {showBookmarkedOnly ? '💙' : '🤍'} 찜한 지원금만 보기 ({bookmarkedIds.length})
+        </Button>
+      </div>
+
       {/* 정렬 + 결과 수 */}
       <div style={s.sortRow}>
         <Paragraph typography="t5" color="#6B7684">
@@ -138,7 +179,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           {sorted.length}개
         </Paragraph>
         <div style={s.sortBtns}>
-          {(['default', 'amount'] as SortKey[]).map((key) => (
+          {(['default', 'amount', 'deadline'] as SortKey[]).map((key) => (
             <Button
               key={key}
               size="small"
@@ -157,7 +198,14 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
         {sorted.length === 0 ? (
           <EmptyState onBack={onBack} />
         ) : (
-          sorted.map((item) => <SubsidyCard key={item.id} item={item} />)
+          sorted.map((item) => (
+            <SubsidyCard
+              key={item.id}
+              item={item}
+              bookmarked={isBookmarked(item.id)}
+              onToggleBookmark={() => toggleBookmark(item.id)}
+            />
+          ))
         )}
       </div>
 
@@ -181,49 +229,75 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 }
 
 // ── 지원금 카드 ──
-function SubsidyCard({ item }: { item: Subsidy }) {
+interface SubsidyCardProps {
+  item: Subsidy;
+  bookmarked: boolean;
+  onToggleBookmark: () => void;
+}
+
+function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
   const dday = item.isUrgent ? getDday(item.deadline) : null;
 
+  const accentColor = CATEGORY_ACCENT_HEX[item.category];
+
   return (
-    <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
-      <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
-        {/* 카테고리 + 마감일 */}
-        <div style={s.cardMeta}>
-          <Badge size="xsmall" variant="weak" color="blue">
-            {CATEGORY_EMOJI[item.category]} {item.category}
-          </Badge>
-          {item.isUrgent ? (
-            <Badge size="xsmall" variant="fill" color="yellow">
-              🔥 {dday ?? '마감 임박'}
+    <div style={s.cardWrap}>
+      <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
+        <div
+          style={{
+            ...s.card,
+            borderLeft: `4px solid ${accentColor}`,
+            ...(item.isUrgent ? s.cardUrgent : {}),
+          }}
+        >
+          {/* 카테고리 + 마감일 */}
+          <div style={s.cardMeta}>
+            <Badge size="xsmall" variant="weak" color={CATEGORY_BADGE_COLOR[item.category]}>
+              {CATEGORY_EMOJI[item.category]} {item.category}
             </Badge>
-          ) : (
-            <Paragraph typography="t6" color="#8B95A1">
-              {item.deadline}
+            {item.isUrgent ? (
+              <Badge size="xsmall" variant="fill" color="yellow">
+                🔥 {dday ?? '마감 임박'}
+              </Badge>
+            ) : (
+              <Paragraph typography="t6" color="#8B95A1">
+                {item.deadline}
+              </Paragraph>
+            )}
+          </div>
+
+          {/* 제목 */}
+          <Paragraph typography="t3" fontWeight="bold" style={{ ...s.cardTitle, paddingRight: '28px' }}>
+            {item.title}
+          </Paragraph>
+
+          {/* 설명 */}
+          <Paragraph typography="t5" color="#6B7684" style={s.cardDesc}>
+            {item.description}
+          </Paragraph>
+
+          {/* 금액 강조 */}
+          <div style={s.amountStrip}>
+            <Paragraph typography="t2" fontWeight="bold" style={{ color: '#3182F6', margin: 0 }}>
+              💸 {item.amount}
             </Paragraph>
-          )}
-        </div>
+          </div>
 
-        {/* 제목 */}
-        <Paragraph typography="t3" fontWeight="bold" style={s.cardTitle}>
-          {item.title}
-        </Paragraph>
-
-        {/* 설명 */}
-        <Paragraph typography="t5" color="#6B7684" style={s.cardDesc}>
-          {item.description}
-        </Paragraph>
-
-        {/* 금액 + 출처 */}
-        <div style={s.cardBottom}>
-          <Badge size="large" variant="fill" color="blue">
-            {item.amount}
-          </Badge>
+          {/* 출처 */}
           <Paragraph typography="t6" color="#8B95A1">
             {item.source}
           </Paragraph>
         </div>
-      </div>
-    </a>
+      </a>
+      <button
+        type="button"
+        aria-label={bookmarked ? '찜 해제' : '찜하기'}
+        style={s.bookmarkBtn}
+        onClick={onToggleBookmark}
+      >
+        {bookmarked ? '💙' : '🤍'}
+      </button>
+    </div>
   );
 }
 
@@ -231,12 +305,14 @@ function SubsidyCard({ item }: { item: Subsidy }) {
 function EmptyState({ onBack }: { onBack: () => void }) {
   return (
     <div style={s.empty}>
-      <span style={s.emptyIcon}>🔍</span>
+      <div style={s.emptyIconCircle}>
+        <span style={s.emptyIcon}>🔍</span>
+      </div>
       <Paragraph typography="t3" fontWeight="bold">
         해당 조건의 지원금이 없어요
       </Paragraph>
       <Paragraph typography="t5" color="#8B95A1">
-        연령대나 성별을 다시 선택해보세요
+        검색어·카테고리·찜 필터를 확인하거나 연령대·성별을 다시 선택해보세요
       </Paragraph>
       <Button size="medium" color="primary" variant="weak" onClick={onBack} style={s.emptyResetBtn}>
         필터 다시 선택하기
@@ -252,6 +328,13 @@ function getDday(deadline: string): string | null {
   const days = Math.ceil(diffMs / 86_400_000);
   if (days < 0) return null;
   return days === 0 ? 'D-day' : `D-${days}`;
+}
+
+/** 마감임박순 정렬용 순위값. 유효한 날짜면 오늘로부터 남은 일수, 날짜가 아니면(상시 등) 맨 뒤로 보냅니다. */
+function deadlineRank(deadline: string): number {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return Number.POSITIVE_INFINITY;
+  const diffMs = new Date(`${deadline}T23:59:59`).getTime() - Date.now();
+  return Math.ceil(diffMs / 86_400_000);
 }
 
 function parseAmount(str: string): number {
@@ -272,6 +355,7 @@ function parseAmount(str: string): number {
 const SORT_LABEL: Record<SortKey, string> = {
   default: '추천순',
   amount: '금액순',
+  deadline: '마감임박순',
 };
 
 // ── 스타일 ──
@@ -352,6 +436,14 @@ const s: Record<string, React.CSSProperties> = {
     flexShrink: 0,
     whiteSpace: 'nowrap',
   },
+  searchWrap: {
+    padding: '10px 16px 0',
+    backgroundColor: '#FFFFFF',
+  },
+  bookmarkToggleWrap: {
+    padding: '10px 16px 0',
+    backgroundColor: '#FFFFFF',
+  },
   sortRow: {
     display: 'flex',
     alignItems: 'center',
@@ -368,10 +460,29 @@ const s: Record<string, React.CSSProperties> = {
     gap: '10px',
     padding: '0 16px 16px',
   },
+  cardWrap: {
+    position: 'relative',
+  },
   cardLink: {
     textDecoration: 'none',
     color: 'inherit',
     display: 'block',
+  },
+  bookmarkBtn: {
+    position: 'absolute',
+    top: '16px',
+    right: '16px',
+    width: '28px',
+    height: '28px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '18px',
+    padding: 0,
+    WebkitTapHighlightColor: 'transparent',
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -401,11 +512,11 @@ const s: Record<string, React.CSSProperties> = {
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
   },
-  cardBottom: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: '4px',
+  amountStrip: {
+    backgroundColor: '#EBF3FE',
+    borderRadius: '10px',
+    padding: '10px 12px',
+    marginTop: '2px',
   },
   empty: {
     display: 'flex',
@@ -417,8 +528,17 @@ const s: Record<string, React.CSSProperties> = {
   emptyResetBtn: {
     marginTop: '8px',
   },
+  emptyIconCircle: {
+    width: '72px',
+    height: '72px',
+    borderRadius: '50%',
+    backgroundColor: '#EBF3FE',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyIcon: {
-    fontSize: '48px',
+    fontSize: '32px',
   },
   moreWrap: {
     padding: '8px 16px 32px',
