@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
-import { AGE_GROUPS, GENDERS, type AgeGroup, type Gender } from '../data/subsidies';
+import { AGE_GROUPS, GENDERS, LAST_UPDATED, type AgeGroup, type Gender } from '../data/subsidies';
 
 interface FilterPageProps {
   onSearch: (ageGroup: AgeGroup | null, gender: Gender) => void;
@@ -99,7 +99,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
           지원금 검색하기
         </Button>
         <Paragraph typography="t5" color="#B0B8C1" style={s.footerNote}>
-          복지로·공공데이터 기준 최신 정보 제공
+          복지로·공공데이터 기준 최신 정보 제공 · {LAST_UPDATED} 업데이트
         </Paragraph>
       </div>
     </div>
