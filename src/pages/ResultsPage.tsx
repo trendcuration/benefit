@@ -453,7 +453,7 @@ const s: Record<string, React.CSSProperties> = {
   categoryRow: {
     display: 'flex',
     gap: '8px',
-    padding: '12px 16px',
+    padding: '8px 16px',
     overflowX: 'auto',
     scrollbarWidth: 'none',
   },
@@ -471,11 +471,11 @@ const s: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
   },
   searchWrap: {
-    padding: '10px 16px 0',
+    padding: '8px 16px 0',
     backgroundColor: '#FFFFFF',
   },
   bookmarkToggleWrap: {
-    padding: '10px 16px 0',
+    padding: '8px 16px 12px',
     backgroundColor: '#FFFFFF',
   },
   sortRow: {
