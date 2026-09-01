@@ -57,7 +57,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
             <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
               성별
             </Paragraph>
-            <Paragraph typography="t5" color="#B0B8C1">
+            <Paragraph typography="t4" color="#8B95A1">
               미선택 시 전체 조회
             </Paragraph>
           </div>
@@ -93,7 +93,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
         >
           {selectedAge ? '지원금 검색하기' : '전체 지원금 보기'}
         </Button>
-        <Paragraph typography="t5" color="#B0B8C1" style={s.footerNote}>
+        <Paragraph typography="t5" color="#8B95A1" style={s.footerNote}>
           복지로·공공데이터 기준 최신 정보 제공 · {LAST_UPDATED} 업데이트
         </Paragraph>
       </div>
@@ -163,11 +163,11 @@ const s: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.3px',
   },
   optionalBadge: {
-    fontSize: '11px',
+    fontSize: '12px',
     fontWeight: 600,
-    color: '#8B95A1',
+    color: '#6B7684',
     backgroundColor: '#F2F4F6',
-    padding: '2px 7px',
+    padding: '3px 8px',
     borderRadius: '6px',
   },
   ageGrid: {

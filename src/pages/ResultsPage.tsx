@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Badge, Button, Paragraph, TextField } from '@toss/tds-mobile';
 import {
   CATEGORIES,
@@ -15,8 +15,39 @@ import { fetchSubsidiesFallback } from '../data/api';
 import { useBookmarks } from '../hooks/useBookmarks';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
+const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
+const REWARDED_AD_ID = 'ait.v2.live.327ced0813c8420f';
+const INFEED_BANNER_INTERVAL = 6;
 
 type SortKey = 'default' | 'amount' | 'deadline';
+
+/**
+ * TossAds.attachBanner()는 initialize()로 광고 SDK를 먼저 불러오지 않으면
+ * "Call initialize() before attaching an ad" 에러로 조용히 실패합니다.
+ */
+function attachTossBanner(
+  adGroupId: string,
+  el: HTMLElement,
+  onResult: (result: { destroy: () => void } | undefined) => void
+) {
+  let cancelled = false;
+  import('@apps-in-toss/web-framework')
+    .then(({ TossAds }) => {
+      if (cancelled || !TossAds.attachBanner.isSupported()) return;
+      TossAds.initialize({
+        callbacks: {
+          onInitialized: () => {
+            if (cancelled) return;
+            onResult(TossAds.attachBanner(adGroupId, el));
+          },
+        },
+      });
+    })
+    .catch(() => {});
+  return () => {
+    cancelled = true;
+  };
+}
 
 interface ResultsPageProps {
   ageGroup: AgeGroup | null;
@@ -33,7 +64,15 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
   const [loading, setLoading] = useState(true);
   const bannerRef = useRef<HTMLDivElement>(null);
-  const { isBookmarked, toggle: toggleBookmark, bookmarkedIds } = useBookmarks();
+  const [unlockingId, setUnlockingId] = useState<number | null>(null);
+  const {
+    isBookmarked,
+    toggle: toggleBookmark,
+    add: addBookmark,
+    bookmarkedIds,
+    isLimitReached,
+    unlockUnlimited,
+  } = useBookmarks();
 
   useEffect(() => {
     setLoading(true);
@@ -45,11 +84,13 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     const el = bannerRef.current;
     if (!el) return;
     let result: { destroy: () => void } | undefined;
-    import('@apps-in-toss/web-framework').then(({ TossAds }) => {
-      if (!TossAds.attachBanner.isSupported()) return;
-      result = TossAds.attachBanner(BANNER_AD_ID, el);
-    }).catch(() => {});
-    return () => result?.destroy();
+    const cancel = attachTossBanner(BANNER_AD_ID, el, (r) => {
+      result = r;
+    });
+    return () => {
+      cancel();
+      result?.destroy();
+    };
   }, []);
 
   const categoryFiltered = activeCategory
@@ -77,6 +118,43 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
   const urgentCount = subsidies.filter((s) => s.isUrgent).length;
 
+  const handleToggleBookmark = (id: number) => {
+    if (isBookmarked(id) || !isLimitReached) {
+      toggleBookmark(id);
+      return;
+    }
+    // 무료 북마크 한도 초과: 리워드 광고 시청 후 무제한 해제 + 해당 항목 북마크
+    setUnlockingId(id);
+    import('@apps-in-toss/web-framework')
+      .then(({ loadFullScreenAd, showFullScreenAd }) => {
+        if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) {
+          setUnlockingId(null);
+          return;
+        }
+        loadFullScreenAd({
+          options: { adGroupId: REWARDED_AD_ID },
+          onEvent: (event) => {
+            if (event.type !== 'loaded') return;
+            showFullScreenAd({
+              options: { adGroupId: REWARDED_AD_ID },
+              onEvent: (e) => {
+                if (e.type === 'userEarnedReward') {
+                  unlockUnlimited();
+                  addBookmark(id);
+                }
+                if (e.type === 'dismissed' || e.type === 'failedToShow') {
+                  setUnlockingId(null);
+                }
+              },
+              onError: () => setUnlockingId(null),
+            });
+          },
+          onError: () => setUnlockingId(null),
+        });
+      })
+      .catch(() => setUnlockingId(null));
+  };
+
   return (
     <div style={s.container}>
       {/* 헤더 */}
@@ -90,7 +168,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           <Paragraph typography="t3" fontWeight="bold" style={s.headerTitle}>
             {ageGroup ?? '전체'} · {gender}
           </Paragraph>
-          <Paragraph typography="t5" color="#3182F6">
+          <Paragraph typography="t4" color="#3182F6">
             {loading ? '불러오는 중...' : `${subsidies.length}개 지원금 · ${LAST_UPDATED} 업데이트`}
           </Paragraph>
         </div>
@@ -203,11 +281,16 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
         >
           {showBookmarkedOnly ? '💙' : '🤍'} 찜한 지원금만 보기 ({bookmarkedIds.length})
         </Button>
+        {isLimitReached && (
+          <Paragraph typography="t5" color="#8B95A1" style={s.limitHint}>
+            무료 북마크를 다 채웠어요 · 하트를 누르면 광고 보고 무제한으로 늘려드려요
+          </Paragraph>
+        )}
       </div>
 
       {/* 정렬 + 결과 수 */}
       <div style={s.sortRow}>
-        <Paragraph typography="t5" color="#6B7684">
+        <Paragraph typography="t4" color="#6B7684">
           {activeCategory
             ? `${CATEGORY_EMOJI[activeCategory]} ${activeCategory} `
             : '전체 '}
@@ -233,13 +316,18 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
         {sorted.length === 0 ? (
           <EmptyState onBack={onBack} />
         ) : (
-          sorted.map((item) => (
-            <SubsidyCard
-              key={item.id}
-              item={item}
-              bookmarked={isBookmarked(item.id)}
-              onToggleBookmark={() => toggleBookmark(item.id)}
-            />
+          sorted.map((item, index) => (
+            <Fragment key={item.id}>
+              <SubsidyCard
+                item={item}
+                bookmarked={isBookmarked(item.id)}
+                unlocking={unlockingId === item.id}
+                onToggleBookmark={() => handleToggleBookmark(item.id)}
+              />
+              {(index + 1) % INFEED_BANNER_INTERVAL === 0 && index !== sorted.length - 1 && (
+                <InFeedBanner key={`banner-${item.id}`} />
+              )}
+            </Fragment>
           ))
         )}
       </div>
@@ -263,14 +351,35 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   );
 }
 
+// ── 인피드 배너 광고 ──
+function InFeedBanner() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let result: { destroy: () => void } | undefined;
+    const cancel = attachTossBanner(INFEED_BANNER_AD_ID, el, (r) => {
+      result = r;
+    });
+    return () => {
+      cancel();
+      result?.destroy();
+    };
+  }, []);
+
+  return <div ref={ref} style={s.infeedBanner} />;
+}
+
 // ── 지원금 카드 ──
 interface SubsidyCardProps {
   item: Subsidy;
   bookmarked: boolean;
+  unlocking: boolean;
   onToggleBookmark: () => void;
 }
 
-function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
+function SubsidyCard({ item, bookmarked, unlocking, onToggleBookmark }: SubsidyCardProps) {
   const dday = item.isUrgent ? getDday(item.deadline) : null;
 
   const handleShare = () => {
@@ -293,7 +402,7 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
                 🔥 {dday ?? '마감 임박'}
               </Badge>
             ) : (
-              <Paragraph typography="t6" color="#8B95A1">
+              <Paragraph typography="t5" color="#6B7684">
                 {item.deadline}
               </Paragraph>
             )}
@@ -305,7 +414,7 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
           </Paragraph>
 
           {/* 설명 */}
-          <Paragraph typography="t5" color="#6B7684" style={s.cardDesc}>
+          <Paragraph typography="t4" color="#6B7684" style={s.cardDesc}>
             {item.description}
           </Paragraph>
 
@@ -314,7 +423,7 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
             <Badge size="large" variant="fill" color="blue">
               {item.amount}
             </Badge>
-            <Paragraph typography="t6" color="#8B95A1" style={s.cardSource}>
+            <Paragraph typography="t5" color="#6B7684" style={s.cardSource}>
               {item.source}
             </Paragraph>
           </div>
@@ -329,8 +438,9 @@ function SubsidyCard({ item, bookmarked, onToggleBookmark }: SubsidyCardProps) {
           aria-label={bookmarked ? '찜 해제' : '찜하기'}
           style={s.cardActionBtn}
           onClick={onToggleBookmark}
+          disabled={unlocking}
         >
-          {bookmarked ? '💙' : '🤍'}
+          {unlocking ? '⏳' : bookmarked ? '💙' : '🤍'}
         </button>
       </div>
     </div>
@@ -345,7 +455,7 @@ function EmptyState({ onBack }: { onBack: () => void }) {
       <Paragraph typography="t3" fontWeight="bold">
         해당 조건의 지원금이 없어요
       </Paragraph>
-      <Paragraph typography="t5" color="#8B95A1">
+      <Paragraph typography="t4" color="#6B7684">
         연령대나 성별을 다시 선택해보세요
       </Paragraph>
       <Button size="medium" color="primary" variant="weak" onClick={onBack} style={s.emptyResetBtn}>
@@ -477,6 +587,13 @@ const s: Record<string, React.CSSProperties> = {
   bookmarkToggleWrap: {
     padding: '8px 16px 12px',
     backgroundColor: '#FFFFFF',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    alignItems: 'flex-start',
+  },
+  limitHint: {
+    lineHeight: 1.5,
   },
   sortRow: {
     display: 'flex',
@@ -493,6 +610,10 @@ const s: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     gap: '10px',
     padding: '0 16px 16px',
+  },
+  infeedBanner: {
+    width: '100%',
+    minHeight: '60px',
   },
   cardWrap: {
     position: 'relative',
