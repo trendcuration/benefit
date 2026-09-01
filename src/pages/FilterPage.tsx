@@ -84,6 +84,11 @@ export function FilterPage({ onSearch }: FilterPageProps) {
 
       {/* 하단 CTA */}
       <div style={s.footer}>
+        <div style={s.adNotice}>
+          <Paragraph typography="t5" color="#8B95A1" style={s.adNoticeText}>
+            {'📺 아래 버튼을 누르면\n결과를 보기 전 잠깐 광고가 표시돼요'}
+          </Paragraph>
+        </div>
         <Button
           display="full"
           size="xlarge"
@@ -194,5 +199,18 @@ const s: Record<string, React.CSSProperties> = {
   },
   footerNote: {
     textAlign: 'center',
+  },
+  adNotice: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '10px 12px',
+    backgroundColor: '#F2F4F6',
+    borderRadius: '10px',
+  },
+  adNoticeText: {
+    textAlign: 'center',
+    whiteSpace: 'pre-line',
+    lineHeight: 1.5,
   },
 };

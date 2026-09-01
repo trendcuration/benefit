@@ -283,7 +283,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
         </Button>
         {isLimitReached && (
           <Paragraph typography="t5" color="#8B95A1" style={s.limitHint}>
-            무료 북마크를 다 채웠어요 · 하트를 누르면 광고 보고 무제한으로 늘려드려요
+            📺 무료 북마크 5개를 다 채웠어요 · 하트를 누르면 광고를 본 뒤 북마크가 무제한으로 늘어나요
           </Paragraph>
         )}
       </div>
