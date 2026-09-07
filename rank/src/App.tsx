@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { InputPage } from './pages/InputPage';
 import { ResultPage } from './pages/ResultPage';
 import type { AgeGroup, Metric, Region } from './data/percentiles';
@@ -18,48 +18,98 @@ export interface JudgeParams {
 }
 
 /**
- * 전면광고 노출.
- * 이전 구현은 광고 로드와 동시에 결과 화면으로 넘어가서, 로드가 늦으면 광고가
- * 뜨기도 전에 유저가 결과를 보고 있어 노출이 누락됐다(임프레션당 유저 비율 0.4~0.98로 들쭉날쭉).
- * 로딩 화면에서 광고 로드를 기다린 뒤 넘어가도록 Promise로 감싼다.
+ * 전면광고 프리로드/노출 컨트롤러.
+ *
+ * 이전 구현은 "제출하는 순간"에야 loadFullScreenAd를 호출했다. 광고 SDK(AdMob 계열
+ * 미디에이션)는 앱 세션의 첫 요청이 초기화 중이라 로드 실패·지연이 잦고, 두 번째
+ * 요청부터 안정적으로 뜨는 경우가 흔하다 — "첫 검색엔 안 뜨고 두 번째부터 뜬다"는
+ * 증상이 정확히 이 패턴이다.
+ *
+ * 그래서 입력 화면이 뜨는 시점(=앱 진입 직후)부터 미리 로드를 시작해, 유저가 금액을
+ * 입력하는 몇 초 동안 백그라운드에서 준비가 끝나도록 한다. 제출 시점엔 이미 로드된
+ * 광고를 보여주기만 하면 되고, 보여준 뒤에는 다음 판정을 위해 즉시 다시 프리로드한다.
  */
-function showInterstitialAd(): Promise<void> {
+let adState: 'idle' | 'loading' | 'loaded' = 'idle';
+let onLoadedCallbacks: (() => void)[] = [];
+
+function preloadInterstitial() {
+  if (adState !== 'idle') return;
+  adState = 'loading';
+  import('@apps-in-toss/web-framework')
+    .then(({ loadFullScreenAd }) => {
+      if (!loadFullScreenAd.isSupported()) {
+        adState = 'idle';
+        return;
+      }
+      loadFullScreenAd({
+        options: { adGroupId: INTERSTITIAL_AD_ID },
+        onEvent: (event) => {
+          if (event.type === 'loaded') {
+            adState = 'loaded';
+            onLoadedCallbacks.forEach((cb) => cb());
+            onLoadedCallbacks = [];
+          }
+        },
+        onError: () => {
+          adState = 'idle'; // 다음 시도에서 재시도 가능하도록
+          onLoadedCallbacks.forEach((cb) => cb());
+          onLoadedCallbacks = [];
+        },
+      });
+    })
+    .catch(() => {
+      adState = 'idle';
+      onLoadedCallbacks.forEach((cb) => cb());
+      onLoadedCallbacks = [];
+    });
+}
+
+/** 이미 로드돼 있으면 즉시, 아니면 로드를 기다리되 timeoutMs를 넘기면 광고 없이 진행 */
+function waitForInterstitial(timeoutMs: number): Promise<void> {
   return new Promise((resolve) => {
-    import('@apps-in-toss/web-framework')
-      .then(({ loadFullScreenAd, showFullScreenAd }) => {
-        if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) {
-          resolve();
-          return;
-        }
-        loadFullScreenAd({
-          options: { adGroupId: INTERSTITIAL_AD_ID },
-          onEvent: (event) => {
-            if (event.type === 'loaded') {
-              showFullScreenAd({
-                options: { adGroupId: INTERSTITIAL_AD_ID },
-                onEvent: () => {},
-                onError: () => resolve(),
-              });
-              // 전면광고는 표시 즉시 다음 화면으로 넘어가도 자연스럽다(광고가 화면을 덮으므로).
-              resolve();
-            }
-          },
-          onError: () => resolve(),
-        });
-      })
-      .catch(() => resolve());
+    if (adState === 'loaded') {
+      resolve();
+      return;
+    }
+    preloadInterstitial();
+    const timer = setTimeout(resolve, timeoutMs);
+    onLoadedCallbacks.push(() => {
+      clearTimeout(timer);
+      resolve();
+    });
   });
+}
+
+function showInterstitialIfReady() {
+  if (adState !== 'loaded') return;
+  import('@apps-in-toss/web-framework')
+    .then(({ showFullScreenAd }) => {
+      showFullScreenAd({
+        options: { adGroupId: INTERSTITIAL_AD_ID },
+        onEvent: () => {},
+        onError: () => {},
+      });
+    })
+    .catch(() => {});
+  adState = 'idle'; // 소모됨 — 다음 판정을 위해 재프리로드 필요
 }
 
 export function App() {
   const [page, setPage] = useState<Page>('input');
   const [params, setParams] = useState<JudgeParams | null>(null);
 
+  // 입력 화면 진입 시점부터 미리 로드 시작 (유저가 입력하는 동안 백그라운드에서 준비)
+  useEffect(() => {
+    preloadInterstitial();
+  }, []);
+
   const handleSubmit = async (next: JudgeParams) => {
     setParams(next);
     setPage('loading');
-    // 광고 로드(최대 ~2초 내외)와 최소 로딩 시간을 함께 기다려 자연스러운 전환 + 노출 보장
-    await Promise.all([showInterstitialAd(), new Promise((r) => setTimeout(r, 900))]);
+    // 이미 로드돼 있으면 거의 즉시 통과, 아니어도 최대 2.5초까지만 기다린다
+    await Promise.all([waitForInterstitial(2500), new Promise((r) => setTimeout(r, 900))]);
+    showInterstitialIfReady();
+    preloadInterstitial(); // 다음 판정("다른 항목도 판정하기")을 위해 바로 재프리로드
     setPage('result');
   };
 
