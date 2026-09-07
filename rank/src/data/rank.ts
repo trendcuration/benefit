@@ -1,4 +1,4 @@
-import { TABLES, type AgeGroup, type Metric } from './percentiles';
+import { REGION_TABLES, TABLES, type AgeGroup, type Metric, type Region } from './percentiles';
 
 export const TOP_CAP = 0.001;
 export const BOTTOM_CAP = 99.9;
@@ -8,8 +8,7 @@ export const BOTTOM_CAP = 99.9;
  * breakpoint 사이는 로그-선형 보간:
  *   p = p1 + (p2 - p1) * (ln v1 - ln v) / (ln v1 - ln v2)
  */
-export function valueToPercentile(metric: Metric, ageGroup: AgeGroup, value: number): number {
-  const points = TABLES[metric][ageGroup];
+function percentileFromPoints(points: { p: number; value: number }[], value: number): number {
   const v = Math.max(value, 1); // 0·음수(부채 초과) 가드
 
   if (v >= points[0].value) return TOP_CAP;
@@ -25,6 +24,14 @@ export function valueToPercentile(metric: Metric, ageGroup: AgeGroup, value: num
     }
   }
   return BOTTOM_CAP;
+}
+
+export function valueToPercentile(metric: Metric, ageGroup: AgeGroup, value: number): number {
+  return percentileFromPoints(TABLES[metric][ageGroup], value);
+}
+
+export function valueToRegionPercentile(metric: Metric, region: Region, value: number): number {
+  return percentileFromPoints(REGION_TABLES[metric][region], value);
 }
 
 /** 상위 p%에 해당하는 금액(만원). 예: p=10 → 상위 10% 진입선 */
@@ -95,11 +102,14 @@ export interface RankResult {
   pAll: number;
   /** 선택 연령대 기준 상위 % (전체 선택 시 null) */
   pAge: number | null;
+  /** 선택 지역 기준 상위 % (전국 선택 시 null) */
+  pRegion: number | null;
 }
 
-export function getRank(metric: Metric, ageGroup: AgeGroup, value: number): RankResult {
+export function getRank(metric: Metric, ageGroup: AgeGroup, region: Region, value: number): RankResult {
   return {
     pAll: valueToPercentile(metric, '전체', value),
     pAge: ageGroup === '전체' ? null : valueToPercentile(metric, ageGroup, value),
+    pRegion: region === '전국' ? null : valueToRegionPercentile(metric, region, value),
   };
 }

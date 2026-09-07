@@ -20,8 +20,10 @@
 
 export type Metric = 'income' | 'asset';
 export type AgeGroup = '전체' | '20대' | '30대' | '40대' | '50대' | '60대+';
+export type Region = '전국' | '서울' | '경기·인천' | '부산·울산·경남' | '대구·경북' | '광주·전남·전북' | '대전·세종·충청' | '강원·제주';
 
 export const AGE_GROUPS: AgeGroup[] = ['전체', '20대', '30대', '40대', '50대', '60대+'];
+export const REGIONS: Region[] = ['전국', '서울', '경기·인천', '부산·울산·경남', '대구·경북', '광주·전남·전북', '대전·세종·충청', '강원·제주'];
 
 /** p = 상위 % (작을수록 상위), value = 만원. p 오름차순 / value 내림차순 */
 export interface PercentilePoint {
@@ -78,6 +80,34 @@ const AGE_RATIO: Record<Metric, Record<AgeGroup, number>> = {
   asset: { 전체: 1, '20대': 0.28, '30대': 0.65, '40대': 1.18, '50대': 1.32, '60대+': 1.15 },
 };
 
+// ── 지역별 스케일링 비율 (해당 지역 중앙값 / 전국 중앙값) ──
+// 연령대와 달리 특정 공표 통계를 그대로 인용한 게 아니라, 수도권 집중·지방 격차라는
+// 잘 알려진 방향성만 반영한 "방향성 추정치"다. 서울은 소득보다 자산(부동산 가격) 격차가
+// 훨씬 크게 벌어진다는 통념을 반영했다. 더 정확한 시도별 수치가 확보되면 교체할 것.
+
+const REGION_RATIO: Record<Metric, Record<Region, number>> = {
+  income: {
+    전국: 1,
+    서울: 1.15,
+    '경기·인천': 1.03,
+    '부산·울산·경남': 0.93,
+    '대구·경북': 0.88,
+    '광주·전남·전북': 0.85,
+    '대전·세종·충청': 0.92,
+    '강원·제주': 0.87,
+  },
+  asset: {
+    전국: 1,
+    서울: 1.45,
+    '경기·인천': 1.05,
+    '부산·울산·경남': 0.85,
+    '대구·경북': 0.75,
+    '광주·전남·전북': 0.7,
+    '대전·세종·충청': 0.8,
+    '강원·제주': 0.78,
+  },
+};
+
 /** 상위 1% 이내 꼬리에서는 연령 간 격차가 줄어들어 스케일링 폭을 절반으로 감쇠 */
 function dampedRatio(ratio: number, p: number): number {
   if (p > 1) return ratio;
@@ -94,9 +124,20 @@ function buildTables(base: PercentilePoint[], ratios: Record<AgeGroup, number>) 
   ) as Record<AgeGroup, PercentilePoint[]>;
 }
 
+function buildRegionTables(base: PercentilePoint[], ratios: Record<Region, number>) {
+  return Object.fromEntries(
+    REGIONS.map((region) => [region, scaleTable(base, ratios[region])])
+  ) as Record<Region, PercentilePoint[]>;
+}
+
 export const TABLES: Record<Metric, Record<AgeGroup, PercentilePoint[]>> = {
   income: buildTables(INCOME_ALL, AGE_RATIO.income),
   asset: buildTables(ASSET_ALL, AGE_RATIO.asset),
+};
+
+export const REGION_TABLES: Record<Metric, Record<Region, PercentilePoint[]>> = {
+  income: buildRegionTables(INCOME_ALL, REGION_RATIO.income),
+  asset: buildRegionTables(ASSET_ALL, REGION_RATIO.asset),
 };
 
 // ── 부가 통계 (만원 / 명·가구) ──

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
-import { AGE_GROUPS, METRIC_META, type AgeGroup, type Metric } from '../data/percentiles';
+import { AGE_GROUPS, METRIC_META, REGIONS, type AgeGroup, type Metric, type Region } from '../data/percentiles';
 import { formatManwon } from '../data/rank';
 import type { JudgeParams } from '../App';
 
@@ -15,6 +15,7 @@ export function InputPage({ onSubmit }: InputPageProps) {
   const [period, setPeriod] = useState<IncomePeriod>('monthly');
   const [amountStr, setAmountStr] = useState('');
   const [ageGroup, setAgeGroup] = useState<AgeGroup>('전체');
+  const [region, setRegion] = useState<Region>('전국');
 
   const amount = amountStr ? parseInt(amountStr, 10) : 0;
   const canSubmit = amount > 0;
@@ -52,6 +53,7 @@ export function InputPage({ onSubmit }: InputPageProps) {
     onSubmit({
       metric,
       ageGroup,
+      region,
       value,
       inputLabel: `${prefix} ${formatManwon(amount)}`,
     });
@@ -192,6 +194,35 @@ export function InputPage({ onSubmit }: InputPageProps) {
                   style={s.ageBtn}
                 >
                   {age}
+                </Button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 지역 */}
+        <section style={s.section}>
+          <div style={s.sectionHeader}>
+            <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
+              지역
+            </Paragraph>
+            <Paragraph typography="t5" color="#B0B8C1">
+              우리 동네 비교에 사용돼요
+            </Paragraph>
+          </div>
+          <div style={s.regionGrid}>
+            {REGIONS.map((r) => {
+              const isActive = region === r;
+              return (
+                <Button
+                  key={r}
+                  size="medium"
+                  color="primary"
+                  variant={isActive ? 'fill' : 'weak'}
+                  onClick={() => setRegion(r)}
+                  style={s.regionBtn}
+                >
+                  {r}
                 </Button>
               );
             })}
@@ -358,6 +389,14 @@ const s: Record<string, React.CSSProperties> = {
   },
   ageBtn: {
     width: '100%',
+  },
+  regionGrid: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+  },
+  regionBtn: {
+    flexShrink: 0,
   },
   footer: {
     padding: '16px 16px 32px',
