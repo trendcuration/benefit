@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge, Button, Paragraph } from '@toss/tds-mobile';
 import {
   AVERAGE,
@@ -18,7 +18,34 @@ import {
 import { getTier } from '../data/tiers';
 import type { JudgeParams } from '../App';
 
-const BANNER_AD_ID = 'ait.v2.live.7a2979a194e84754';
+const REGION_REWARD_AD_ID = 'ait.v2.live.75f767ef7002430e';
+
+/** 리워드광고 시청 완료(userEarnedReward) 시에만 true. dismissed/failedToShow에서 로딩 상태를 푼다. */
+function showRewardedAd(onEarned: () => void, onSettle: () => void) {
+  import('@apps-in-toss/web-framework')
+    .then(({ loadFullScreenAd, showFullScreenAd }) => {
+      if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) {
+        onSettle();
+        return;
+      }
+      loadFullScreenAd({
+        options: { adGroupId: REGION_REWARD_AD_ID },
+        onEvent: (event) => {
+          if (event.type !== 'loaded') return;
+          showFullScreenAd({
+            options: { adGroupId: REGION_REWARD_AD_ID },
+            onEvent: (e) => {
+              if (e.type === 'userEarnedReward') onEarned();
+              if (e.type === 'dismissed' || e.type === 'failedToShow') onSettle();
+            },
+            onError: () => onSettle(),
+          });
+        },
+        onError: () => onSettle(),
+      });
+    })
+    .catch(() => onSettle());
+}
 
 interface ResultPageProps {
   params: JudgeParams;
@@ -26,23 +53,13 @@ interface ResultPageProps {
 }
 
 export function ResultPage({ params, onBack }: ResultPageProps) {
-  const { metric, ageGroup, value, inputLabel } = params;
+  const { metric, ageGroup, region, value, inputLabel } = params;
   const meta = METRIC_META[metric];
-  const { pAll, pAge } = getRank(metric, ageGroup, value);
+  const { pAll, pAge, pRegion } = getRank(metric, ageGroup, region, value);
   const tier = getTier(pAll);
   const [canShare, setCanShare] = useState(false);
-  const bannerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = bannerRef.current;
-    if (!el) return;
-    let result: { destroy: () => void } | undefined;
-    import('@apps-in-toss/web-framework').then(({ TossAds }) => {
-      if (!TossAds.attachBanner.isSupported()) return;
-      result = TossAds.attachBanner(BANNER_AD_ID, el);
-    }).catch(() => {});
-    return () => result?.destroy();
-  }, []);
+  const [regionUnlocked, setRegionUnlocked] = useState(false);
+  const [unlockingRegion, setUnlockingRegion] = useState(false);
 
   useEffect(() => {
     // 토스 앱 안에서만 공유 버튼 노출 (웹 브라우저에서는 브릿지가 없어 숨김)
@@ -57,6 +74,14 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
       })
       .catch(() => {});
   }, []);
+
+  const handleUnlockRegion = () => {
+    setUnlockingRegion(true);
+    showRewardedAd(
+      () => setRegionUnlocked(true),
+      () => setUnlockingRegion(false),
+    );
+  };
 
   const handleShare = () => {
     import('@apps-in-toss/web-framework')
@@ -97,9 +122,6 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
         <div style={{ width: 40 }} />
       </header>
 
-      {/* 배너 광고 */}
-      <div ref={bannerRef} style={s.banner} />
-
       <div style={s.body}>
         {/* 히어로 카드 */}
         <div style={s.heroCard}>
@@ -122,24 +144,45 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
           <span style={s.watermark}>내소득은 상위 몇프로 · 토스 앱인토스</span>
         </div>
 
-        {/* 동년배 비교 */}
+        {/* 비교해보면 */}
         <div style={s.card}>
           <Paragraph typography="t3" fontWeight="bold" style={s.cardTitle}>
             비교해보면
           </Paragraph>
-          <CompareRow
-            label={`🇰🇷 대한민국 전체`}
-            percentile={pAll}
-          />
+          <CompareRow label={`🇰🇷 대한민국 전체`} percentile={pAll} />
           {pAge !== null ? (
-            <CompareRow
-              label={`🧑 동년배 ${ageGroup} 중에서`}
-              percentile={pAge}
-            />
+            <CompareRow label={`🧑 동년배 ${ageGroup} 중에서`} percentile={pAge} />
           ) : (
             <Paragraph typography="t5" color="#8B95A1" style={s.ageNudge}>
               연령대를 선택하면 동년배와도 비교해드려요
             </Paragraph>
+          )}
+
+          {region === '전국' ? (
+            <Paragraph typography="t5" color="#8B95A1" style={s.ageNudge}>
+              지역을 선택하면 우리 동네와도 비교해드려요
+            </Paragraph>
+          ) : regionUnlocked && pRegion !== null ? (
+            <CompareRow label={`📍 ${region} 중에서`} percentile={pRegion} />
+          ) : (
+            <div style={s.lockedRow}>
+              <div style={s.lockedHead}>
+                <Paragraph typography="t4" color="#4E5968">
+                  📍 {region} 중에서
+                </Paragraph>
+                <span style={s.lockedBadge}>🔒 잠금</span>
+              </div>
+              <Button
+                display="full"
+                size="medium"
+                color="primary"
+                variant="weak"
+                disabled={unlockingRegion}
+                onClick={handleUnlockRegion}
+              >
+                {unlockingRegion ? '광고 불러오는 중…' : '광고 보고 지역 비교 확인하기'}
+              </Button>
+            </div>
           )}
         </div>
 
@@ -199,6 +242,7 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
         <Paragraph typography="t6" color="#8B95A1" style={s.disclaimer}>
           {SOURCE_NOTE}
           {pAge !== null && ' · 연령대별 순위는 공표 통계 기반 근사치예요'}
+          {pRegion !== null && ' · 지역별 순위는 방향성을 반영한 추정치예요'}
           {pAll < 0.1 && ' · 0.1% 미만 구간은 파레토 분포 추정치예요'}
         </Paragraph>
       </div>
@@ -304,10 +348,6 @@ const s: Record<string, React.CSSProperties> = {
   headerTitle: {
     letterSpacing: '-0.3px',
   },
-  banner: {
-    width: '100%',
-    minHeight: '60px',
-  },
   body: {
     flex: 1,
     display: 'flex',
@@ -382,6 +422,28 @@ const s: Record<string, React.CSSProperties> = {
   ageNudge: {
     textAlign: 'center',
     padding: '4px 0',
+  },
+  lockedRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    padding: '12px',
+    backgroundColor: '#F8F9FA',
+    borderRadius: '12px',
+    border: '1px dashed #D1D6DB',
+  },
+  lockedHead: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  lockedBadge: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#8B95A1',
+    backgroundColor: '#EEEFF1',
+    padding: '2px 8px',
+    borderRadius: '999px',
   },
   distWrap: {
     width: '100%',
