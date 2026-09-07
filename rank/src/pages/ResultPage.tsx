@@ -104,14 +104,9 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
 
   return (
     <div style={s.container}>
-      {/* 헤더 */}
-      <header style={s.header}>
-        <button style={s.backBtn} onClick={onBack} aria-label="뒤로가기">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18l-6-6 6-6" stroke="#191F28" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <div style={s.headerCenter}>
+      <div style={s.body}>
+        {/* 판정 요약 (네이티브 내비게이션 바와 중복되지 않도록 헤더/뒤로가기 버튼 없이 본문에 표기) */}
+        <div style={s.summaryLine}>
           <Paragraph typography="t3" fontWeight="bold" style={s.headerTitle}>
             판정 결과
           </Paragraph>
@@ -119,10 +114,7 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
             {inputLabel} · {ageGroup}
           </Paragraph>
         </div>
-        <div style={{ width: 40 }} />
-      </header>
 
-      <div style={s.body}>
         {/* 히어로 카드 */}
         <div style={s.heroCard}>
           <span style={s.heroEmoji}>{tier.emoji}</span>
@@ -318,32 +310,12 @@ const s: Record<string, React.CSSProperties> = {
     minHeight: '100dvh',
     backgroundColor: '#F2F4F6',
   },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '8px 8px 8px 4px',
-    backgroundColor: '#FFFFFF',
-    borderBottom: '1px solid #F2F4F6',
-  },
-  backBtn: {
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    borderRadius: '10px',
-    padding: 0,
-    WebkitTapHighlightColor: 'transparent',
-  },
-  headerCenter: {
+  summaryLine: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: '2px',
+    padding: '4px 0 2px',
   },
   headerTitle: {
     letterSpacing: '-0.3px',
