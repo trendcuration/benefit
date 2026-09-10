@@ -13,6 +13,7 @@ import {
 } from '../data/subsidies';
 import { fetchSubsidiesFallback } from '../data/api';
 import { useBookmarks } from '../hooks/useBookmarks';
+import { openExternal } from '../lib/links';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
@@ -157,23 +158,16 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
   return (
     <div style={s.container}>
-      {/* 헤더 */}
-      <header style={s.header}>
-        <button style={s.backBtn} onClick={onBack} aria-label="뒤로가기">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18l-6-6 6-6" stroke="#191F28" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <div style={s.headerCenter}>
-          <Paragraph typography="t3" fontWeight="bold" style={s.headerTitle}>
-            {ageGroup ?? '전체'} · {gender}
-          </Paragraph>
-          <Paragraph typography="t4" color="#3182F6">
-            {loading ? '불러오는 중...' : `${subsidies.length}개 지원금 · ${LAST_UPDATED} 업데이트`}
-          </Paragraph>
-        </div>
-        <div style={{ width: 40 }} />
-      </header>
+      {/* 조건 요약 (토스 네이티브 내비게이션 바의 뒤로가기 버튼과 중복되지 않도록
+          자체 헤더/뒤로가기 버튼 없이 본문 상단에만 표기) */}
+      <div style={s.summaryLine}>
+        <Paragraph typography="t3" fontWeight="bold" style={s.headerTitle}>
+          {ageGroup ?? '전체'} · {gender} 지원금
+        </Paragraph>
+        <Paragraph typography="t4" color="#3182F6">
+          {loading ? '불러오는 중...' : `${subsidies.length}개 · ${LAST_UPDATED} 업데이트`}
+        </Paragraph>
+      </div>
 
       {/* 배너 광고 */}
       <div ref={bannerRef} style={s.banner} />
@@ -335,16 +329,23 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       {/* 더보기 */}
       <div style={s.moreWrap}>
         <Button
-          as="a"
           display="full"
           size="xlarge"
           color="primary"
           variant="weak"
-          href="https://www.bokjiro.go.kr"
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={() => openExternal('https://www.bokjiro.go.kr')}
         >
           복지로에서 더 많은 지원금 보기 →
+        </Button>
+        <Button
+          display="full"
+          size="large"
+          color="primary"
+          variant="weak"
+          onClick={onBack}
+          style={s.backToFilterBtn}
+        >
+          다른 조건으로 검색하기
         </Button>
       </div>
     </div>
@@ -388,9 +389,21 @@ function SubsidyCard({ item, bookmarked, unlocking, onToggleBookmark }: SubsidyC
       .catch(() => {});
   };
 
+  const handleOpen = (event: React.MouseEvent) => {
+    event.preventDefault();
+    openExternal(item.url);
+  };
+
   return (
     <div style={s.cardWrap}>
-      <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${item.title} (외부 브라우저에서 열림)`}
+        style={s.cardLink}
+        onClick={handleOpen}
+      >
         <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
           {/* 카테고리 + 마감일 */}
           <div style={s.cardMeta}>
@@ -510,35 +523,20 @@ const s: Record<string, React.CSSProperties> = {
     minHeight: '100dvh',
     backgroundColor: '#F2F4F6',
   },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '8px 8px 8px 4px',
-    backgroundColor: '#FFFFFF',
-    borderBottom: '1px solid #F2F4F6',
-  },
-  backBtn: {
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    borderRadius: '10px',
-    padding: 0,
-    WebkitTapHighlightColor: 'transparent',
-  },
-  headerCenter: {
+  summaryLine: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: '2px',
+    padding: '14px 16px 10px',
+    backgroundColor: '#FFFFFF',
+    borderBottom: '1px solid #F2F4F6',
   },
   headerTitle: {
     letterSpacing: '-0.3px',
+  },
+  backToFilterBtn: {
+    marginTop: '8px',
   },
   banner: {
     width: '100%',
