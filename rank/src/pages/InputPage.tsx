@@ -232,6 +232,10 @@ export function InputPage({ onSubmit }: InputPageProps) {
 
       {/* 하단 CTA */}
       <div style={s.footer}>
+        {/* 광고가 나오기 전에 유저가 미리 알 수 있도록 버튼을 누르기 '전'에 보이는 안내 */}
+        <Paragraph typography="t6" color="#8B95A1" style={{ textAlign: 'center', whiteSpace: 'pre-line', marginBottom: '8px' }}>
+          {'📺 아래 버튼을 누르면\n결과를 보기 전 잠깐 광고가 표시돼요'}
+        </Paragraph>
         <Button
           display="full"
           size="xlarge"
