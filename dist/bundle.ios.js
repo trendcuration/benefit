@@ -9,8 +9,8 @@ var global = typeof globalThis !== 'undefined' ? globalThis : typeof global !== 
     host: ''
   };
   global.__appsInToss = {
-    deploymentId: "01a0c31e-81cf-7634-af0c-51e2dd93b4db",
-    brandDisplayName: "\uC9C0\uC6D0\uAE08 \uCC3E\uAE30",
+    deploymentId: "01a0c32b-f82a-7583-b88e-c3b1ac28f4d2",
+    brandDisplayName: "\uB098\uC758 \uC9C0\uC6D0\uAE08",
     brandPrimaryColor: "#3182F6",
     brandIcon: "./benefit.png",
     webViewType: "partner",
@@ -132,8 +132,8 @@ if (global.__MICRO_FRONTEND__ == null) {
     host: ''
   };
   global.__appsInToss = {
-    deploymentId: "01a0c31e-81cf-7634-af0c-51e2dd93b4db",
-    brandDisplayName: "\uC9C0\uC6D0\uAE08 \uCC3E\uAE30",
+    deploymentId: "01a0c32b-f82a-7583-b88e-c3b1ac28f4d2",
+    brandDisplayName: "\uB098\uC758 \uC9C0\uC6D0\uAE08",
     brandPrimaryColor: "#3182F6",
     brandIcon: "./benefit.png",
     webViewType: "partner",
