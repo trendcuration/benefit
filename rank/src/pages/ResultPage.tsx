@@ -16,6 +16,7 @@ import {
   valueAtPercentile,
 } from '../data/rank';
 import { getTier } from '../data/tiers';
+import { logClick, logImpression } from '../lib/analytics';
 import type { JudgeParams } from '../App';
 
 const REGION_REWARD_AD_ID = 'ait.v2.live.75f767ef7002430e';
@@ -75,7 +76,14 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    // 전환지표용: 판정 결과까지 실제로 확인했는지가 이 앱의 서비스 가치 완료 시점
+    logImpression('result_view', { metric, age_group: ageGroup, region });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleUnlockRegion = () => {
+    logClick('region_unlock_click', { region });
     setUnlockingRegion(true);
     showRewardedAd(
       () => setRegionUnlocked(true),
@@ -84,6 +92,7 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
   };
 
   const handleShare = () => {
+    logClick('share_click', { metric });
     import('@apps-in-toss/web-framework')
       .then(async ({ share, getTossShareLink }) => {
         const link = await getTossShareLink('intoss://income-rank').catch(() => '');
