@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Analytics } from '@apps-in-toss/web-framework';
 import { Badge, Button, Paragraph } from '@toss/tds-mobile';
 import {
   CATEGORIES,
@@ -184,8 +185,17 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 function SubsidyCard({ item }: { item: Subsidy }) {
   const dday = item.isUrgent ? getDday(item.deadline) : null;
 
+  const handleClick = () => {
+    // 전환지표용: 지원금을 실제로 클릭해서 신청 사이트로 넘어가는지가 이 앱의 진짜 서비스 가치.
+    try {
+      Analytics.click({ log_name: 'subsidy_click', subsidy_id: item.id, category: item.category });
+    } catch {
+      /* 로깅 실패로 이동 자체를 막지 않는다 */
+    }
+  };
+
   return (
-    <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink}>
+    <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink} onClick={handleClick}>
       <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
         {/* 카테고리 + 마감일 */}
         <div style={s.cardMeta}>
