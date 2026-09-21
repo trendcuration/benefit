@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Analytics, openURL } from '@apps-in-toss/web-framework';
 import { Badge, Button, Paragraph } from '@toss/tds-mobile';
+import { attachBanner } from '../lib/ads';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
@@ -48,12 +49,16 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   useEffect(() => {
     const el = bannerRef.current;
     if (!el) return;
-    let result: { destroy: () => void } | undefined;
-    import('@apps-in-toss/web-framework').then(({ TossAds }) => {
-      if (!TossAds.attachBanner.isSupported()) return;
-      result = TossAds.attachBanner(BANNER_AD_ID, el);
-    }).catch(() => {});
-    return () => result?.destroy();
+    let destroy: (() => void) | undefined;
+    let cancelled = false;
+    attachBanner(BANNER_AD_ID, el).then((d) => {
+      if (cancelled) d();
+      else destroy = d;
+    });
+    return () => {
+      cancelled = true;
+      destroy?.();
+    };
   }, []);
 
   const categoryFiltered = activeCategory
