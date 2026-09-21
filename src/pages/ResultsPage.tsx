@@ -413,6 +413,7 @@ function SubsidyCard({ item, bookmarked, unlocking, onToggleBookmark }: SubsidyC
 
   const handleOpen = (event: React.MouseEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     // 전환지표용: 지원금을 실제로 눌러 신청 사이트로 넘어가는 것이 이 앱의 서비스 가치 완료 시점
     logClick('subsidy_click', { subsidy_id: item.id, category: item.category });
     openExternal(item.url);
@@ -420,13 +421,17 @@ function SubsidyCard({ item, bookmarked, unlocking, onToggleBookmark }: SubsidyC
 
   return (
     <div style={s.cardWrap}>
-      <a
-        href={item.url}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* <a href>가 아니라 role=link 요소: 브라우저 기본 이동(미니앱 화면이 외부 사이트로 넘어가 뒤로가기가 막히는 문제)이
+          끼어들 여지를 없애고, 링크 열기는 openExternal 한 곳에서만 처리한다. */}
+      <div
+        role="link"
+        tabIndex={0}
         aria-label={`${item.title} (외부 브라우저에서 열림)`}
         style={s.cardLink}
         onClick={handleOpen}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') handleOpen(e as unknown as React.MouseEvent);
+        }}
       >
         <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
           {/* 카테고리 + 마감일 */}
@@ -465,7 +470,7 @@ function SubsidyCard({ item, bookmarked, unlocking, onToggleBookmark }: SubsidyC
             </Paragraph>
           </div>
         </div>
-      </a>
+      </div>
       <div style={s.cardActions}>
         <button type="button" aria-label="공유하기" style={s.cardActionBtn} onClick={handleShare}>
           🔗
