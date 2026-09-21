@@ -128,7 +128,7 @@ export const subsidies: Subsidy[] = [
     ageGroups: ['20대', '30대', '40대', '50대'],
     genders: ['여성'],
     source: '여성가족부',
-    url: 'https://www.saeil.mogef.go.kr',
+    url: 'https://saeil.mogef.go.kr',
   },
   {
     id: 9,
@@ -195,7 +195,7 @@ export const subsidies: Subsidy[] = [
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
     source: '금융위원회',
-    url: 'https://ylaccount.kinfa.or.kr/',
+    url: 'https://www.fsc.go.kr',
   },
   {
     id: 14,
@@ -557,7 +557,7 @@ export const subsidies: Subsidy[] = [
     ageGroups: ['20대', '30대', '40대', '50대', '60대', '70대이상'],
     genders: ['전체'],
     source: '국가평생교육진흥원',
-    url: 'https://www.class.moe.go.kr',
+    url: 'https://www.lllcard.kr',
   },
   {
     id: 41,
