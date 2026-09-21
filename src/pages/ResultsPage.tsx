@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Analytics } from '@apps-in-toss/web-framework';
+import { Analytics, openURL } from '@apps-in-toss/web-framework';
 import { Badge, Button, Paragraph } from '@toss/tds-mobile';
 import {
   CATEGORIES,
@@ -12,6 +12,17 @@ import {
 import { fetchSubsidiesFallback } from '../data/api';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
+
+/**
+ * 정부 사이트 등 외부 링크는 기기 기본 브라우저로 연다(openURL).
+ * 미니앱 웹뷰 안에서 그냥 이동시키면 뒤로가기 수단이 없어 앱을 재시작해야 빠져나올 수 있었다.
+ * openURL이 지원되지 않는 환경(브라우저 미리보기 등)은 새 탭으로 폴백한다.
+ */
+function openExternal(url: string): void {
+  openURL(url).catch(() => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  });
+}
 
 type SortKey = 'default' | 'amount';
 
@@ -91,8 +102,10 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       {urgentCount > 0 && (
         <div style={s.urgentBanner}>
           <span>🔥</span>
-          <Paragraph typography="t4" style={{ color: '#B45309' }}>
-            마감 임박 지원금 <strong>{urgentCount}개</strong>가 있어요! 서둘러 확인하세요
+          <Paragraph typography="t4" style={{ color: '#B45309', whiteSpace: 'pre-line' }}>
+            {'마감 임박 지원금 '}
+            <strong>{urgentCount}개</strong>
+            {'가 있어요!\n서둘러 확인하세요'}
           </Paragraph>
         </div>
       )}
@@ -171,8 +184,10 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           color="primary"
           variant="weak"
           href="https://www.bokjiro.go.kr"
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={(e: React.MouseEvent) => {
+            e.preventDefault();
+            openExternal('https://www.bokjiro.go.kr');
+          }}
         >
           복지로에서 더 많은 지원금 보기 →
         </Button>
@@ -185,17 +200,19 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 function SubsidyCard({ item }: { item: Subsidy }) {
   const dday = item.isUrgent ? getDday(item.deadline) : null;
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     // 전환지표용: 지원금을 실제로 클릭해서 신청 사이트로 넘어가는지가 이 앱의 진짜 서비스 가치.
     try {
       Analytics.click({ log_name: 'subsidy_click', subsidy_id: item.id, category: item.category });
     } catch {
       /* 로깅 실패로 이동 자체를 막지 않는다 */
     }
+    openExternal(item.url);
   };
 
   return (
-    <a href={item.url} target="_blank" rel="noopener noreferrer" style={s.cardLink} onClick={handleClick}>
+    <a href={item.url} style={s.cardLink} onClick={handleClick}>
       <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
         {/* 카테고리 + 마감일 */}
         <div style={s.cardMeta}>
@@ -413,8 +430,9 @@ const s: Record<string, React.CSSProperties> = {
   },
   cardBottom: {
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '4px',
     paddingTop: '4px',
   },
   empty: {
