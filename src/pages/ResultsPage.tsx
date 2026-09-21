@@ -12,7 +12,9 @@ import {
   type Subsidy,
 } from '../data/subsidies';
 import { fetchSubsidiesFallback } from '../data/api';
-import { useBookmarks } from '../hooks/useBookmarks';
+import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
+import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
+import { logClick } from '../lib/analytics';
 import { openExternal } from '../lib/links';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
@@ -66,6 +68,8 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [loading, setLoading] = useState(true);
   const bannerRef = useRef<HTMLDivElement>(null);
   const [unlockingId, setUnlockingId] = useState<number | null>(null);
+  // 무료 한도 초과 시 리워드 광고를 보기 전에 안내/확인을 받기 위한 대상 항목 id
+  const [confirmUnlockId, setConfirmUnlockId] = useState<number | null>(null);
   const {
     isBookmarked,
     toggle: toggleBookmark,
@@ -124,7 +128,12 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       toggleBookmark(id);
       return;
     }
-    // 무료 북마크 한도 초과: 리워드 광고 시청 후 무제한 해제 + 해당 항목 북마크
+    // 무료 북마크 한도 초과: 광고를 바로 띄우지 않고, 무엇을 얻는지 안내한 뒤 사용자가 선택했을 때만 광고를 보여준다.
+    setConfirmUnlockId(id);
+  };
+
+  // 사용자가 안내에서 "광고 보고 무제한 북마크"를 선택한 경우: 리워드 광고 시청 후 무제한 해제 + 해당 항목 북마크
+  const startBookmarkUnlock = (id: number) => {
     setUnlockingId(id);
     import('@apps-in-toss/web-framework')
       .then(({ loadFullScreenAd, showFullScreenAd }) => {
@@ -158,6 +167,17 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
   return (
     <div style={s.container}>
+      {confirmUnlockId !== null && (
+        <RewardUnlockDialog
+          limit={FREE_BOOKMARK_LIMIT}
+          onConfirm={() => {
+            const id = confirmUnlockId;
+            setConfirmUnlockId(null);
+            startBookmarkUnlock(id);
+          }}
+          onCancel={() => setConfirmUnlockId(null)}
+        />
+      )}
       {/* 조건 요약 (토스 네이티브 내비게이션 바의 뒤로가기 버튼과 중복되지 않도록
           자체 헤더/뒤로가기 버튼 없이 본문 상단에만 표기) */}
       <div style={s.summaryLine}>
@@ -185,8 +205,10 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       {urgentCount > 0 && (
         <div style={s.urgentBanner}>
           <span>🔥</span>
-          <Paragraph typography="t4" style={{ color: '#B45309' }}>
-            마감 임박 지원금 <strong>{urgentCount}개</strong>가 있어요! 서둘러 확인하세요
+          <Paragraph typography="t4" style={{ whiteSpace: 'pre-line', color: '#B45309' }}>
+            {'마감 임박 지원금 '}
+            <strong>{urgentCount}개</strong>
+            {'가 있어요!\n서둘러 확인하세요'}
           </Paragraph>
         </div>
       )}
@@ -391,6 +413,8 @@ function SubsidyCard({ item, bookmarked, unlocking, onToggleBookmark }: SubsidyC
 
   const handleOpen = (event: React.MouseEvent) => {
     event.preventDefault();
+    // 전환지표용: 지원금을 실제로 눌러 신청 사이트로 넘어가는 것이 이 앱의 서비스 가치 완료 시점
+    logClick('subsidy_click', { subsidy_id: item.id, category: item.category });
     openExternal(item.url);
   };
 

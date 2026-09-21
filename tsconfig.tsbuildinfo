@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/RewardUnlockDialog.tsx","./src/data/api.ts","./src/data/subsidies.ts","./src/hooks/useBookmarks.ts","./src/lib/ads.ts","./src/lib/analytics.ts","./src/lib/links.ts","./src/pages/AdNoticePage.tsx","./src/pages/FilterPage.tsx","./src/pages/ResultsPage.tsx"],"version":"5.9.3"}
