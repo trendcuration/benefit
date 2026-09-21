@@ -1,11 +1,10 @@
 import { useState } from 'react';
+import { AdNoticePage } from './pages/AdNoticePage';
 import { FilterPage } from './pages/FilterPage';
 import { ResultsPage } from './pages/ResultsPage';
 import type { AgeGroup, Gender } from './data/subsidies';
 
-const INTERSTITIAL_AD_ID = 'ait.v2.live.f7c40079c7494d4f';
-
-type Page = 'filter' | 'results';
+type Page = 'filter' | 'ad' | 'results';
 
 interface SearchParams {
   ageGroup: AgeGroup | null;
@@ -18,23 +17,8 @@ export function App() {
 
   const handleSearch = (ageGroup: AgeGroup | null, gender: Gender) => {
     setParams({ ageGroup, gender });
-    import('@apps-in-toss/web-framework').then(({ loadFullScreenAd, showFullScreenAd }) => {
-      if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) return;
-      loadFullScreenAd({
-        options: { adGroupId: INTERSTITIAL_AD_ID },
-        onEvent: (event) => {
-          if (event.type === 'loaded') {
-            showFullScreenAd({
-              options: { adGroupId: INTERSTITIAL_AD_ID },
-              onEvent: () => {},
-              onError: () => {},
-            });
-          }
-        },
-        onError: () => {},
-      });
-    }).catch(() => {});
-    setPage('results');
+    // 광고 안내 → 광고 노출(완료/실패 모두 대기) → 결과. 결과 화면 뒤로 광고가 끼어들지 않는다.
+    setPage('ad');
   };
 
   return (
@@ -42,6 +26,7 @@ export function App() {
       {page === 'filter' && (
         <FilterPage onSearch={handleSearch} />
       )}
+      {page === 'ad' && <AdNoticePage onDone={() => setPage('results')} />}
       {page === 'results' && (
         <ResultsPage
           ageGroup={params.ageGroup}
