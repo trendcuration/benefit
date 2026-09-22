@@ -115,7 +115,7 @@ export const subsidies: Subsidy[] = [
     ageGroups: ['10대', '20대', '30대'],
     genders: ['전체'],
     source: '고용노동부',
-    url: 'https://www.work.go.kr/youngChallenge/index.do',
+    url: 'https://www.work24.go.kr/wk/g/b/1100/busiIntro.do',
   },
   {
     id: 8,
