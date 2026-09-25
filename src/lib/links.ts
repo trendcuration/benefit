@@ -1,5 +1,10 @@
 /**
- * 외부 링크를 `openURL`(React Native `Linking.openURL`)로 연다.
+ * 외부 링크를 `Device.openURL`(React Native `Linking.openURL`)로 연다.
+ *
+ * SDK 3.x(web-framework 3.5.0) 마이그레이션 직후 "외부 링크가 정상적으로 열리지 않아요"로
+ * 재반려됐다. 같은 코드가 SDK 3.0.5에선 통과했었는데, 그때 쓰던 최상위 `openURL`은 두 버전
+ * 다 `@deprecated`(`Device.openURL`을 쓰라고 안내) 상태였다 — 최신 버전에서 이 deprecated
+ * 경로가 실제로 동작하지 않게 된 것으로 보여 `Device.openURL`로 교체했다.
  *
  * 동시 재진입(한 번의 탭이 터치+클릭 등으로 두 번 발화하는 경우)만 막고, 서로 다른 링크를
  * 연달아 여는 것은 절대 막지 않는다 — 예전엔 "마지막으로 연 시각부터 1.5초"를 모든 링크에
@@ -19,8 +24,8 @@ export async function openExternal(url: string): Promise<void> {
   if (opening) return;
   opening = true;
   try {
-    const { openURL } = await import('@apps-in-toss/web-framework');
-    await openURL(url);
+    const { Device } = await import('@apps-in-toss/web-framework');
+    await Device.openURL(url);
   } catch {
     window.open(url, '_blank', 'noopener,noreferrer');
   } finally {
