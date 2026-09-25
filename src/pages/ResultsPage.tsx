@@ -3,6 +3,7 @@ import { Badge, Button, Paragraph, TextField } from '@toss/tds-mobile';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
+  filterSubsidies,
   LAST_UPDATED,
   REGIONS,
   type AgeGroup,
@@ -11,7 +12,6 @@ import {
   type Region,
   type Subsidy,
 } from '../data/subsidies';
-import { fetchSubsidiesFallback } from '../data/api';
 import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { logClick } from '../lib/analytics';
@@ -81,7 +81,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
   useEffect(() => {
     setLoading(true);
-    setSubsidies(fetchSubsidiesFallback(ageGroup, gender));
+    setSubsidies(filterSubsidies(ageGroup, gender));
     setLoading(false);
   }, [ageGroup, gender]);
 
