@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "latest",
+    "@apps-in-toss/web-framework": "^3.5.0",
     "@emotion/react": "^11.14.0",
     "@toss/tds-mobile": "latest",
     "@toss/tds-mobile-ait": "latest",
