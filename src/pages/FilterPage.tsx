@@ -1,14 +1,32 @@
 import { useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
 import { AGE_GROUPS, GENDERS, LAST_UPDATED, type AgeGroup, type Gender } from '../data/subsidies';
+import { fetchAutoFilledUserInfo } from '../lib/userInfo';
 
 interface FilterPageProps {
   onSearch: (ageGroup: AgeGroup | null, gender: Gender) => void;
 }
 
+type AutoFillStatus = 'idle' | 'loading' | 'filled' | 'unavailable';
+
 export function FilterPage({ onSearch }: FilterPageProps) {
   const [selectedAge, setSelectedAge] = useState<AgeGroup | null>(null);
   const [selectedGender, setSelectedGender] = useState<Gender>('전체');
+  const [autoFillStatus, setAutoFillStatus] = useState<AutoFillStatus>('idle');
+
+  // 동의 웹뷰가 예고 없이 뜨지 않도록, 페이지 진입 시 자동 호출하지 않고 사용자가
+  // 버튼을 눌렀을 때만 동의를 요청한다. 값을 못 가져와도 수동 선택을 그대로 쓸 수 있다.
+  const handleAutoFill = async () => {
+    setAutoFillStatus('loading');
+    const { ageGroup, gender } = await fetchAutoFilledUserInfo();
+    if (ageGroup === null && gender === null) {
+      setAutoFillStatus('unavailable');
+      return;
+    }
+    if (ageGroup !== null) setSelectedAge(ageGroup);
+    if (gender !== null) setSelectedGender(gender);
+    setAutoFillStatus('filled');
+  };
 
   return (
     <div style={s.container}>
@@ -24,6 +42,24 @@ export function FilterPage({ onSearch }: FilterPageProps) {
       </header>
 
       <div style={s.body}>
+        {/* 내 정보 자동 채우기 */}
+        <div style={s.autoFillWrap}>
+          <Button
+            size="medium"
+            color="primary"
+            variant="weak"
+            onClick={handleAutoFill}
+            disabled={autoFillStatus === 'loading'}
+          >
+            {autoFillStatus === 'loading' ? '불러오는 중...' : '📱 내 정보로 자동 채우기'}
+          </Button>
+          {autoFillStatus === 'unavailable' && (
+            <Paragraph typography="t5" color="#8B95A1">
+              정보를 가져오지 못했어요. 직접 선택해주세요.
+            </Paragraph>
+          )}
+        </div>
+
         {/* 연령대 선택 */}
         <section style={s.section}>
           <div style={s.sectionHeader}>
@@ -157,6 +193,12 @@ const s: Record<string, React.CSSProperties> = {
     backgroundColor: '#FFFFFF',
     borderRadius: '16px',
     padding: '20px',
+  },
+  autoFillWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '6px',
   },
   sectionHeader: {
     display: 'flex',
