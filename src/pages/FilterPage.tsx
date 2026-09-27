@@ -33,8 +33,8 @@ export function FilterPage({ onSearch }: FilterPageProps) {
       {/* 헤더 */}
       <header style={s.header}>
         <div style={s.iconWrap}>💰</div>
-        <Paragraph as="h1" typography="t1" style={s.title}>
-          지원금 찾기
+        <Paragraph as="h1" typography="t1" fontWeight="bold" style={s.title}>
+          나의 지원금 찾기
         </Paragraph>
         <Paragraph typography="t4" color="#6B7684" style={s.subtitle}>
           {'연령대와 성별을 선택하면\n딱 맞는 지원금을 찾아드려요'}
@@ -135,7 +135,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
           {selectedAge ? '지원금 검색하기' : '전체 지원금 보기'}
         </Button>
         <Paragraph typography="t5" color="#8B95A1" style={s.footerNote}>
-          복지로·공공데이터 기준 최신 정보 제공 · {LAST_UPDATED} 업데이트
+          {`복지로·공공데이터 기준 최신 정보 제공\n[${LAST_UPDATED} 업데이트]`}
         </Paragraph>
       </div>
     </div>
@@ -241,6 +241,8 @@ const s: Record<string, React.CSSProperties> = {
   },
   footerNote: {
     textAlign: 'center',
+    whiteSpace: 'pre-line',
+    lineHeight: 1.6,
   },
   adNotice: {
     width: '100%',

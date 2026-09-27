@@ -1,3 +1,4 @@
+import { User } from '@apps-in-toss/web-framework';
 import type { AgeGroup, Gender } from '../data/subsidies';
 
 // 콘솔에 등록된 동의 항목 키. "나의 지원금"(miniAppId 43538) 기준 USER_GENDER/USER_BIRTHDAY
@@ -48,10 +49,15 @@ function toGender(value: string): Gender | null {
  * 사용자 동의를 받아 성별/생년월일을 조회해 연령대/성별로 변환한다.
  * 동의 거부·미지원 앱 버전·알 수 없는 값·예외는 모두 null로 흡수해서, 호출부가
  * 실패를 그대로 무시하고 수동 선택 화면을 유지할 수 있게 한다.
+ *
+ * 동의 웹뷰를 여는 API라 공식 문서 예제와 동일하게 정적 import된 User를 그대로 쓴다 —
+ * 버튼 탭(사용자 제스처)과 호출 사이에 동적 import(await import(...))로 인한 비동기 지연이
+ * 끼면 일부 환경에서 웹뷰가 열리지 않을 수 있다고 의심된다(검수 반려: "외부 링크가
+ * 정상적으로 열리지 않아요" — grantPromotionReward처럼 UI를 띄우지 않는 호출은 동적 import로도
+ * 문제없이 통과했었다).
  */
 export async function fetchAutoFilledUserInfo(): Promise<AutoFilledUserInfo> {
   try {
-    const { User } = await import('@apps-in-toss/web-framework');
     if (!User.getConsentedData.isSupported()) return EMPTY_INFO;
 
     const result = await User.getConsentedData({ consentedUserDataKey: CONSENTED_USER_DATA_KEY });
