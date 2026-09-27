@@ -52,6 +52,45 @@ function attachTossBanner(
   };
 }
 
+// 지원금 조회 리워드 프로모션. amount는 콘솔의 maxSingleRewardAmount(10원)와 반드시 일치해야 한다.
+const SUBSIDY_VIEW_PROMOTION_CODE = '01M3HN5DNBKXTKFQZPJ3J3KZ3V';
+const SUBSIDY_VIEW_PROMOTION_AMOUNT = 10;
+
+/**
+ * 이 프로모션의 광고 타겟은 혜택탭 진입자이므로, 최초 진입 스킴의 referrer가
+ * benefit_tab일 때만(https://developers-apps-in-toss.toss.im/documentation/common/growth/analytics/referrer.md)
+ * 지원금 목록이 표시되는 시점에 리워드 지급을 1회 시도한다.
+ * 4113(이미 지급됨)·4109(미실행 상태) 등은 반복 호출 시 정상적으로 발생할 수 있으므로
+ * 사용자에게 노출하지 않고 조용히 무시한다. 하루 1회 한도는 서버가 막아주므로
+ * 클라이언트에서 별도 중복 호출 방지 로직은 두지 않는다(실패해도 무해).
+ */
+function grantSubsidyViewReward(): void {
+  import('@apps-in-toss/web-framework')
+    .then(({ getSchemeUri, grantPromotionReward }) => {
+      let isFromBenefitTab = false;
+      try {
+        isFromBenefitTab = new URL(getSchemeUri()).searchParams.get('referrer') === 'benefit_tab';
+      } catch {
+        return;
+      }
+      if (!isFromBenefitTab) return;
+
+      return grantPromotionReward({
+        params: {
+          promotionCode: SUBSIDY_VIEW_PROMOTION_CODE,
+          amount: SUBSIDY_VIEW_PROMOTION_AMOUNT,
+        },
+      }).then((result) => {
+        if (result && typeof result === 'object' && 'errorCode' in result) {
+          console.warn('[promotion] grantPromotionReward 실패:', result.errorCode, result.message);
+        }
+      });
+    })
+    .catch((error) => {
+      console.warn('[promotion] grantPromotionReward 예외:', error);
+    });
+}
+
 interface ResultsPageProps {
   ageGroup: AgeGroup | null;
   gender: Gender;
@@ -84,6 +123,11 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     setSubsidies(filterSubsidies(ageGroup, gender));
     setLoading(false);
   }, [ageGroup, gender]);
+
+  // 지원금 목록이 표시되는 화면이 마운트될 때 조회 리워드 지급을 1회 시도한다.
+  useEffect(() => {
+    grantSubsidyViewReward();
+  }, []);
 
   useEffect(() => {
     const el = bannerRef.current;
