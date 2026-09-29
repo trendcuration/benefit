@@ -16,6 +16,7 @@ import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { logClick } from '../lib/analytics';
 import { openExternal } from '../lib/links';
+import { isFromBenefitTab } from '../lib/referrer';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
@@ -65,16 +66,10 @@ const SUBSIDY_VIEW_PROMOTION_AMOUNT = 10;
  * 클라이언트에서 별도 중복 호출 방지 로직은 두지 않는다(실패해도 무해).
  */
 function grantSubsidyViewReward(): void {
-  import('@apps-in-toss/web-framework')
-    .then(({ getSchemeUri, grantPromotionReward }) => {
-      let isFromBenefitTab = false;
-      try {
-        isFromBenefitTab = new URL(getSchemeUri()).searchParams.get('referrer') === 'benefit_tab';
-      } catch {
-        return;
-      }
-      if (!isFromBenefitTab) return;
+  if (!isFromBenefitTab()) return;
 
+  import('@apps-in-toss/web-framework')
+    .then(({ grantPromotionReward }) => {
       return grantPromotionReward({
         params: {
           promotionCode: SUBSIDY_VIEW_PROMOTION_CODE,
