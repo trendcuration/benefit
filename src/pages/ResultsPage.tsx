@@ -54,7 +54,7 @@ function attachTossBanner(
 }
 
 // 지원금 조회 리워드 프로모션. amount는 콘솔의 maxSingleRewardAmount(10원)와 반드시 일치해야 한다.
-const SUBSIDY_VIEW_PROMOTION_CODE = '01M3HN5DNBKXTKFQZPJ3J3KZ3V';
+const SUBSIDY_VIEW_PROMOTION_CODE = '01M3NX99WYX3M9Y5YYDAHQ786Q';
 const SUBSIDY_VIEW_PROMOTION_AMOUNT = 10;
 
 /**
