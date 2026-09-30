@@ -21,6 +21,30 @@ import type { JudgeParams } from '../App';
 
 const REGION_REWARD_AD_ID = 'ait.v2.live.75f767ef7002430e';
 
+/** 결과 화면 하단 크로스 프로모션 배너. 돈 얘기에 몰입한 시점(통계 확인 직후)에 자사 다른 앱으로 자연스럽게 연결. */
+const PROMO_APPS = [
+  {
+    name: 'benefit',
+    scheme: 'intoss://benefit',
+    icon: 'https://static.toss.im/appsintoss/21275/4861ab12-a025-4f2e-81d0-467fd390feb0.png',
+    title: '혹시 놓친 지원금 있는지 확인해보세요',
+    subtitle: '나의 지원금 · 1분이면 조회 끝',
+  },
+  {
+    name: 'low-price-shop',
+    scheme: 'intoss://low-price-shop',
+    icon: 'https://static.toss.im/appsintoss/21275/b4761777-395d-4b44-be5c-fd6ec9fbfe7f.png',
+    title: '생활비 아까우면?',
+    subtitle: '오늘의 핫딜 · 최저가부터 확인',
+  },
+] as const;
+
+function openMiniApp(scheme: string) {
+  import('@apps-in-toss/web-framework')
+    .then(({ openURL }) => openURL(scheme))
+    .catch(() => {});
+}
+
 /** 리워드광고 시청 완료(userEarnedReward) 시에만 true. dismissed/failedToShow에서 로딩 상태를 푼다. */
 function showRewardedAd(onEarned: () => void, onSettle: () => void) {
   import('@apps-in-toss/web-framework')
@@ -79,8 +103,14 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
   useEffect(() => {
     // 전환지표용: 판정 결과까지 실제로 확인했는지가 이 앱의 서비스 가치 완료 시점
     logImpression('result_view', { metric, age_group: ageGroup, region });
+    logImpression('cross_promo_view', { metric });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handlePromoClick = (app: (typeof PROMO_APPS)[number]) => {
+    logClick('cross_promo_click', { app: app.name, metric });
+    openMiniApp(app.scheme);
+  };
 
   const handleUnlockRegion = () => {
     logClick('region_unlock_click', { region });
@@ -224,6 +254,29 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
             }
             highlight
           />
+        </div>
+
+        {/* 크로스 프로모션 */}
+        <div style={s.card}>
+          {PROMO_APPS.map((app, i) => (
+            <div
+              key={app.name}
+              role="button"
+              onClick={() => handlePromoClick(app)}
+              style={{ ...s.promoRow, ...(i > 0 ? s.promoRowDivider : {}) }}
+            >
+              <img src={app.icon} alt="" style={s.promoIcon} />
+              <div style={s.promoText}>
+                <Paragraph typography="t4" fontWeight="bold" color="#191F28">
+                  {app.title}
+                </Paragraph>
+                <Paragraph typography="t5" color="#8B95A1">
+                  {app.subtitle}
+                </Paragraph>
+              </div>
+              <span style={s.promoArrow}>›</span>
+            </div>
+          ))}
         </div>
 
         {/* 공유 */}
@@ -474,6 +527,34 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  promoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '4px 0',
+    cursor: 'pointer',
+  },
+  promoRowDivider: {
+    borderTop: '1px solid #F2F4F6',
+    paddingTop: '16px',
+    marginTop: '4px',
+  },
+  promoIcon: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '10px',
+    flexShrink: 0,
+  },
+  promoText: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  promoArrow: {
+    fontSize: '20px',
+    color: '#B0B8C1',
   },
   disclaimer: {
     textAlign: 'center',
