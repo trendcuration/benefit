@@ -78,10 +78,22 @@ export function matchComplexes(
     };
   });
 
-  return candidates
-    .sort((a, b) => Math.abs(a.displayManwon - budgetManwon) - Math.abs(b.displayManwon - budgetManwon))
-    .slice(0, count)
-    .sort((a, b) => b.displayManwon - a.displayManwon);
+  const sorted = candidates.sort(
+    (a, b) => Math.abs(a.displayManwon - budgetManwon) - Math.abs(b.displayManwon - budgetManwon),
+  );
+
+  // 같은 단지가 평형별로 여러 후보로 들어와 있어도 목록에는 한 번만 노출한다.
+  const seen = new Set<string>();
+  const picked: MatchedComplex[] = [];
+  for (const c of sorted) {
+    const key = `${c.name}|${c.dong}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    picked.push(c);
+    if (picked.length >= count) break;
+  }
+
+  return picked.sort((a, b) => b.displayManwon - a.displayManwon);
 }
 
 export { ymToYear };

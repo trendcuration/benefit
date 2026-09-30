@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Paragraph } from '@toss/tds-mobile';
 import { matchComplexes, ymToYear, REGION_TABS, type Horizon, type MatchedComplex } from '../lib/aptGoal';
+import { estimateAnnualNetIncomeManwon } from '../lib/netIncome';
 import { logClick, logImpression } from '../lib/analytics';
 
 interface AptGoalCardProps {
   /** 순자산 판정 값(만원)이 있으면 '내 자금' 초기값으로 미리 채워준다. */
   initialAssetManwon?: number;
+  /** 소득 판정 값(연 환산, 만원)이 있으면 '5년 뒤' 저축 시뮬레이션의 소득 초기값으로 채워준다. */
+  initialIncomeManwon?: number;
 }
 
 const DOT_COLORS = ['#3182F6', '#F59E0B', '#10B981', '#EC4899'];
@@ -14,18 +17,29 @@ function formatEok(manwon: number): string {
   return `${(manwon / 10_000).toFixed(1)}억`;
 }
 
-export function AptGoalCard({ initialAssetManwon }: AptGoalCardProps) {
+export function AptGoalCard({ initialAssetManwon, initialIncomeManwon }: AptGoalCardProps) {
   const [horizon, setHorizon] = useState<Horizon>('now');
   const [regionId, setRegionId] = useState(REGION_TABS[0].id);
   const [myFundsEok, setMyFundsEok] = useState(
     initialAssetManwon && initialAssetManwon > 0 ? (initialAssetManwon / 10_000).toFixed(1) : '',
   );
   const [extraLoanEok, setExtraLoanEok] = useState('0');
+  const [annualIncomeEok, setAnnualIncomeEok] = useState(
+    initialIncomeManwon && initialIncomeManwon > 0 ? (initialIncomeManwon / 10_000).toFixed(1) : '',
+  );
+  const [savingsRatePercent, setSavingsRatePercent] = useState('50');
   const [opened, setOpened] = useState(false);
 
   const myFundsManwon = Math.round((parseFloat(myFundsEok) || 0) * 10_000);
   const extraLoanManwon = Math.round((parseFloat(extraLoanEok) || 0) * 10_000);
-  const budgetManwon = myFundsManwon + extraLoanManwon;
+  const annualGrossIncomeManwon = Math.round((parseFloat(annualIncomeEok) || 0) * 10_000);
+  const savingsRate = Math.min(100, Math.max(0, parseFloat(savingsRatePercent) || 0)) / 100;
+
+  // 5년 뒤: 세후 소득의 일정 비율을 5년간 그대로 모은다고 가정(투자수익 없이 단순 합산 — 보수적 추정)
+  const annualNetIncomeManwon = estimateAnnualNetIncomeManwon(annualGrossIncomeManwon);
+  const fiveYearSavingsManwon = Math.round(annualNetIncomeManwon * savingsRate * 5);
+  const projectedMyFundsManwon = horizon === '5y' ? myFundsManwon + fiveYearSavingsManwon : myFundsManwon;
+  const budgetManwon = projectedMyFundsManwon + extraLoanManwon;
 
   const matched = useMemo(
     () => matchComplexes(regionId, budgetManwon, horizon, 4),
@@ -81,13 +95,34 @@ export function AptGoalCard({ initialAssetManwon }: AptGoalCardProps) {
         <FundInput label="추가 대출" value={extraLoanEok} onChange={setExtraLoanEok} />
         <div style={s.budgetTotal}>
           <Paragraph typography="t6" color="#8B95A1">
-            총 예산
+            {horizon === '5y' ? '5년 뒤 예산' : '총 예산'}
           </Paragraph>
           <Paragraph typography="t2" fontWeight="bold" color="#3182F6">
             {formatEok(budgetManwon)}
           </Paragraph>
         </div>
       </div>
+
+      {/* 5년 뒤: 저축 시뮬레이션 */}
+      {horizon === '5y' && (
+        <div style={s.savingsBox}>
+          <div style={s.fundsRow}>
+            <FundInput label="연소득(세전)" value={annualIncomeEok} onChange={setAnnualIncomeEok} />
+            <PercentInput label="저축률" value={savingsRatePercent} onChange={setSavingsRatePercent} />
+          </div>
+          {annualGrossIncomeManwon > 0 ? (
+            <Paragraph typography="t6" color="#8B95A1" style={s.savingsSummary}>
+              세후 연 {formatEok(annualNetIncomeManwon)} × {Math.round(savingsRate * 100)}% × 5년 = 저축{' '}
+              <strong>{formatEok(fiveYearSavingsManwon)}</strong> 누적 → 내 자금 {formatEok(myFundsManwon)} +{' '}
+              {formatEok(fiveYearSavingsManwon)} = {formatEok(projectedMyFundsManwon)}
+            </Paragraph>
+          ) : (
+            <Paragraph typography="t6" color="#8B95A1" style={s.savingsSummary}>
+              연소득을 입력하면 5년간 모을 수 있는 돈을 계산해드려요
+            </Paragraph>
+          )}
+        </div>
+      )}
 
       {/* 지역 탭 */}
       <div style={s.regionTabs}>
@@ -135,7 +170,7 @@ export function AptGoalCard({ initialAssetManwon }: AptGoalCardProps) {
           </div>
           <Paragraph typography="t6" color="#B0B8C1" style={s.disclaimer}>
             국토교통부 아파트매매 실거래가 기준 · 5년 뒤 가격은 단지별 최근 추세를 단순 연장한
-            추정치예요
+            추정치예요{horizon === '5y' && ' · 세후 소득·저축액도 투자수익 없이 단순 합산한 추정치예요'}
           </Paragraph>
         </>
       )}
@@ -171,6 +206,39 @@ function FundInput({
           aria-label={`${label} (억원)`}
         />
         <span style={s.fundInputSuffix}>억</span>
+      </div>
+    </div>
+  );
+}
+
+// ── 저축률 입력 필드(%) ──
+function PercentInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div style={s.fundInput}>
+      <Paragraph typography="t6" color="#8B95A1">
+        {label}
+      </Paragraph>
+      <div style={s.fundInputRow}>
+        <input
+          style={s.fundInputField}
+          inputMode="numeric"
+          placeholder="50"
+          value={value}
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9]/g, '');
+            onChange(v);
+          }}
+          aria-label={`${label} (%)`}
+        />
+        <span style={s.fundInputSuffix}>%</span>
       </div>
     </div>
   );
@@ -272,6 +340,17 @@ const s: Record<string, React.CSSProperties> = {
     backgroundColor: '#F8F9FA',
     borderRadius: '12px',
     marginBottom: '12px',
+  },
+  savingsBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    marginTop: '-4px',
+    marginBottom: '12px',
+  },
+  savingsSummary: {
+    lineHeight: 1.5,
+    padding: '0 4px',
   },
   fundInput: { display: 'flex', flexDirection: 'column', gap: '4px' },
   fundInputRow: { display: 'flex', alignItems: 'center', gap: '4px' },

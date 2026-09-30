@@ -12,9 +12,23 @@ import { readFile, writeFile } from 'node:fs/promises';
 const MIN_SERIES_LEN = 8; // 분기 18개 중 8개 미만은 그래프가 너무 듬성듬성해 제외
 const TARGET_PER_REGION = 28; // 지역당 대표 단지 수(가격 구간별 1개씩 뽑음)
 
+/** 같은 단지(이름+동)가 평형별로 여러 개 잡혀 있으면, 최종 리스트에 같은 이름이 중복
+ * 노출되는 문제가 생긴다(예산에 가까운 평형이 여러 개면 그 단지만 4칸을 다 채움).
+ * 시계열이 가장 촘촘한 평형 하나만 그 단지의 대표로 남긴다. */
+function dedupeByComplex(complexes) {
+  const byKey = new Map();
+  for (const c of complexes) {
+    const key = `${c.name}__${c.dong}`;
+    const prev = byKey.get(key);
+    if (!prev || c.series.length > prev.series.length) byKey.set(key, c);
+  }
+  return [...byKey.values()];
+}
+
 function pickRepresentatives(complexes) {
-  const dense = complexes.filter((c) => c.series.length >= MIN_SERIES_LEN);
-  const pool = dense.length >= TARGET_PER_REGION ? dense : complexes;
+  const deduped = dedupeByComplex(complexes);
+  const dense = deduped.filter((c) => c.series.length >= MIN_SERIES_LEN);
+  const pool = dense.length >= TARGET_PER_REGION ? dense : deduped;
   if (pool.length <= TARGET_PER_REGION) return pool;
 
   const sorted = [...pool].sort((a, b) => a.latestManwon - b.latestManwon);
