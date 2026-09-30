@@ -27,7 +27,7 @@ const PROMO_APPS = [
     name: 'benefit',
     scheme: 'intoss://benefit',
     icon: 'https://static.toss.im/appsintoss/21275/4861ab12-a025-4f2e-81d0-467fd390feb0.png',
-    title: '혹시 놓친 지원금 있는지 확인해보세요',
+    title: '깐깐하게 지원금도 확인해요',
     subtitle: '나의 지원금 · 1분이면 조회 끝',
   },
   {
