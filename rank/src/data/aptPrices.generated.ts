@@ -322,88 +322,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "한솔마을(4단지)(주공)",
-        "dong": "정자동",
-        "sggName": "분당구",
-        "pyeong": 13,
-        "areaM2": 41.85,
-        "latestManwon": 113350,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 72000
-          },
-          {
-            "ym": "202206",
-            "medianManwon": 84000
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 64500
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 57700
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 64000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 62900
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 69700
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 58500
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 61900
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 62500
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 63000
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 62000
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 63800
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 69500
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 75000
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 93000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 85050
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 113350
-          }
-        ]
-      },
-      {
         "name": "양지마을(5단지)(한양501-514)",
         "dong": "수내동",
         "sggName": "분당구",
@@ -610,6 +528,204 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 133000
+          }
+        ]
+      },
+      {
+        "name": "까치마을",
+        "dong": "수서동",
+        "sggName": "강남구",
+        "pyeong": 10,
+        "areaM2": 34.44,
+        "latestManwon": 145000,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 100625
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 89000
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 82575
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 89500
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 82250
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 86000
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 87500
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 89000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 91000
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 96000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 116000
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 135000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 143250
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 145000
+          }
+        ]
+      },
+      {
+        "name": "판교원마을6단지(판교대광로제비앙)",
+        "dong": "판교동",
+        "sggName": "분당구",
+        "pyeong": 18,
+        "areaM2": 59.667,
+        "latestManwon": 146000,
+        "series": [
+          {
+            "ym": "202209",
+            "medianManwon": 55673
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 92000
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 93000
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 98000
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 94500
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 92250
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 94500
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 90950
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 106600
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 116250
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 114000
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 125000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 141000
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 146000
+          }
+        ]
+      },
+      {
+        "name": "이매촌(한신)",
+        "dong": "이매동",
+        "sggName": "분당구",
+        "pyeong": 15,
+        "areaM2": 50.1,
+        "latestManwon": 148500,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 90500
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 82800
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 81500
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 85000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 81500
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 88000
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 85200
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 93500
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 94425
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 93000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 117500
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 121500
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 132500
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 148500
           }
         ]
       },
@@ -828,6 +944,204 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
+        "name": "신동아",
+        "dong": "수서동",
+        "sggName": "강남구",
+        "pyeong": 10,
+        "areaM2": 33.18,
+        "latestManwon": 160250,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 115000
+          },
+          {
+            "ym": "202206",
+            "medianManwon": 97000
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 87000
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 91000
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 88000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 92000
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 91500
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 90000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 98850
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 109000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 127500
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 151200
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 148750
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 160250
+          }
+        ]
+      },
+      {
+        "name": "송파시그니처롯데캐슬",
+        "dong": "거여동",
+        "sggName": "송파구",
+        "pyeong": 18,
+        "areaM2": 59.98,
+        "latestManwon": 184000,
+        "series": [
+          {
+            "ym": "202303",
+            "medianManwon": 108000
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 117500
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 118000
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 117500
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 116000
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 120000
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 135000
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 138500
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 134000
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 143000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 156250
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 174500
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 179000
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 184000
+          }
+        ]
+      },
+      {
+        "name": "봇들마을3단지(주공)",
+        "dong": "삼평동",
+        "sggName": "분당구",
+        "pyeong": 18,
+        "areaM2": 59.95,
+        "latestManwon": 190000,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 130000
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 100000
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 111500
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 119500
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 123250
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 119050
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 120500
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 123400
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 136000
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 137000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 138850
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 150000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 170000
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 190000
+          }
+        ]
+      },
+      {
         "name": "코오롱아파트",
         "dong": "방이동",
         "sggName": "송파구",
@@ -968,208 +1282,68 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "올림픽훼밀리타운",
-        "dong": "문정동",
-        "sggName": "송파구",
-        "pyeong": 26,
-        "areaM2": 84.705,
-        "latestManwon": 263750,
+        "name": "개포래미안포레스트",
+        "dong": "개포동",
+        "sggName": "강남구",
+        "pyeong": 18,
+        "areaM2": 59.92,
+        "latestManwon": 271500,
         "series": [
           {
-            "ym": "202203",
+            "ym": "202206",
             "medianManwon": 195000
           },
           {
-            "ym": "202212",
-            "medianManwon": 138000
-          },
-          {
             "ym": "202303",
-            "medianManwon": 161500
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 174500
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 172500
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 159000
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 171500
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 175000
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 185000
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 180000
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 204000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 225000
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 247750
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 211500
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 263750
-          }
-        ]
-      },
-      {
-        "name": "파크리오",
-        "dong": "신천동",
-        "sggName": "송파구",
-        "pyeong": 18,
-        "areaM2": 59.95,
-        "latestManwon": 267000,
-        "series": [
-          {
-            "ym": "202206",
-            "medianManwon": 192000
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 170000
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 155000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 169000
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 174000
-          },
-          {
-            "ym": "202312",
             "medianManwon": 171000
           },
           {
-            "ym": "202403",
-            "medianManwon": 173000
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 181000
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 199000
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 227000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 242000
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 260000
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 266000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 272500
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 267000
-          }
-        ]
-      },
-      {
-        "name": "올림픽훼밀리타운",
-        "dong": "문정동",
-        "sggName": "송파구",
-        "pyeong": 36,
-        "areaM2": 117.585,
-        "latestManwon": 282500,
-        "series": [
-          {
-            "ym": "202206",
-            "medianManwon": 212000
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 180000
-          },
-          {
             "ym": "202306",
-            "medianManwon": 194000
+            "medianManwon": 184000
           },
           {
             "ym": "202309",
-            "medianManwon": 191250
+            "medianManwon": 191500
           },
           {
             "ym": "202312",
-            "medianManwon": 205000
+            "medianManwon": 192500
           },
           {
             "ym": "202403",
-            "medianManwon": 194500
+            "medianManwon": 187000
           },
           {
             "ym": "202406",
-            "medianManwon": 197500
+            "medianManwon": 199000
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 230000
           },
           {
             "ym": "202412",
-            "medianManwon": 204000
+            "medianManwon": 240000
           },
           {
             "ym": "202503",
-            "medianManwon": 234000
+            "medianManwon": 244500
           },
           {
             "ym": "202506",
-            "medianManwon": 249000
+            "medianManwon": 255000
           },
           {
             "ym": "202509",
-            "medianManwon": 265000
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 277000
+            "medianManwon": 275000
           },
           {
             "ym": "202603",
-            "medianManwon": 287000
+            "medianManwon": 300000
           },
           {
             "ym": "202606",
-            "medianManwon": 282500
+            "medianManwon": 271500
           }
         ]
       },
@@ -1408,80 +1582,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "잠실엘스",
-        "dong": "잠실동",
-        "sggName": "송파구",
-        "pyeong": 18,
-        "areaM2": 59.96,
-        "latestManwon": 300000,
-        "series": [
-          {
-            "ym": "202209",
-            "medianManwon": 160500
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 154750
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 170000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 188000
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 199750
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 194000
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 195000
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 202400
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 228000
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 219000
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 245000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 274250
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 279000
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 294500
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 281500
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 300000
-          }
-        ]
-      },
-      {
         "name": "트리지움",
         "dong": "잠실동",
         "sggName": "송파구",
@@ -1716,80 +1816,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "리센츠",
-        "dong": "잠실동",
-        "sggName": "송파구",
-        "pyeong": 26,
-        "areaM2": 84.99,
-        "latestManwon": 349500,
-        "series": [
-          {
-            "ym": "202209",
-            "medianManwon": 220000
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 205000
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 210000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 227200
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 241000
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 231500
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 236750
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 248500
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 267500
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 263750
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 300000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 320000
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 338000
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 352000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 332000
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 349500
-          }
-        ]
-      },
-      {
         "name": "주공아파트 5단지",
         "dong": "잠실동",
         "sggName": "송파구",
@@ -1864,80 +1890,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 405700
-          }
-        ]
-      },
-      {
-        "name": "주공아파트 5단지",
-        "dong": "잠실동",
-        "sggName": "송파구",
-        "pyeong": 25,
-        "areaM2": 82.51,
-        "latestManwon": 426500,
-        "series": [
-          {
-            "ym": "202206",
-            "medianManwon": 311550
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 267600
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 227600
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 262600
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 272600
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 291600
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 269200
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 280600
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 303590
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 338500
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 388500
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 422500
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 403825
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 427500
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 447750
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 426500
           }
         ]
       },
@@ -2165,84 +2117,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "벽적골주공휴먼시아8단지",
-        "dong": "영통동",
-        "sggName": "영통구",
-        "pyeong": 15,
-        "areaM2": 49.59,
-        "latestManwon": 33900,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 41000
-          },
-          {
-            "ym": "202206",
-            "medianManwon": 36800
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 28500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 29500
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 31400
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 32000
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 31500
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 34250
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 33150
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 32750
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 31500
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 33000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 32900
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 33500
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 31400
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 31250
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 33900
-          }
-        ]
-      },
-      {
         "name": "신나무실휴먼시아5단지",
         "dong": "영통동",
         "sggName": "영통구",
@@ -2317,6 +2191,154 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 43750
+          }
+        ]
+      },
+      {
+        "name": "신나무실쌍용",
+        "dong": "영통동",
+        "sggName": "영통구",
+        "pyeong": 18,
+        "areaM2": 59.965,
+        "latestManwon": 44500,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 49800
+          },
+          {
+            "ym": "202206",
+            "medianManwon": 51300
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 35800
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 38900
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 38750
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 37500
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 39500
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 38400
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 38500
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 41000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 38400
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 37960
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 40000
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 40000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 44450
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 44500
+          }
+        ]
+      },
+      {
+        "name": "황골마을(쌍용)",
+        "dong": "영통동",
+        "sggName": "영통구",
+        "pyeong": 18,
+        "areaM2": 59.8,
+        "latestManwon": 45950,
+        "series": [
+          {
+            "ym": "202206",
+            "medianManwon": 42750
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 34000
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 34150
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 33150
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 38175
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 36400
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 36500
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 38075
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 36500
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 40300
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 37950
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 39250
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 40500
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 41500
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 40500
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 45950
           }
         ]
       },
@@ -2645,6 +2667,80 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
+        "name": "원천레이크파크",
+        "dong": "원천동",
+        "sggName": "영통구",
+        "pyeong": 18,
+        "areaM2": 59.8,
+        "latestManwon": 52350,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 55650
+          },
+          {
+            "ym": "202206",
+            "medianManwon": 55500
+          },
+          {
+            "ym": "202209",
+            "medianManwon": 42000
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 36000
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 35000
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 38750
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 40300
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 41300
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 41500
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 44500
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 44700
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 45350
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 45000
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 46000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 46500
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 52350
+          }
+        ]
+      },
+      {
         "name": "벽적골한신",
         "dong": "영통동",
         "sggName": "영통구",
@@ -2719,6 +2815,80 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 53200
+          }
+        ]
+      },
+      {
+        "name": "풍림",
+        "dong": "영통동",
+        "sggName": "영통구",
+        "pyeong": 26,
+        "areaM2": 84.84,
+        "latestManwon": 54000,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 59000
+          },
+          {
+            "ym": "202206",
+            "medianManwon": 57500
+          },
+          {
+            "ym": "202209",
+            "medianManwon": 50000
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 31500
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 48600
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 50625
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 51000
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 52000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 56000
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 53000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 53000
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 53000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 51000
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 49000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 54500
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 54000
           }
         ]
       },
@@ -3042,80 +3212,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         "name": "매탄위브하늘채",
         "dong": "매탄동",
         "sggName": "영통구",
-        "pyeong": 18,
-        "areaM2": 59.9845,
-        "latestManwon": 68000,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 62150
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 47630
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 47500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 48850
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 51000
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 47500
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 54700
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 55500
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 57850
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 59900
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 58900
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 59650
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 59600
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 62800
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 63000
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 68000
-          }
-        ]
-      },
-      {
-        "name": "매탄위브하늘채",
-        "dong": "매탄동",
-        "sggName": "영통구",
         "pyeong": 26,
         "areaM2": 84.818,
         "latestManwon": 76250,
@@ -3195,80 +3291,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "매탄위브하늘채",
-        "dong": "매탄동",
-        "sggName": "영통구",
-        "pyeong": 31,
-        "areaM2": 103.4857,
-        "latestManwon": 87500,
-        "series": [
-          {
-            "ym": "202206",
-            "medianManwon": 82500
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 69000
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 72400
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 74800
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 73250
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 40000
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 76500
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 78300
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 81000
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 82250
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 77700
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 81750
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 85000
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 81500
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 80750
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 87500
-          }
-        ]
-      },
-      {
         "name": "영통에듀파크(321동~327동)",
         "dong": "영통동",
         "sggName": "영통구",
@@ -3339,80 +3361,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 88750
-          }
-        ]
-      },
-      {
-        "name": "영통아이파크캐슬1단지",
-        "dong": "망포동",
-        "sggName": "영통구",
-        "pyeong": 18,
-        "areaM2": 59.98,
-        "latestManwon": 96900,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 69900
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 52500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 58000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 65000
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 70000
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 65000
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 67700
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 68000
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 74500
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 72500
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 76000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 77400
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 75900
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 84000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 88500
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 96900
           }
         ]
       },
@@ -7139,6 +7087,68 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
+        "name": "시지3차서한이다음",
+        "dong": "사월동",
+        "sggName": "수성구",
+        "pyeong": 26,
+        "areaM2": 84.97,
+        "latestManwon": 40000,
+        "series": [
+          {
+            "ym": "202303",
+            "medianManwon": 40000
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 43400
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 40500
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 40500
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 39000
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 38700
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 40800
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 40800
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 41700
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 41000
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 39150
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 41700
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 40000
+          }
+        ]
+      },
+      {
         "name": "수성월드메르디앙",
         "dong": "노변동",
         "sggName": "수성구",
@@ -7271,72 +7281,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 45500
-          }
-        ]
-      },
-      {
-        "name": "수성하늘채르레브",
-        "dong": "범물동",
-        "sggName": "수성구",
-        "pyeong": 23,
-        "areaM2": 77.6522,
-        "latestManwon": 46000,
-        "series": [
-          {
-            "ym": "202209",
-            "medianManwon": 56000
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 50000
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 45800
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 61000
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 46500
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 45550
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 44800
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 44800
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 45700
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 46200
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 46500
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 47100
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 46650
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 46000
           }
         ]
       },
@@ -8840,6 +8784,138 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
+        "name": "해운대더샵센텀그린",
+        "dong": "반여동",
+        "sggName": "해운대구",
+        "pyeong": 18,
+        "areaM2": 59.9607,
+        "latestManwon": 32900,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 45000
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 35150
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 35000
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 30950
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 34750
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 32000
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 32000
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 31000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 32450
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 31900
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 34900
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 32500
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 32600
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 32900
+          }
+        ]
+      },
+      {
+        "name": "센텀롯데캐슬2차",
+        "dong": "반여동",
+        "sggName": "해운대구",
+        "pyeong": 26,
+        "areaM2": 84.97,
+        "latestManwon": 34475,
+        "series": [
+          {
+            "ym": "202206",
+            "medianManwon": 50250
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 34000
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 33500
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 36400
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 37900
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 36150
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 35800
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 36000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 35250
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 35000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 35700
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 27000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 33600
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 34475
+          }
+        ]
+      },
+      {
         "name": "대우2",
         "dong": "좌동",
         "sggName": "해운대구",
@@ -9466,72 +9542,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "수영SKVIEW1단지",
-        "dong": "망미동",
-        "sggName": "수영구",
-        "pyeong": 26,
-        "areaM2": 84.9819,
-        "latestManwon": 65500,
-        "series": [
-          {
-            "ym": "202206",
-            "medianManwon": 73000
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 73000
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 62000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 65250
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 59800
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 62750
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 62000
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 63800
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 63400
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 65000
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 65250
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 66000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 69000
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 65500
-          }
-        ]
-      },
-      {
         "name": "센텀비스타동원2차",
         "dong": "민락동",
         "sggName": "수영구",
@@ -9882,72 +9892,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 92500
-          }
-        ]
-      },
-      {
-        "name": "삼익비치",
-        "dong": "남천동",
-        "sggName": "수영구",
-        "pyeong": 18,
-        "areaM2": 60.83,
-        "latestManwon": 92750,
-        "series": [
-          {
-            "ym": "202206",
-            "medianManwon": 104000
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 74000
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 79000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 79000
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 81800
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 77100
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 76750
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 72500
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 88100
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 85000
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 86000
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 93000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 89875
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 92750
           }
         ]
       },
@@ -10587,6 +10531,72 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
+        "name": "달동주공2단지",
+        "dong": "달동",
+        "sggName": "남구",
+        "pyeong": 12,
+        "areaM2": 38.64,
+        "latestManwon": 14150,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 17300
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 15000
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 13000
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 15450
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 14825
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 15000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 14650
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 13000
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 14250
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 13500
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 14400
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 15000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 11700
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 14150
+          }
+        ]
+      },
+      {
         "name": "현대문화1차",
         "dong": "삼산동",
         "sggName": "남구",
@@ -11195,146 +11205,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "신정현대홈타운2",
-        "dong": "야음동",
-        "sggName": "남구",
-        "pyeong": 18,
-        "areaM2": 59.97,
-        "latestManwon": 35600,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 30800
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 28500
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 28650
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 27350
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 26800
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 27400
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 28000
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 29400
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 30400
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 30500
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 32500
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 31000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 33700
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 35600
-          }
-        ]
-      },
-      {
-        "name": "세양청구마을",
-        "dong": "삼산동",
-        "sggName": "남구",
-        "pyeong": 26,
-        "areaM2": 84.99,
-        "latestManwon": 37000,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 38000
-          },
-          {
-            "ym": "202206",
-            "medianManwon": 34300
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 29500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 30000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 29600
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 29000
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 31650
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 28500
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 30800
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 32250
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 33250
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 34300
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 35500
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 35500
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 35000
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 37000
-          }
-        ]
-      },
-      {
         "name": "신정현대홈타운3",
         "dong": "신정동",
         "sggName": "남구",
@@ -11689,6 +11559,68 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
+        "name": "신성미소지움1단지",
+        "dong": "신정동",
+        "sggName": "남구",
+        "pyeong": 26,
+        "areaM2": 84.95,
+        "latestManwon": 59050,
+        "series": [
+          {
+            "ym": "202206",
+            "medianManwon": 54000
+          },
+          {
+            "ym": "202209",
+            "medianManwon": 50000
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 40000
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 41500
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 47000
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 47000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 55000
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 47700
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 52850
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 56600
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 52900
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 56800
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 59050
+          }
+        ]
+      },
+      {
         "name": "울산호수공원대명루첸아파트",
         "dong": "야음동",
         "sggName": "남구",
@@ -11907,76 +11839,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 72900
-          }
-        ]
-      },
-      {
-        "name": "대현더샵",
-        "dong": "야음동",
-        "sggName": "남구",
-        "pyeong": 21,
-        "areaM2": 68.998,
-        "latestManwon": 76500,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 64800
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 51500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 59500
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 62200
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 60000
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 61500
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 66000
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 65500
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 68500
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 68000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 69000
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 71750
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 72600
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 74300
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 76500
           }
         ]
       },
@@ -12477,6 +12339,68 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
             "medianManwon": 106000
           }
         ]
+      },
+      {
+        "name": "대공원한신휴플러스",
+        "dong": "옥동",
+        "sggName": "남구",
+        "pyeong": 26,
+        "areaM2": 84.92,
+        "latestManwon": 125300,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 107500
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 81500
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 87000
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 92750
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 87000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 90700
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 90800
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 96000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 95750
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 97700
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 107200
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 114500
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 125300
+          }
+        ]
       }
     ]
   },
@@ -12792,6 +12716,76 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
+        "name": "세경",
+        "dong": "연수동",
+        "sggName": "연수구",
+        "pyeong": 16,
+        "areaM2": 51.75,
+        "latestManwon": 22000,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 32500
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 22000
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 19950
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 23000
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 21800
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 21500
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 22000
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 23000
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 21950
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 20450
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 22400
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 21050
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 20700
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 22000
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 22000
+          }
+        ]
+      },
+      {
         "name": "동남",
         "dong": "동춘동",
         "sggName": "연수구",
@@ -12870,6 +12864,146 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
+        "name": "아주",
+        "dong": "동춘동",
+        "sggName": "연수구",
+        "pyeong": 26,
+        "areaM2": 84.78,
+        "latestManwon": 27800,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 38500
+          },
+          {
+            "ym": "202206",
+            "medianManwon": 40000
+          },
+          {
+            "ym": "202209",
+            "medianManwon": 32000
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 25500
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 25750
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 29500
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 26000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 29500
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 28000
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 26500
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 27900
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 26000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 29000
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 26000
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 27800
+          }
+        ]
+      },
+      {
+        "name": "현대2차아파트",
+        "dong": "옥련동",
+        "sggName": "연수구",
+        "pyeong": 18,
+        "areaM2": 59.985,
+        "latestManwon": 28000,
+        "series": [
+          {
+            "ym": "202203",
+            "medianManwon": 37800
+          },
+          {
+            "ym": "202212",
+            "medianManwon": 28000
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 26400
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 26750
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 28000
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 27000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 27050
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 24950
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 25750
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 25150
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 26750
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 27000
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 27400
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 27500
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 28000
+          }
+        ]
+      },
+      {
         "name": "무지개마을",
         "dong": "동춘동",
         "sggName": "연수구",
@@ -12940,6 +13074,76 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 31800
+          }
+        ]
+      },
+      {
+        "name": "현대4",
+        "dong": "옥련동",
+        "sggName": "연수구",
+        "pyeong": 26,
+        "areaM2": 84.6,
+        "latestManwon": 33350,
+        "series": [
+          {
+            "ym": "202206",
+            "medianManwon": 43500
+          },
+          {
+            "ym": "202209",
+            "medianManwon": 40500
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 35250
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 36350
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 32250
+          },
+          {
+            "ym": "202312",
+            "medianManwon": 31000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 38100
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 31500
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 39000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 36000
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 37000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 34020
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 35000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 35800
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 33350
           }
         ]
       },
@@ -13084,76 +13288,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 44600
-          }
-        ]
-      },
-      {
-        "name": "송도파크레인동일하이빌",
-        "dong": "동춘동",
-        "sggName": "연수구",
-        "pyeong": 22,
-        "areaM2": 74.2443,
-        "latestManwon": 45900,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 56000
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 47000
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 46500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 44850
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 44500
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 50000
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 40000
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 40000
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 48800
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 49800
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 47250
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 46500
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 47000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 44700
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 45900
           }
         ]
       },
@@ -13754,80 +13888,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "송도오션파크베르디움",
-        "dong": "송도동",
-        "sggName": "연수구",
-        "pyeong": 26,
-        "areaM2": 84.795,
-        "latestManwon": 63000,
-        "series": [
-          {
-            "ym": "202206",
-            "medianManwon": 76000
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 62500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 62600
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 65250
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 67500
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 65000
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 65000
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 65750
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 66650
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 64000
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 61000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 63650
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 55250
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 60000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 61000
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 63000
-          }
-        ]
-      },
-      {
         "name": "랜드마크시티센트럴더샵",
         "dong": "송도동",
         "sggName": "연수구",
@@ -13980,88 +14040,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "e편한세상송도",
-        "dong": "송도동",
-        "sggName": "연수구",
-        "pyeong": 26,
-        "areaM2": 84.4163,
-        "latestManwon": 66875,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 87000
-          },
-          {
-            "ym": "202206",
-            "medianManwon": 89000
-          },
-          {
-            "ym": "202209",
-            "medianManwon": 75000
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 62500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 66200
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 70000
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 65250
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 69000
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 70650
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 67000
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 70000
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 68500
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 67700
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 68900
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 65750
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 65000
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 63000
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 66875
-          }
-        ]
-      },
-      {
         "name": "송도에듀포레푸르지오",
         "dong": "송도동",
         "sggName": "연수구",
@@ -14128,84 +14106,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 66900
-          }
-        ]
-      },
-      {
-        "name": "송도더샵센트럴시티",
-        "dong": "송도동",
-        "sggName": "연수구",
-        "pyeong": 18,
-        "areaM2": 59.99,
-        "latestManwon": 69700,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 73000
-          },
-          {
-            "ym": "202206",
-            "medianManwon": 68000
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 50750
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 56000
-          },
-          {
-            "ym": "202306",
-            "medianManwon": 60000
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 63250
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 62250
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 60000
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 61500
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 63225
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 63700
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 61600
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 63000
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 65700
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 65400
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 65550
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 69700
           }
         ]
       },
@@ -14366,80 +14266,6 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
         ]
       },
       {
-        "name": "송도더샵센트럴시티",
-        "dong": "송도동",
-        "sggName": "연수구",
-        "pyeong": 22,
-        "areaM2": 72.99,
-        "latestManwon": 79800,
-        "series": [
-          {
-            "ym": "202203",
-            "medianManwon": 82000
-          },
-          {
-            "ym": "202206",
-            "medianManwon": 95000
-          },
-          {
-            "ym": "202212",
-            "medianManwon": 63500
-          },
-          {
-            "ym": "202303",
-            "medianManwon": 65000
-          },
-          {
-            "ym": "202309",
-            "medianManwon": 72500
-          },
-          {
-            "ym": "202312",
-            "medianManwon": 68450
-          },
-          {
-            "ym": "202403",
-            "medianManwon": 73000
-          },
-          {
-            "ym": "202406",
-            "medianManwon": 72700
-          },
-          {
-            "ym": "202409",
-            "medianManwon": 73500
-          },
-          {
-            "ym": "202412",
-            "medianManwon": 71000
-          },
-          {
-            "ym": "202503",
-            "medianManwon": 67000
-          },
-          {
-            "ym": "202506",
-            "medianManwon": 72900
-          },
-          {
-            "ym": "202509",
-            "medianManwon": 73000
-          },
-          {
-            "ym": "202512",
-            "medianManwon": 74150
-          },
-          {
-            "ym": "202603",
-            "medianManwon": 74800
-          },
-          {
-            "ym": "202606",
-            "medianManwon": 79800
-          }
-        ]
-      },
-      {
         "name": "더샵그린워크1차",
         "dong": "송도동",
         "sggName": "연수구",
@@ -14588,6 +14414,72 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
           {
             "ym": "202606",
             "medianManwon": 91000
+          }
+        ]
+      },
+      {
+        "name": "송도더샵퍼스트파크F13-1BL",
+        "dong": "송도동",
+        "sggName": "연수구",
+        "pyeong": 26,
+        "areaM2": 84.9,
+        "latestManwon": 104500,
+        "series": [
+          {
+            "ym": "202212",
+            "medianManwon": 77500
+          },
+          {
+            "ym": "202303",
+            "medianManwon": 83500
+          },
+          {
+            "ym": "202306",
+            "medianManwon": 94000
+          },
+          {
+            "ym": "202309",
+            "medianManwon": 101000
+          },
+          {
+            "ym": "202403",
+            "medianManwon": 97750
+          },
+          {
+            "ym": "202406",
+            "medianManwon": 100300
+          },
+          {
+            "ym": "202409",
+            "medianManwon": 105000
+          },
+          {
+            "ym": "202412",
+            "medianManwon": 101000
+          },
+          {
+            "ym": "202503",
+            "medianManwon": 97500
+          },
+          {
+            "ym": "202506",
+            "medianManwon": 99000
+          },
+          {
+            "ym": "202509",
+            "medianManwon": 96500
+          },
+          {
+            "ym": "202512",
+            "medianManwon": 105000
+          },
+          {
+            "ym": "202603",
+            "medianManwon": 97250
+          },
+          {
+            "ym": "202606",
+            "medianManwon": 104500
           }
         ]
       }

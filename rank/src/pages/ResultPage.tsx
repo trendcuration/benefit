@@ -257,9 +257,6 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
           />
         </div>
 
-        {/* 이 돈이면 어디까지 (내 집 마련 목표) */}
-        <AptGoalCard initialAssetManwon={metric === 'asset' ? value : undefined} />
-
         {/* 크로스 프로모션 */}
         <div style={s.card}>
           {PROMO_APPS.map((app, i) => (
@@ -282,6 +279,12 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
             </div>
           ))}
         </div>
+
+        {/* 이 돈이면 어디까지 (내 집 마련 목표) */}
+        <AptGoalCard
+          initialAssetManwon={metric === 'asset' ? value : undefined}
+          initialIncomeManwon={metric === 'income' ? value : undefined}
+        />
 
         {/* 공유 */}
         {canShare && (
