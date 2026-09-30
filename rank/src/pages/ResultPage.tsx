@@ -17,6 +17,7 @@ import {
 } from '../data/rank';
 import { getTier } from '../data/tiers';
 import { logClick, logImpression } from '../lib/analytics';
+import { AptGoalCard } from '../components/AptGoalCard';
 import type { JudgeParams } from '../App';
 
 const REGION_REWARD_AD_ID = 'ait.v2.live.75f767ef7002430e';
@@ -255,6 +256,9 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
             highlight
           />
         </div>
+
+        {/* 이 돈이면 어디까지 (내 집 마련 목표) */}
+        <AptGoalCard initialAssetManwon={metric === 'asset' ? value : undefined} />
 
         {/* 크로스 프로모션 */}
         <div style={s.card}>
