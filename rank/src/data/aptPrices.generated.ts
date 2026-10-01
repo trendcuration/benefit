@@ -2036,7 +2036,7 @@ export const APT_PRICE_DATA: Record<string, RegionGroupData> = {
     ]
   },
   "seoul-premium": {
-    "label": "서울 상급지",
+    "label": "수도권 상급지",
     "complexes": [
       {
         "name": "동남",

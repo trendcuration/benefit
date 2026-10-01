@@ -40,7 +40,7 @@ export const REGION_GROUPS = [
   },
   {
     id: 'seoul-premium',
-    label: '서울 상급지',
+    label: '수도권 상급지', // 마용성(서울)+과천·영통(경기)이 섞여 있어 '서울'로만 표기하면 부정확함
     lawdCodes: [
       { code: '11440', name: '마포구' },
       { code: '11170', name: '용산구' },

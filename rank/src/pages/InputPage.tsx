@@ -66,7 +66,7 @@ export function InputPage({ onSubmit }: InputPageProps) {
       {/* 헤더 */}
       <header style={s.header}>
         <div style={s.iconWrap}>📊</div>
-        <Paragraph as="h1" typography="t1" style={s.title}>
+        <Paragraph as="h1" typography="t1" fontWeight="bold" style={s.title}>
           나는 상위 몇 %?
         </Paragraph>
         <Paragraph typography="t4" color="#6B7684" style={s.subtitle}>
