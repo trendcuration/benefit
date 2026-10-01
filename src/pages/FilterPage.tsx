@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
 import { AGE_GROUPS, GENDERS, LAST_UPDATED, type AgeGroup, type Gender } from '../data/subsidies';
+import { isFromBenefitTab } from '../lib/referrer';
 
 interface FilterPageProps {
   onSearch: (ageGroup: AgeGroup | null, gender: Gender) => void;
@@ -9,14 +10,17 @@ interface FilterPageProps {
 export function FilterPage({ onSearch }: FilterPageProps) {
   const [selectedAge, setSelectedAge] = useState<AgeGroup | null>(null);
   const [selectedGender, setSelectedGender] = useState<Gender>('전체');
+  // 리워드는 혜택탭 진입자에게만 지급되므로(ResultsPage 참고), 버튼 문구도 그 경우에만
+  // 리워드를 언급한다 — 다른 경로로 들어온 사람에게 실제로 안 주는 리워드를 약속하지 않기 위함.
+  const [cameFromBenefitTab] = useState(isFromBenefitTab);
 
   return (
     <div style={s.container}>
       {/* 헤더 */}
       <header style={s.header}>
         <div style={s.iconWrap}>💰</div>
-        <Paragraph as="h1" typography="t1" style={s.title}>
-          지원금 찾기
+        <Paragraph as="h1" typography="t1" fontWeight="bold" style={s.title}>
+          나의 지원금 찾기
         </Paragraph>
         <Paragraph typography="t4" color="#6B7684" style={s.subtitle}>
           {'연령대와 성별을 선택하면\n딱 맞는 지원금을 찾아드려요'}
@@ -96,10 +100,14 @@ export function FilterPage({ onSearch }: FilterPageProps) {
           variant="fill"
           onClick={() => onSearch(selectedAge, selectedGender)}
         >
-          {selectedAge ? '지원금 검색하기' : '전체 지원금 보기'}
+          {cameFromBenefitTab
+            ? '지원금 결과 조회하고 10원 받기'
+            : selectedAge
+              ? '지원금 검색하기'
+              : '전체 지원금 보기'}
         </Button>
         <Paragraph typography="t5" color="#8B95A1" style={s.footerNote}>
-          복지로·공공데이터 기준 최신 정보 제공 · {LAST_UPDATED} 업데이트
+          {`복지로·공공데이터 기준 최신 정보 제공\n[${LAST_UPDATED} 업데이트]`}
         </Paragraph>
       </div>
     </div>
@@ -199,6 +207,8 @@ const s: Record<string, React.CSSProperties> = {
   },
   footerNote: {
     textAlign: 'center',
+    whiteSpace: 'pre-line',
+    lineHeight: 1.6,
   },
   adNotice: {
     width: '100%',

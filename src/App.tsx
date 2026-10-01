@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { graniteEvent, Screen } from '@apps-in-toss/web-framework';
 import { AdNoticePage } from './pages/AdNoticePage';
 import { FilterPage } from './pages/FilterPage';
 import { ResultsPage } from './pages/ResultsPage';
@@ -19,6 +20,30 @@ export function App() {
   // 필터 화면에 있는 동안 전면광고를 미리 로드해 둔다.
   useEffect(() => {
     preloadInterstitial();
+  }, []);
+
+  // 화면 전환을 useState로만 관리해 브라우저 히스토리 엔트리가 없다 — 시스템
+  // 뒤로가기(하드웨어/제스처)를 그대로 두면 되돌아갈 곳이 없어 보여 미니앱 자체가
+  // 종료돼버린다(검수 반려 사유). backEvent를 구독하면 기본 동작(미니앱 종료)이
+  // 자동으로 막히므로, 화면 스택 한 단계를 직접 되돌리거나 최상위 화면(filter)에서만
+  // 명시적으로 Screen.close()를 호출한다.
+  const pageRef = useRef(page);
+  pageRef.current = page;
+
+  useEffect(() => {
+    const unsubscribe = graniteEvent.addEventListener('backEvent', {
+      onEvent: () => {
+        if (pageRef.current === 'results' || pageRef.current === 'ad') {
+          setPage('filter');
+        } else {
+          Screen.close();
+        }
+      },
+      onError: () => {
+        Screen.close();
+      },
+    });
+    return unsubscribe;
   }, []);
 
   const handleSearch = (ageGroup: AgeGroup | null, gender: Gender) => {
