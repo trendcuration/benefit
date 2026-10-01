@@ -26,7 +26,11 @@ function decodeXmlEntities(str) {
     .replace(/&amp;/g, '&');
 }
 
-// ── 지역 그룹: 이름 + 법정동코드(5자리) 목록. 전부 API로 실측 검증됨(2026-09-30). ──
+// ── 지역 그룹: 어떤 법정동코드(5자리)를 API에서 긁어올지만 정한다. ──
+// label은 이 스크립트의 진행 로그 출력용일 뿐, 화면에 보일 실제 탭 라벨·구성은
+// build-apt-dataset.mjs의 REGION_DEFINITIONS가 sggName 기준으로 다시 정한다
+// (예: 여기선 '서울+경기'를 한 번에 긁어도, 화면엔 '서울 상급지'/'경기 상급지'로 분리해 보여줄 수 있다).
+// 법정동코드는 전부 API로 실측 검증됨(2026-09-30).
 export const REGION_GROUPS = [
   {
     id: 'gangnam-bundang',
@@ -40,7 +44,7 @@ export const REGION_GROUPS = [
   },
   {
     id: 'seoul-premium',
-    label: '수도권 상급지', // 마용성(서울)+과천·영통(경기)이 섞여 있어 '서울'로만 표기하면 부정확함
+    label: '서울·경기 상급지 수집용',
     lawdCodes: [
       { code: '11440', name: '마포구' },
       { code: '11170', name: '용산구' },
