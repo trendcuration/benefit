@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
 import { AGE_GROUPS, METRIC_META, REGIONS, type AgeGroup, type Metric, type Region } from '../data/percentiles';
 import { formatManwon } from '../data/rank';
+import { BenefitTabRewardCard } from '../components/BenefitTabRewardCard';
 import type { JudgeParams } from '../App';
 
 type IncomePeriod = 'monthly' | 'annual';
@@ -73,6 +74,8 @@ export function InputPage({ onSubmit }: InputPageProps) {
           {'월급이나 순자산을 입력하면\n대한민국에서 내 위치를 알려드려요'}
         </Paragraph>
       </header>
+
+      <BenefitTabRewardCard />
 
       <div style={s.body}>
         {/* 판정 항목 */}
