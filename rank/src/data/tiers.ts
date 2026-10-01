@@ -9,7 +9,9 @@ export interface Tier {
 export const TIERS: Tier[] = [
   { maxP: 0.001, emoji: '🌌', title: '대한민국 최상위 0.001%', oneLiner: '전국에 다 합쳐도 300명이 채 안 돼요' },
   { maxP: 0.01, emoji: '🏔️', title: '전설의 상위 0.01%', oneLiner: '뉴스에서나 보던 그 사람들 급이에요' },
+  { maxP: 0.03, emoji: '🛸', title: '상위 0.03%의 희소함', oneLiner: '0.1%보다도 세 배는 더 좁은 문이에요' },
   { maxP: 0.1, emoji: '👑', title: '상위 0.1%의 세계', oneLiner: '여기는 공기부터 다른 곳이에요' },
+  { maxP: 0.3, emoji: '🦄', title: '상위 0.3%, 흔치 않은 자리', oneLiner: '1% 문턱보다 세 배 더 높은 곳이에요' },
   { maxP: 1, emoji: '💎', title: '상위 1% 클럽', oneLiner: '백 명 중 한 명만 서는 자리예요' },
   { maxP: 5, emoji: '✨', title: '다이아몬드 티어', oneLiner: '스무 명 중 한 명만 서는 자리예요' },
   { maxP: 10, emoji: '🏆', title: '상위 10% 클럽', oneLiner: '열 명 중 아홉 명이 당신을 올려다봐요' },
