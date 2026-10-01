@@ -12,6 +12,24 @@ import { readFile, writeFile } from 'node:fs/promises';
 const MIN_SERIES_LEN = 8; // 분기 18개 중 8개 미만은 그래프가 너무 듬성듬성해 제외
 const TARGET_PER_REGION = 28; // 지역당 대표 단지 수(가격 구간별 1개씩 뽑음)
 
+/**
+ * 최종 지역 탭 구성 — 원본 캐시가 어떤 LAWD_CD 묶음으로 수집됐는지와 무관하게,
+ * 여기서 단지의 sggName(시군구명)만 보고 다시 묶는다. 수집 시점 버킷("seoul-premium"에
+ * 과천·영통까지 섞여 있었음)과 화면에 보여줄 탭 구성을 분리해두면, "서울 상급지에
+ * 영통이 나온다" 같은 라벨 오류를 재수집 없이 캐시만 다시 썰어서 고칠 수 있다.
+ * 탭 노출 순서 = 이 배열 순서(강남·분당 바로 다음에 진짜 서울 상급지).
+ */
+const REGION_DEFINITIONS = [
+  { id: 'gangnam-bundang', label: '강남·분당', sggNames: ['강남구', '서초구', '송파구', '분당구'] },
+  { id: 'seoul-premium', label: '서울 상급지', sggNames: ['마포구', '용산구', '성동구'] },
+  { id: 'gyeonggi-premium', label: '경기 상급지', sggNames: ['과천시', '영통구'] },
+  { id: 'daejeon-premium', label: '대전 상급지', sggNames: ['유성구', '서구'] },
+  { id: 'daegu-premium', label: '대구 상급지', sggNames: ['수성구'] },
+  { id: 'busan-premium', label: '부산 상급지', sggNames: ['해운대구', '수영구'] },
+  { id: 'ulsan-premium', label: '울산 상급지', sggNames: ['남구'] },
+  { id: 'incheon-premium', label: '인천 상급지', sggNames: ['연수구'] },
+];
+
 /** 같은 단지(이름+동)가 평형별로 여러 개 잡혀 있으면, 최종 리스트에 같은 이름이 중복
  * 노출되는 문제가 생긴다(예산에 가까운 평형이 여러 개면 그 단지만 4칸을 다 채움).
  * 시계열이 가장 촘촘한 평형 하나만 그 단지의 대표로 남긴다. */
@@ -63,11 +81,15 @@ function pickRepresentatives(complexes) {
 async function main() {
   const raw = JSON.parse(await readFile(new URL('./.cache/apt-raw.json', import.meta.url), 'utf-8'));
 
+  // 수집 당시 버킷과 무관하게 전체 단지를 한 풀로 모은 뒤, sggName 기준으로 다시 나눈다.
+  const allComplexes = Object.values(raw).flatMap((region) => region.complexes);
+
   const output = {};
-  for (const [id, region] of Object.entries(raw)) {
-    const picked = pickRepresentatives(region.complexes);
-    output[id] = { label: region.label, complexes: picked };
-    console.log(`${region.label}: ${region.complexes.length}개 중 ${picked.length}개 선택`);
+  for (const def of REGION_DEFINITIONS) {
+    const matched = allComplexes.filter((c) => def.sggNames.includes(c.sggName));
+    const picked = pickRepresentatives(matched);
+    output[def.id] = { label: def.label, complexes: picked };
+    console.log(`${def.label}: ${matched.length}개 중 ${picked.length}개 선택`);
   }
 
   const ts = `// 자동 생성 파일 — scripts/fetch-apt-prices.mjs → build-apt-dataset.mjs 순서로 다시 생성하세요. 직접 수정하지 마세요.
