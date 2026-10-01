@@ -17,6 +17,7 @@ import {
 } from '../data/rank';
 import { getTier } from '../data/tiers';
 import { logClick, logImpression } from '../lib/analytics';
+import { claimBenefitTabRewardIfEligible } from '../lib/promotion';
 import { AptGoalCard } from '../components/AptGoalCard';
 import type { JudgeParams } from '../App';
 
@@ -105,6 +106,8 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
     // 전환지표용: 판정 결과까지 실제로 확인했는지가 이 앱의 서비스 가치 완료 시점
     logImpression('result_view', { metric, age_group: ageGroup, region });
     logImpression('cross_promo_view', { metric });
+    // 혜택탭으로 들어와 결과까지 본 사람에게만(마커 없으면 내부에서 조용히 무시) 10원 지급.
+    void claimBenefitTabRewardIfEligible();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
