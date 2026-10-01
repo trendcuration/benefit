@@ -20,7 +20,7 @@ export interface Subsidy {
 }
 
 /** 이 데이터의 마지막 콘텐츠 갱신일(신규 항목 추가·금액/조건 재점검 기준일) */
-export const LAST_UPDATED = '2026-09-01';
+export const LAST_UPDATED = '2026-10-01';
 
 export const subsidies: Subsidy[] = [
   // ── 주거 ──
@@ -146,8 +146,8 @@ export const subsidies: Subsidy[] = [
   {
     id: 10,
     title: '초기창업패키지',
-    description: '창업 3년 이내 청년 창업자에게 사업화 자금 최대 1억원 및 전담 멘토링을 지원합니다.',
-    amount: '최대 1억원',
+    description: '창업 3년 이내 창업자에게 사업화 자금과 전담 멘토링을 지원합니다. 2026년부터 일반형·딥테크 특화형·투자연계형 3가지로 세분화되어, 딥테크 특화형은 최대 1억 5천만원까지 지원됩니다.',
+    amount: '일반형·투자연계형 최대 1억원 / 딥테크 특화형 최대 1억 5천만원',
     deadline: '상시',
     regions: ['전국'],
     category: '취업·창업',
@@ -304,6 +304,19 @@ export const subsidies: Subsidy[] = [
     url: 'https://www.mogef.go.kr/io/ind/io_ind_s005d.do?mid=old919&bbtSn=15',
   },
   {
+    id: 48,
+    title: '양육비 선지급제',
+    description: '상대방이 양육비를 지급하지 않는 한부모가족에게 국가가 양육비를 먼저 지급하고, 이후 양육비 채무자에게 구상합니다. 기준 중위소득 65% 이하 한부모가족 아동양육비(위 항목)와는 다른 별도 제도입니다. 2026년 10월 29일부터 소득기준(기존 중위소득 150% 이하)이 폐지되어, 양육비 채권이 있고 받아야 할 양육비를 못 받고 있다면 소득과 무관하게 신청할 수 있습니다.',
+    amount: '미성년 자녀 1인당 월 최대 20만원 (성년까지)',
+    deadline: '소득기준 폐지 2026-10-29 시행',
+    regions: ['전국'],
+    category: '복지·돌봄',
+    ageGroups: ['20대', '30대', '40대', '50대'],
+    genders: ['전체'],
+    source: '여성가족부 (양육비이행관리원)',
+    url: 'https://www.childsupport.or.kr',
+  },
+  {
     id: 22,
     title: '장애인연금',
     description: '18세 이상 중증장애인 중 소득 하위 70%에게 매월 최대 43만 9,700원(기초급여+부가급여)을 지급합니다.',
@@ -367,6 +380,19 @@ export const subsidies: Subsidy[] = [
     genders: ['여성'],
     source: '보건복지부',
     url: 'https://www.nhis.or.kr',
+  },
+  {
+    id: 49,
+    title: '에너지바우처',
+    description: '기초생활수급자·차상위계층 중 노인·장애인·영유아·임산부 등이 포함된 가구에 냉·난방비를 바우처로 지원합니다. 하절기·동절기 구분 없이 2026년 7월 1일부터 2027년 5월 31일까지 자유롭게 사용할 수 있고, 동절기 요금차감은 10월 1일부터 시작됩니다. 아직 신청하지 않았다면 12월 31일까지 신청 가능합니다.',
+    amount: '1인가구 29만 5,200원 / 2인 40만 7,500원 / 3인 53만 2,700원 / 4인 이상 70만 1,300원 (연간 총액)',
+    deadline: '신청 ~2026-12-31 · 동절기 사용 2026-10-01부터',
+    regions: ['전국'],
+    category: '복지·돌봄',
+    ageGroups: ['10대', '20대', '30대', '40대', '50대', '60대', '70대이상'],
+    genders: ['전체'],
+    source: '한국에너지공단',
+    url: 'https://www.energyv.or.kr',
   },
 
   // ── 교육 ──
