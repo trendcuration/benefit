@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
 import { AGE_GROUPS, GENDERS, LAST_UPDATED, type AgeGroup, type Gender } from '../data/subsidies';
-import { isFromBenefitTab } from '../lib/referrer';
+import { isFromBenefitMission } from '../lib/referrer';
 
 interface FilterPageProps {
   onSearch: (ageGroup: AgeGroup | null, gender: Gender) => void;
@@ -10,9 +10,10 @@ interface FilterPageProps {
 export function FilterPage({ onSearch }: FilterPageProps) {
   const [selectedAge, setSelectedAge] = useState<AgeGroup | null>(null);
   const [selectedGender, setSelectedGender] = useState<Gender>('전체');
-  // 리워드는 혜택탭 진입자에게만 지급되므로(ResultsPage 참고), 버튼 문구도 그 경우에만
-  // 리워드를 언급한다 — 다른 경로로 들어온 사람에게 실제로 안 주는 리워드를 약속하지 않기 위함.
-  const [cameFromBenefitTab] = useState(isFromBenefitTab);
+  // 리워드는 혜택탭 미션 카드로 들어와 '지원금 상세보기'까지 한 사람에게만 지급되므로
+  // (ResultsPage 참고), 그 경우에만 조건을 미리 안내한다 — 다른 경로로 들어온 사람에게
+  // 실제로 안 주는 리워드를 약속하지 않기 위함.
+  const [cameFromBenefitMission] = useState(isFromBenefitMission);
 
   return (
     <div style={s.container}>
@@ -88,6 +89,15 @@ export function FilterPage({ onSearch }: FilterPageProps) {
 
       {/* 하단 CTA */}
       <div style={s.footer}>
+        {/* 혜택탭 미션으로 들어온 경우, 유저가 검색을 시작하기 전에 지급 조건을 먼저 밝힌다.
+            혜택탭 카드는 '10원'만 보여주므로 여기서 '무엇을 해야 받는지'를 분명히 해둔다. */}
+        {cameFromBenefitMission && (
+          <div style={s.missionNotice}>
+            <Paragraph typography="t5" style={s.missionNoticeText}>
+              {'💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 10원을 받아요'}
+            </Paragraph>
+          </div>
+        )}
         <div style={s.adNotice}>
           <Paragraph typography="t5" color="#8B95A1" style={s.adNoticeText}>
             {'📺 아래 버튼을 누르면\n결과를 보기 전 잠깐 광고가 표시돼요'}
@@ -100,11 +110,7 @@ export function FilterPage({ onSearch }: FilterPageProps) {
           variant="fill"
           onClick={() => onSearch(selectedAge, selectedGender)}
         >
-          {cameFromBenefitTab
-            ? '지원금 결과 조회하고 10원 받기'
-            : selectedAge
-              ? '지원금 검색하기'
-              : '전체 지원금 보기'}
+          {selectedAge ? '지원금 검색하기' : '전체 지원금 보기'}
         </Button>
         <Paragraph typography="t5" color="#8B95A1" style={s.footerNote}>
           {`복지로·공공데이터 기준 최신 정보 제공\n[${LAST_UPDATED} 업데이트]`}
@@ -209,6 +215,20 @@ const s: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     whiteSpace: 'pre-line',
     lineHeight: 1.6,
+  },
+  missionNotice: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '10px 12px',
+    marginBottom: '8px',
+    backgroundColor: '#EEF3FF',
+    borderRadius: '10px',
+  },
+  missionNoticeText: {
+    textAlign: 'center',
+    whiteSpace: 'pre-line',
+    color: '#1B64DA',
   },
   adNotice: {
     width: '100%',

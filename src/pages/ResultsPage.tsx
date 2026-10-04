@@ -16,7 +16,8 @@ import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { logClick } from '../lib/analytics';
 import { openExternal } from '../lib/links';
-import { isFromBenefitTab } from '../lib/referrer';
+import { grantSubsidyDetailReward } from '../lib/promotion';
+import { isFromBenefitMission } from '../lib/referrer';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
@@ -53,39 +54,6 @@ function attachTossBanner(
   };
 }
 
-// 지원금 조회 리워드 프로모션. amount는 콘솔의 maxSingleRewardAmount(10원)와 반드시 일치해야 한다.
-const SUBSIDY_VIEW_PROMOTION_CODE = '01M3NX99WYX3M9Y5YYDAHQ786Q';
-const SUBSIDY_VIEW_PROMOTION_AMOUNT = 10;
-
-/**
- * 이 프로모션의 광고 타겟은 혜택탭 진입자이므로, 최초 진입 스킴의 referrer가
- * benefit_tab일 때만(https://developers-apps-in-toss.toss.im/documentation/common/growth/analytics/referrer.md)
- * 지원금 목록이 표시되는 시점에 리워드 지급을 1회 시도한다.
- * 4113(이미 지급됨)·4109(미실행 상태) 등은 반복 호출 시 정상적으로 발생할 수 있으므로
- * 사용자에게 노출하지 않고 조용히 무시한다. 하루 1회 한도는 서버가 막아주므로
- * 클라이언트에서 별도 중복 호출 방지 로직은 두지 않는다(실패해도 무해).
- */
-function grantSubsidyViewReward(): void {
-  if (!isFromBenefitTab()) return;
-
-  import('@apps-in-toss/web-framework')
-    .then(({ grantPromotionReward }) => {
-      return grantPromotionReward({
-        params: {
-          promotionCode: SUBSIDY_VIEW_PROMOTION_CODE,
-          amount: SUBSIDY_VIEW_PROMOTION_AMOUNT,
-        },
-      }).then((result) => {
-        if (result && typeof result === 'object' && 'errorCode' in result) {
-          console.warn('[promotion] grantPromotionReward 실패:', result.errorCode, result.message);
-        }
-      });
-    })
-    .catch((error) => {
-      console.warn('[promotion] grantPromotionReward 예외:', error);
-    });
-}
-
 interface ResultsPageProps {
   ageGroup: AgeGroup | null;
   gender: Gender;
@@ -112,17 +80,23 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     isLimitReached,
     unlockUnlimited,
   } = useBookmarks();
+  // 리워드 대상은 혜택탭 미션 카드 경유자뿐이다. 화면 진입만으로는 주지 않고,
+  // 아래 handleOpenDetail에서 '지원금 상세보기를 실제로 1건 이상'했을 때 지급한다.
+  const [fromBenefitMission] = useState(isFromBenefitMission);
+  const [rewardGranted, setRewardGranted] = useState(false);
+
+  const handleOpenDetail = () => {
+    if (!fromBenefitMission) return;
+    void grantSubsidyDetailReward().then((outcome) => {
+      if (outcome === 'ok') setRewardGranted(true);
+    });
+  };
 
   useEffect(() => {
     setLoading(true);
     setSubsidies(filterSubsidies(ageGroup, gender));
     setLoading(false);
   }, [ageGroup, gender]);
-
-  // 지원금 목록이 표시되는 화면이 마운트될 때 조회 리워드 지급을 1회 시도한다.
-  useEffect(() => {
-    grantSubsidyViewReward();
-  }, []);
 
   useEffect(() => {
     const el = bannerRef.current;
@@ -227,6 +201,18 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           {loading ? '불러오는 중...' : `${subsidies.length}개 · ${LAST_UPDATED} 업데이트`}
         </Paragraph>
       </div>
+
+      {/* 혜택탭 미션 안내: 유저가 노력을 들이기 전에 지급 조건을 먼저 밝힌다.
+          지급이 실제로 성공했을 때만 완료 문구로 바꾼다(주지 않은 걸 줬다고 말하지 않기 위함). */}
+      {fromBenefitMission && (
+        <div style={s.missionNotice}>
+          <Paragraph typography="t5" style={s.missionNoticeText}>
+            {rewardGranted
+              ? '✅ 10원을 지급했어요! 토스 혜택탭에서 확인할 수 있어요'
+              : '💰 지원금 1개를 눌러 자세히 보면 10원을 받아요'}
+          </Paragraph>
+        </div>
+      )}
 
       {/* 배너 광고 */}
       <div ref={bannerRef} style={s.banner} />
@@ -378,6 +364,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
                 bookmarked={isBookmarked(item.id)}
                 unlocking={unlockingId === item.id}
                 onToggleBookmark={() => handleToggleBookmark(item.id)}
+                onOpenDetail={handleOpenDetail}
               />
               {(index + 1) % INFEED_BANNER_INTERVAL === 0 && index !== sorted.length - 1 && (
                 <InFeedBanner key={`banner-${item.id}`} />
@@ -439,9 +426,17 @@ interface SubsidyCardProps {
   bookmarked: boolean;
   unlocking: boolean;
   onToggleBookmark: () => void;
+  /** 지원금 상세(신청 사이트)를 실제로 열었을 때 알린다 — 리워드 지급 조건이다. */
+  onOpenDetail: () => void;
 }
 
-function SubsidyCard({ item, bookmarked, unlocking, onToggleBookmark }: SubsidyCardProps) {
+function SubsidyCard({
+  item,
+  bookmarked,
+  unlocking,
+  onToggleBookmark,
+  onOpenDetail,
+}: SubsidyCardProps) {
   const dday = item.isUrgent ? getDday(item.deadline) : null;
 
   const handleShare = () => {
@@ -455,6 +450,7 @@ function SubsidyCard({ item, bookmarked, unlocking, onToggleBookmark }: SubsidyC
     event.stopPropagation();
     // 전환지표용: 지원금을 실제로 눌러 신청 사이트로 넘어가는 것이 이 앱의 서비스 가치 완료 시점
     logClick('subsidy_click', { subsidy_id: item.id, category: item.category });
+    onOpenDetail();
     openExternal(item.url);
   };
 
@@ -621,6 +617,17 @@ const s: Record<string, React.CSSProperties> = {
     gap: '8px',
     backgroundColor: '#FFF4E5',
     padding: '12px 16px',
+  },
+  missionNotice: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF3FF',
+    padding: '12px 16px',
+  },
+  missionNoticeText: {
+    textAlign: 'center',
+    color: '#1B64DA',
   },
   categoryRowWrap: {
     position: 'relative',
