@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
 import { AGE_GROUPS, GENDERS, LAST_UPDATED, type AgeGroup, type Gender } from '../data/subsidies';
+import { IS_PROMOTION_TEST } from '../lib/promotion';
 import { isFromBenefitMission } from '../lib/referrer';
 
 interface FilterPageProps {
@@ -13,7 +14,9 @@ export function FilterPage({ onSearch }: FilterPageProps) {
   // 리워드는 혜택탭 미션 카드로 들어와 '지원금 상세보기'까지 한 사람에게만 지급되므로
   // (ResultsPage 참고), 그 경우에만 조건을 미리 안내한다 — 다른 경로로 들어온 사람에게
   // 실제로 안 주는 리워드를 약속하지 않기 위함.
-  const [cameFromBenefitMission] = useState(isFromBenefitMission);
+  const [cameFromBenefitMission] = useState(
+    () => IS_PROMOTION_TEST || isFromBenefitMission()
+  );
 
   return (
     <div style={s.container}>

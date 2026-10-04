@@ -9,15 +9,21 @@ import { logClick } from './analytics';
 const LIVE_PROMOTION_CODE = '01M43MSF4HJAWJ89CW7H0TES8D';
 
 /**
- * 프로모션은 시작(RUNNING) 전에 테스트 지급을 한 번 성공시켜야 하고(콘솔 isTested),
- * 그때는 'TEST_' 를 붙인 코드로 호출해야 한다.
- * 테스트 번들은 `VITE_PROMOTION_TEST=1 npm run build` 로 빌드한다 — 플래그를 주지 않으면
- * 항상 실제 코드로 빌드되므로 테스트 코드가 라이브에 섞일 일이 없다.
+ * 테스트 번들 여부. `VITE_PROMOTION_TEST=1 npm run build` 로만 true가 되고,
+ * 플래그 없이 빌드하면 항상 false다 — 테스트 설정이 라이브에 섞일 일이 없다.
+ *
+ * 프로모션은 시작(RUNNING) 전에 테스트 지급을 한 번 성공시켜야 하는데(콘솔 isTested),
+ * 혜택탭 미션 카드는 RUNNING이 돼야 노출된다. 그래서 테스트 시점에는 카드를 눌러
+ * `src=benefit_mission`을 받을 방법이 없고, 진입 경로 게이트가 테스트 자체를 막는다.
+ * 이 플래그는 그 고리를 끊기 위해 테스트 번들에서만 게이트를 우회하는 데 쓴다
+ * (실제 게이트 동작은 출시 후 promo_grant_ok 로그 건수로 검증한다).
  */
-const PROMOTION_CODE =
-  import.meta.env.VITE_PROMOTION_TEST === '1'
-    ? `TEST_${LIVE_PROMOTION_CODE}`
-    : LIVE_PROMOTION_CODE;
+export const IS_PROMOTION_TEST = import.meta.env.VITE_PROMOTION_TEST === '1';
+
+/** 테스트 번들에서는 'TEST_' 를 붙인 코드로 호출해야 콘솔 isTested가 기록된다. */
+const PROMOTION_CODE = IS_PROMOTION_TEST
+  ? `TEST_${LIVE_PROMOTION_CODE}`
+  : LIVE_PROMOTION_CODE;
 
 /**
  * 1회 지급액. 콘솔의 maxSingleRewardAmount·benefitTabSpec.rewardAmount와 반드시 일치해야 한다.

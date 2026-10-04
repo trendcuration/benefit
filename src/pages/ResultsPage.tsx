@@ -16,7 +16,7 @@ import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { logClick } from '../lib/analytics';
 import { openExternal } from '../lib/links';
-import { grantSubsidyDetailReward } from '../lib/promotion';
+import { grantSubsidyDetailReward, IS_PROMOTION_TEST } from '../lib/promotion';
 import { isFromBenefitMission } from '../lib/referrer';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
@@ -82,7 +82,8 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   } = useBookmarks();
   // 리워드 대상은 혜택탭 미션 카드 경유자뿐이다. 화면 진입만으로는 주지 않고,
   // 아래 handleOpenDetail에서 '지원금 상세보기를 실제로 1건 이상'했을 때 지급한다.
-  const [fromBenefitMission] = useState(isFromBenefitMission);
+  // 테스트 번들에서만 진입 경로 판정을 건너뛴다(카드가 RUNNING 전에는 안 보이기 때문).
+  const [fromBenefitMission] = useState(() => IS_PROMOTION_TEST || isFromBenefitMission());
   const [rewardGranted, setRewardGranted] = useState(false);
 
   const handleOpenDetail = () => {
