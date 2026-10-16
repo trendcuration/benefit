@@ -1,8 +1,9 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
-import { Badge, Button, Paragraph, TextField } from '@toss/tds-mobile';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { TextField } from '@toss/tds-mobile';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
+  CATEGORY_ICON,
   filterSubsidies,
   LAST_UPDATED,
   REGIONS,
@@ -12,9 +13,13 @@ import {
   type Region,
   type Subsidy,
 } from '../data/subsidies';
+import { getSubsidyDetail } from '../data/subsidyDetails';
 import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
+import { EmojiIcon } from '../components/EmojiIcon';
+import { DetailPage } from './DetailPage';
 import { logClick } from '../lib/analytics';
+import { attachTossBanner } from '../lib/banner';
 import { openExternal } from '../lib/links';
 import { grantSubsidyDetailReward, IS_PROMOTION_TEST } from '../lib/promotion';
 import { isFromBenefitMission } from '../lib/referrer';
@@ -25,34 +30,6 @@ const REWARDED_AD_ID = 'ait.v2.live.327ced0813c8420f';
 const INFEED_BANNER_INTERVAL = 6;
 
 type SortKey = 'default' | 'amount' | 'deadline';
-
-/**
- * TossAds.attachBanner()는 initialize()로 광고 SDK를 먼저 불러오지 않으면
- * "Call initialize() before attaching an ad" 에러로 조용히 실패합니다.
- */
-function attachTossBanner(
-  adGroupId: string,
-  el: HTMLElement,
-  onResult: (result: { destroy: () => void } | undefined) => void
-) {
-  let cancelled = false;
-  import('@apps-in-toss/web-framework')
-    .then(({ TossAds }) => {
-      if (cancelled || !TossAds.attachBanner.isSupported()) return;
-      TossAds.initialize({
-        callbacks: {
-          onInitialized: () => {
-            if (cancelled) return;
-            onResult(TossAds.attachBanner(adGroupId, el));
-          },
-        },
-      });
-    })
-    .catch(() => {});
-  return () => {
-    cancelled = true;
-  };
-}
 
 interface ResultsPageProps {
   ageGroup: AgeGroup | null;
@@ -72,6 +49,9 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [unlockingId, setUnlockingId] = useState<number | null>(null);
   // 무료 한도 초과 시 리워드 광고를 보기 전에 안내/확인을 받기 위한 대상 항목 id
   const [confirmUnlockId, setConfirmUnlockId] = useState<number | null>(null);
+  // 상세 요약 화면에 띄운 지원금
+  const [detailItem, setDetailItem] = useState<Subsidy | null>(null);
+  const [showScamTips, setShowScamTips] = useState(false);
   const {
     isBookmarked,
     toggle: toggleBookmark,
@@ -86,12 +66,17 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [fromBenefitMission] = useState(() => IS_PROMOTION_TEST || isFromBenefitMission());
   const [rewardGranted, setRewardGranted] = useState(false);
 
-  const handleOpenDetail = () => {
+  const handleOpenDetail = (item: Subsidy) => {
+    // 전환지표: 지원금을 눌러 자세히 보는 것이 이 앱의 서비스 가치 완료 시점(신청 사이트 이동은 subsidy_apply_click)
+    logClick('subsidy_click', { subsidy_id: item.id, category: item.category });
+    setDetailItem(item);
     if (!fromBenefitMission) return;
     void grantSubsidyDetailReward().then((outcome) => {
       if (outcome === 'ok') setRewardGranted(true);
     });
   };
+
+  const closeDetail = useCallback(() => setDetailItem(null), []);
 
   useEffect(() => {
     setLoading(true);
@@ -123,11 +108,12 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     : regionFiltered;
   const trimmedQuery = query.trim().toLowerCase();
   const searchFiltered = trimmedQuery
-    ? bookmarkFiltered.filter(
-        (s) =>
-          s.title.toLowerCase().includes(trimmedQuery) ||
-          s.description.toLowerCase().includes(trimmedQuery)
-      )
+    ? bookmarkFiltered.filter((s) => {
+        const d = getSubsidyDetail(s.id);
+        return [s.title, s.description, d?.headline, d?.target]
+          .filter(Boolean)
+          .some((text) => text!.toLowerCase().includes(trimmedQuery));
+      })
     : bookmarkFiltered;
   const sorted = [...searchFiltered].sort((a, b) => {
     if (sort === 'amount') return parseAmount(b.amount) - parseAmount(a.amount);
@@ -144,6 +130,15 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     }
     // 무료 북마크 한도 초과: 광고를 바로 띄우지 않고, 무엇을 얻는지 안내한 뒤 사용자가 선택했을 때만 광고를 보여준다.
     setConfirmUnlockId(id);
+  };
+
+  const handleShare = (item: Subsidy) => {
+    const d = getSubsidyDetail(item.id);
+    import('@apps-in-toss/web-framework')
+      .then(({ share }) =>
+        share({ message: `[${item.title}]\n${d?.headline ?? item.amount}\n${item.url}` })
+      )
+      .catch(() => {});
   };
 
   // 사용자가 안내에서 "광고 보고 무제한 북마크"를 선택한 경우: 리워드 광고 시청 후 무제한 해제 + 해당 항목 북마크
@@ -192,180 +187,161 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           onCancel={() => setConfirmUnlockId(null)}
         />
       )}
+
+      {detailItem && (
+        <DetailPage
+          item={detailItem}
+          detail={getSubsidyDetail(detailItem.id)}
+          bookmarked={isBookmarked(detailItem.id)}
+          unlocking={unlockingId === detailItem.id}
+          onToggleBookmark={() => handleToggleBookmark(detailItem.id)}
+          onShare={() => handleShare(detailItem)}
+          onClose={closeDetail}
+        />
+      )}
+
       {/* 조건 요약 (토스 네이티브 내비게이션 바의 뒤로가기 버튼과 중복되지 않도록
           자체 헤더/뒤로가기 버튼 없이 본문 상단에만 표기) */}
-      <div style={s.summaryLine}>
-        <Paragraph typography="t3" fontWeight="bold" style={s.headerTitle}>
-          {ageGroup ?? '전체'} · {gender} 지원금
-        </Paragraph>
-        <Paragraph typography="t4" color="#3182F6">
-          {loading ? '불러오는 중...' : `${subsidies.length}개 · ${LAST_UPDATED} 업데이트`}
-        </Paragraph>
+      <div style={s.hero}>
+        <p style={s.heroSub}>
+          <span style={s.heroCond}>
+            {ageGroup ?? '전체 연령'} · {gender}
+          </span>
+          에 맞는
+        </p>
+        <h1 style={s.heroTitle}>{loading ? '지원금을 찾고 있어요' : `지원금 ${subsidies.length}개 찾았어요`}</h1>
+        <p style={s.heroNote}>
+          {LAST_UPDATED} 업데이트
+          {urgentCount > 0 && <span style={s.heroUrgent}> · 🔥 마감 임박 {urgentCount}개</span>}
+        </p>
       </div>
 
       {/* 혜택탭 미션 안내: 유저가 노력을 들이기 전에 지급 조건을 먼저 밝힌다.
           지급이 실제로 성공했을 때만 완료 문구로 바꾼다(주지 않은 걸 줬다고 말하지 않기 위함). */}
       {fromBenefitMission && (
         <div style={s.missionNotice}>
-          <Paragraph typography="t5" style={s.missionNoticeText}>
+          <p style={s.missionNoticeText}>
             {rewardGranted
               ? '✅ 10원을 지급했어요! 토스 혜택탭에서 확인할 수 있어요'
               : '💰 지원금 1개를 눌러 자세히 보면 10원을 받아요'}
-          </Paragraph>
+          </p>
         </div>
       )}
+
+      {/* 지원금 사기 예방 안내 */}
+      <div style={s.infoCardWrap}>
+        <button
+          type="button"
+          style={s.infoCard}
+          onClick={() => setShowScamTips((v) => !v)}
+          aria-expanded={showScamTips}
+        >
+          <EmojiIcon codepoint="1F6E1" fallback="🛡️" size={28} />
+          <span style={s.infoCardTexts}>
+            <span style={s.infoCardTitle}>지원금 사기 문자 예방법</span>
+            <span style={s.infoCardSub}>신청 전에 미리 알아두세요</span>
+          </span>
+          <span style={s.chevron}>{showScamTips ? '⌃' : '⌄'}</span>
+        </button>
+        {showScamTips && (
+          <ul style={s.tips}>
+            {SCAM_TIPS.map((tip) => (
+              <li key={tip} style={s.tip}>
+                <span style={s.tipDot}>•</span>
+                {tip}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {/* 배너 광고 */}
       <div ref={bannerRef} style={s.banner} />
 
-      {/* 로딩 */}
-      {loading && (
-        <div style={s.loadingWrap}>
-          <Paragraph typography="t4" color="#6B7684">
-            지원금 정보를 불러오고 있어요...
-          </Paragraph>
-        </div>
-      )}
-
-      {/* 마감 임박 알림 */}
-      {urgentCount > 0 && (
-        <div style={s.urgentBanner}>
-          <span>🔥</span>
-          <Paragraph typography="t4" style={{ whiteSpace: 'pre-line', color: '#B45309' }}>
-            {'마감 임박 지원금 '}
-            <strong>{urgentCount}개</strong>
-            {'가 있어요!\n서둘러 확인하세요'}
-          </Paragraph>
-        </div>
-      )}
-
-      {/* 카테고리 필터 */}
-      <div style={s.categoryRowWrap}>
-        <div style={s.categoryRow}>
-          <Button
-            size="small"
-            color="primary"
-            variant={activeCategory === null ? 'fill' : 'weak'}
-            onClick={() => setActiveCategory(null)}
-            style={s.chipBtn}
-          >
-            전체
-          </Button>
+      {/* 카테고리 탭 (스크롤해도 상단에 고정) */}
+      <div style={s.tabsWrap}>
+        <div style={s.tabs} role="tablist">
+          <Tab label="전체" active={activeCategory === null} onClick={() => setActiveCategory(null)} />
           {CATEGORIES.map((cat) => {
             const count = subsidies.filter((item) => item.category === cat).length;
             if (count === 0) return null;
-            const isActive = activeCategory === cat;
             return (
-              <Button
+              <Tab
                 key={cat}
-                size="small"
-                color="primary"
-                variant={isActive ? 'fill' : 'weak'}
-                onClick={() => setActiveCategory(isActive ? null : cat)}
-                style={s.chipBtn}
-              >
-                {CATEGORY_EMOJI[cat]} {cat}
-              </Button>
+                label={cat}
+                active={activeCategory === cat}
+                onClick={() => setActiveCategory(cat)}
+              />
             );
           })}
         </div>
-        <div style={s.categoryFade} />
       </div>
 
-      {/* 지역 필터 */}
-      <div style={s.categoryRowWrap}>
-        <div style={s.categoryRow}>
-          <Button
-            size="small"
-            color="primary"
-            variant={activeRegion === null ? 'fill' : 'weak'}
-            onClick={() => setActiveRegion(null)}
-            style={s.chipBtn}
-          >
-            전체 지역
-          </Button>
-          {REGIONS.map((region) => {
-            const isActive = activeRegion === region;
-            return (
-              <Button
-                key={region}
-                size="small"
-                color="primary"
-                variant={isActive ? 'fill' : 'weak'}
-                onClick={() => setActiveRegion(isActive ? null : region)}
-                style={s.chipBtn}
-              >
-                📍 {region}
-              </Button>
-            );
-          })}
+      {/* 지역·찜 필터 */}
+      <div style={s.filterPanel}>
+        <div style={s.pillRow}>
+          <Pill
+            label={`${showBookmarkedOnly ? '💙' : '🤍'} 찜 ${bookmarkedIds.length}`}
+            active={showBookmarkedOnly}
+            onClick={() => setShowBookmarkedOnly((v) => !v)}
+          />
+          <span style={s.pillDivider} />
+          <Pill label="전체 지역" active={activeRegion === null} onClick={() => setActiveRegion(null)} />
+          {REGIONS.map((region) => (
+            <Pill
+              key={region}
+              label={region}
+              active={activeRegion === region}
+              onClick={() => setActiveRegion(activeRegion === region ? null : region)}
+            />
+          ))}
         </div>
-        <div style={s.categoryFade} />
-      </div>
-
-      {/* 검색 */}
-      <div style={s.searchWrap}>
-        <TextField.Clearable
-          variant="box"
-          placeholder="지원금 검색 (예: 청년, 월세, 육아)"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
-
-      {/* 찜한 것만 보기 */}
-      <div style={s.bookmarkToggleWrap}>
-        <Button
-          size="small"
-          color="primary"
-          variant={showBookmarkedOnly ? 'fill' : 'weak'}
-          onClick={() => setShowBookmarkedOnly((v) => !v)}
-        >
-          {showBookmarkedOnly ? '💙' : '🤍'} 찜한 지원금만 보기 ({bookmarkedIds.length})
-        </Button>
+        <div style={s.searchWrap}>
+          <TextField.Clearable
+            variant="box"
+            placeholder="지원금 검색 (예: 청년, 월세, 육아)"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
         {isLimitReached && (
-          <Paragraph typography="t5" color="#8B95A1" style={s.limitHint}>
-            📺 무료 북마크 5개를 다 채웠어요 · 하트를 누르면 광고를 본 뒤 북마크가 무제한으로 늘어나요
-          </Paragraph>
+          <p style={s.limitHint}>
+            📺 무료 찜 5개를 다 채웠어요 · 하트를 누르면 광고를 본 뒤 찜이 무제한으로 늘어나요
+          </p>
         )}
       </div>
 
-      {/* 정렬 + 결과 수 */}
-      <div style={s.sortRow}>
-        <Paragraph typography="t4" color="#6B7684">
-          {activeCategory
-            ? `${CATEGORY_EMOJI[activeCategory]} ${activeCategory} `
-            : '전체 '}
-          {sorted.length}개
-        </Paragraph>
-        <div style={s.sortBtns}>
-          {(['default', 'amount', 'deadline'] as SortKey[]).map((key) => (
-            <Button
-              key={key}
-              size="small"
-              color="primary"
-              variant={sort === key ? 'fill' : 'weak'}
-              onClick={() => setSort(key)}
-            >
-              {SORT_LABEL[key]}
-            </Button>
-          ))}
-        </div>
-      </div>
-
       {/* 결과 목록 */}
-      <div style={s.list}>
+      <div style={s.listPanel}>
+        <div style={s.sortRow}>
+          <span style={s.listTitle}>
+            {activeCategory ?? '전체'} <span style={s.listCount}>{sorted.length}</span>
+          </span>
+          <div style={s.sortBtns}>
+            {(['default', 'amount', 'deadline'] as SortKey[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                style={sort === key ? { ...s.sortBtn, ...s.sortBtnActive } : s.sortBtn}
+                onClick={() => setSort(key)}
+              >
+                {SORT_LABEL[key]}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {sorted.length === 0 ? (
           <EmptyState onBack={onBack} />
         ) : (
           sorted.map((item, index) => (
             <Fragment key={item.id}>
-              <SubsidyCard
+              <SubsidyRow
                 item={item}
                 bookmarked={isBookmarked(item.id)}
                 unlocking={unlockingId === item.id}
                 onToggleBookmark={() => handleToggleBookmark(item.id)}
-                onOpenDetail={handleOpenDetail}
+                onOpen={() => handleOpenDetail(item)}
               />
               {(index + 1) % INFEED_BANNER_INTERVAL === 0 && index !== sorted.length - 1 && (
                 <InFeedBanner key={`banner-${item.id}`} />
@@ -377,27 +353,37 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
 
       {/* 더보기 */}
       <div style={s.moreWrap}>
-        <Button
-          display="full"
-          size="xlarge"
-          color="primary"
-          variant="weak"
-          onClick={() => openExternal('https://www.bokjiro.go.kr')}
-        >
-          복지로에서 더 많은 지원금 보기 →
-        </Button>
-        <Button
-          display="full"
-          size="large"
-          color="primary"
-          variant="weak"
-          onClick={onBack}
-          style={s.backToFilterBtn}
-        >
-          다른 조건으로 검색하기
-        </Button>
+        <button type="button" style={s.moreBtn} onClick={() => openExternal('https://www.bokjiro.go.kr')}>
+          복지로에서 더 많은 지원금 보기 ›
+        </button>
+        <button type="button" style={s.moreBtn} onClick={onBack}>
+          다른 조건으로 다시 찾기 ›
+        </button>
       </div>
     </div>
+  );
+}
+
+// ── 탭·필 ──
+function Tab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      style={active ? { ...s.tab, ...s.tabActive } : s.tab}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button type="button" style={active ? { ...s.pill, ...s.pillActive } : s.pill} onClick={onClick}>
+      {label}
+    </button>
   );
 }
 
@@ -421,106 +407,59 @@ function InFeedBanner() {
   return <div ref={ref} style={s.infeedBanner} />;
 }
 
-// ── 지원금 카드 ──
-interface SubsidyCardProps {
+// ── 지원금 한 줄 ──
+interface SubsidyRowProps {
   item: Subsidy;
   bookmarked: boolean;
   unlocking: boolean;
   onToggleBookmark: () => void;
-  /** 지원금 상세(신청 사이트)를 실제로 열었을 때 알린다 — 리워드 지급 조건이다. */
-  onOpenDetail: () => void;
+  /** 상세 요약 화면을 연다 — 리워드 지급 조건(상세보기 1건)이다. */
+  onOpen: () => void;
 }
 
-function SubsidyCard({
-  item,
-  bookmarked,
-  unlocking,
-  onToggleBookmark,
-  onOpenDetail,
-}: SubsidyCardProps) {
+function SubsidyRow({ item, bookmarked, unlocking, onToggleBookmark, onOpen }: SubsidyRowProps) {
+  const detail = getSubsidyDetail(item.id);
+  const icon = CATEGORY_ICON[item.category];
   const dday = item.isUrgent ? getDday(item.deadline) : null;
-
-  const handleShare = () => {
-    import('@apps-in-toss/web-framework')
-      .then(({ share }) => share({ message: `[${item.title}]\n${item.amount}\n${item.url}` }))
-      .catch(() => {});
-  };
-
-  const handleOpen = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    // 전환지표용: 지원금을 실제로 눌러 신청 사이트로 넘어가는 것이 이 앱의 서비스 가치 완료 시점
-    logClick('subsidy_click', { subsidy_id: item.id, category: item.category });
-    onOpenDetail();
-    openExternal(item.url);
-  };
+  const regionLabel = item.regions.includes('전국') ? null : item.regions.join('·');
+  const sub = [regionLabel, detail?.target ?? item.source].filter(Boolean).join(' · ');
 
   return (
-    <div style={s.cardWrap}>
-      {/* <a href>가 아니라 role=link 요소: 브라우저 기본 이동(미니앱 화면이 외부 사이트로 넘어가 뒤로가기가 막히는 문제)이
-          끼어들 여지를 없애고, 링크 열기는 openExternal 한 곳에서만 처리한다. */}
+    <div style={s.row}>
       <div
-        role="link"
+        role="button"
         tabIndex={0}
-        aria-label={`${item.title} (외부 브라우저에서 열림)`}
-        style={s.cardLink}
-        onClick={handleOpen}
+        aria-label={`${item.title} 자세히 보기`}
+        style={s.rowMain}
+        onClick={onOpen}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') handleOpen(e as unknown as React.MouseEvent);
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen();
+          }
         }}
       >
-        <div style={{ ...s.card, ...(item.isUrgent ? s.cardUrgent : {}) }}>
-          {/* 카테고리 + 마감일 */}
-          <div style={s.cardMeta}>
-            <Badge size="xsmall" variant="weak" color="blue">
-              {CATEGORY_EMOJI[item.category]} {item.category}
-            </Badge>
-            {item.isUrgent ? (
-              <Badge size="xsmall" variant="fill" color="yellow">
-                🔥 {dday ?? '마감 임박'}
-              </Badge>
-            ) : (
-              <Paragraph typography="t5" color="#6B7684">
-                {item.deadline}
-              </Paragraph>
-            )}
+        <div style={{ ...s.rowIcon, backgroundColor: icon.bg }}>
+          <EmojiIcon codepoint={icon.codepoint} fallback={CATEGORY_EMOJI[item.category]} size={26} />
+        </div>
+        <div style={s.rowTexts}>
+          <div style={s.rowProgram}>
+            <span style={s.ellipsis}>{item.title}</span>
+            {item.isUrgent && <span style={s.ddayBadge}>{dday ?? '마감 임박'}</span>}
           </div>
-
-          {/* 제목 */}
-          <Paragraph typography="t3" fontWeight="bold" style={{ ...s.cardTitle, paddingRight: '60px' }}>
-            {item.title}
-          </Paragraph>
-
-          {/* 설명 */}
-          <Paragraph typography="t4" color="#6B7684" style={s.cardDesc}>
-            {item.description}
-          </Paragraph>
-
-          {/* 금액 + 출처 */}
-          <div style={s.cardBottom}>
-            <Badge size="large" variant="fill" color="blue">
-              {item.amount}
-            </Badge>
-            <Paragraph typography="t5" color="#6B7684" style={s.cardSource}>
-              {item.source}
-            </Paragraph>
-          </div>
+          <p style={{ ...s.rowHeadline, ...s.ellipsis }}>{detail?.headline ?? item.amount}</p>
+          <p style={{ ...s.rowSub, ...s.ellipsis }}>{sub}</p>
         </div>
       </div>
-      <div style={s.cardActions}>
-        <button type="button" aria-label="공유하기" style={s.cardActionBtn} onClick={handleShare}>
-          🔗
-        </button>
-        <button
-          type="button"
-          aria-label={bookmarked ? '찜 해제' : '찜하기'}
-          style={s.cardActionBtn}
-          onClick={onToggleBookmark}
-          disabled={unlocking}
-        >
-          {unlocking ? '⏳' : bookmarked ? '💙' : '🤍'}
-        </button>
-      </div>
+      <button
+        type="button"
+        aria-label={bookmarked ? '찜 해제' : '찜하기'}
+        style={s.heartBtn}
+        onClick={onToggleBookmark}
+        disabled={unlocking}
+      >
+        {unlocking ? '⏳' : bookmarked ? '💙' : '🤍'}
+      </button>
     </div>
   );
 }
@@ -529,16 +468,12 @@ function SubsidyCard({
 function EmptyState({ onBack }: { onBack: () => void }) {
   return (
     <div style={s.empty}>
-      <span style={s.emptyIcon}>🔍</span>
-      <Paragraph typography="t3" fontWeight="bold">
-        해당 조건의 지원금이 없어요
-      </Paragraph>
-      <Paragraph typography="t4" color="#6B7684">
-        연령대나 성별을 다시 선택해보세요
-      </Paragraph>
-      <Button size="medium" color="primary" variant="weak" onClick={onBack} style={s.emptyResetBtn}>
-        필터 다시 선택하기
-      </Button>
+      <EmojiIcon codepoint="1F50D" fallback="🔍" size={44} />
+      <p style={s.emptyTitle}>해당 조건의 지원금이 없어요</p>
+      <p style={s.emptySub}>탭이나 지역, 검색어를 바꿔 보세요</p>
+      <button type="button" style={s.moreBtn} onClick={onBack}>
+        조건 다시 선택하기 ›
+      </button>
     </div>
   );
 }
@@ -577,8 +512,15 @@ function parseAmount(str: string): number {
 const SORT_LABEL: Record<SortKey, string> = {
   default: '추천순',
   amount: '금액순',
-  deadline: '마감임박순',
+  deadline: '마감순',
 };
+
+const SCAM_TIPS = [
+  '정부·기관은 문자로 링크를 보내 지원금 신청을 받지 않아요. 문자 속 링크는 누르지 마세요.',
+  '지원금을 주겠다며 수수료·보증금·개인정보 입력이나 앱 설치를 요구하면 사기예요.',
+  '신청은 복지로·정부24·고용24 등 공식 사이트나 행정복지센터에서만 하세요.',
+  '의심되면 국번 없이 118(불법스팸) 또는 112(경찰)에 신고하세요.',
+];
 
 // ── 스타일 ──
 const s: Record<string, React.CSSProperties> = {
@@ -588,188 +530,331 @@ const s: Record<string, React.CSSProperties> = {
     minHeight: '100dvh',
     backgroundColor: '#F2F4F6',
   },
-  summaryLine: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '2px',
-    padding: '14px 16px 10px',
+  hero: {
+    padding: '20px 20px 18px',
     backgroundColor: '#FFFFFF',
-    borderBottom: '1px solid #F2F4F6',
   },
-  headerTitle: {
-    letterSpacing: '-0.3px',
+  heroSub: {
+    fontSize: '15px',
+    color: '#6B7684',
   },
-  backToFilterBtn: {
-    marginTop: '8px',
+  heroCond: {
+    color: '#4E5968',
+    fontWeight: 600,
+    textDecoration: 'underline',
+    textDecorationColor: '#D1D6DB',
+    textUnderlineOffset: '3px',
   },
-  banner: {
-    width: '100%',
-    minHeight: '60px',
+  heroTitle: {
+    marginTop: '4px',
+    fontSize: '24px',
+    fontWeight: 700,
+    letterSpacing: '-0.5px',
+    color: '#191F28',
   },
-  loadingWrap: {
-    padding: '32px 16px',
-    display: 'flex',
-    justifyContent: 'center',
+  heroNote: {
+    marginTop: '6px',
+    fontSize: '13px',
+    color: '#8B95A1',
   },
-  urgentBanner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    backgroundColor: '#FFF4E5',
-    padding: '12px 16px',
+  heroUrgent: {
+    color: '#D97706',
+    fontWeight: 600,
   },
   missionNotice: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#EEF3FF',
     padding: '12px 16px',
   },
   missionNoticeText: {
     textAlign: 'center',
     color: '#1B64DA',
+    fontSize: '14px',
   },
-  categoryRowWrap: {
-    position: 'relative',
+  infoCardWrap: {
     backgroundColor: '#FFFFFF',
+    padding: '0 16px 12px',
   },
-  categoryRow: {
+  infoCard: {
+    width: '100%',
     display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '14px 16px',
+    border: 'none',
+    borderRadius: '16px',
+    backgroundColor: '#F9FAFB',
+    textAlign: 'left',
+    cursor: 'pointer',
+  },
+  infoCardTexts: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  infoCardTitle: {
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#333D4B',
+  },
+  infoCardSub: {
+    fontSize: '13px',
+    color: '#8B95A1',
+  },
+  chevron: {
+    fontSize: '18px',
+    color: '#B0B8C1',
+  },
+  tips: {
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
     gap: '8px',
-    padding: '8px 16px',
+    padding: '12px 8px 4px',
+  },
+  tip: {
+    fontSize: '14px',
+    lineHeight: 1.55,
+    color: '#4E5968',
+    display: 'flex',
+    gap: '6px',
+  },
+  tipDot: {
+    color: '#B0B8C1',
+  },
+  banner: {
+    width: '100%',
+    minHeight: '60px',
+  },
+  tabsWrap: {
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    backgroundColor: '#FFFFFF',
+    borderBottom: '1px solid #E5E8EB',
+  },
+  tabs: {
+    display: 'flex',
+    gap: '4px',
+    padding: '0 12px',
     overflowX: 'auto',
     scrollbarWidth: 'none',
   },
-  categoryFade: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: '28px',
-    background: 'linear-gradient(to right, rgba(255,255,255,0), #FFFFFF)',
-    pointerEvents: 'none',
-  },
-  chipBtn: {
+  tab: {
     flexShrink: 0,
+    padding: '14px 10px 12px',
+    border: 'none',
+    borderBottom: '2px solid transparent',
+    background: 'none',
+    fontSize: '16px',
+    fontWeight: 600,
+    color: '#8B95A1',
     whiteSpace: 'nowrap',
+    cursor: 'pointer',
   },
-  searchWrap: {
-    padding: '8px 16px 0',
-    backgroundColor: '#FFFFFF',
+  tabActive: {
+    color: '#191F28',
+    fontWeight: 700,
+    borderBottom: '2px solid #191F28',
   },
-  bookmarkToggleWrap: {
-    padding: '8px 16px 12px',
+  filterPanel: {
     backgroundColor: '#FFFFFF',
+    padding: '12px 0 14px',
     display: 'flex',
     flexDirection: 'column',
+    gap: '10px',
+  },
+  pillRow: {
+    display: 'flex',
+    alignItems: 'center',
     gap: '6px',
-    alignItems: 'flex-start',
+    padding: '0 16px',
+    overflowX: 'auto',
+    scrollbarWidth: 'none',
+  },
+  pill: {
+    flexShrink: 0,
+    padding: '7px 12px',
+    borderRadius: '999px',
+    border: '1px solid #E5E8EB',
+    backgroundColor: '#FFFFFF',
+    fontSize: '14px',
+    color: '#4E5968',
+    whiteSpace: 'nowrap',
+    cursor: 'pointer',
+  },
+  pillActive: {
+    border: '1px solid #3182F6',
+    backgroundColor: '#EBF3FE',
+    color: '#1B64DA',
+    fontWeight: 600,
+  },
+  pillDivider: {
+    flexShrink: 0,
+    width: '1px',
+    height: '16px',
+    backgroundColor: '#E5E8EB',
+    margin: '0 2px',
+  },
+  searchWrap: {
+    padding: '0 16px',
   },
   limitHint: {
+    padding: '0 16px',
+    fontSize: '13px',
     lineHeight: 1.5,
+    color: '#8B95A1',
+  },
+  listPanel: {
+    marginTop: '10px',
+    backgroundColor: '#FFFFFF',
+    paddingBottom: '8px',
   },
   sortRow: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '10px 16px',
+    padding: '18px 20px 6px',
+  },
+  listTitle: {
+    fontSize: '18px',
+    fontWeight: 700,
+    color: '#191F28',
+  },
+  listCount: {
+    color: '#3182F6',
   },
   sortBtns: {
     display: 'flex',
-    gap: '6px',
+    gap: '2px',
   },
-  list: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    padding: '0 16px 16px',
+  sortBtn: {
+    border: 'none',
+    background: 'none',
+    padding: '6px 6px',
+    fontSize: '13px',
+    color: '#8B95A1',
+    cursor: 'pointer',
+  },
+  sortBtnActive: {
+    color: '#191F28',
+    fontWeight: 700,
   },
   infeedBanner: {
     width: '100%',
     minHeight: '60px',
+    padding: '4px 0',
   },
-  cardWrap: {
-    position: 'relative',
-  },
-  cardLink: {
-    textDecoration: 'none',
-    color: 'inherit',
-    display: 'block',
-  },
-  cardActions: {
-    position: 'absolute',
-    top: '12px',
-    right: '12px',
+  row: {
     display: 'flex',
-    gap: '4px',
+    alignItems: 'center',
+    padding: '0 8px 0 0',
   },
-  cardActionBtn: {
-    width: '28px',
-    height: '28px',
+  rowMain: {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    padding: '14px 4px 14px 20px',
+    cursor: 'pointer',
+    WebkitTapHighlightColor: 'transparent',
+  },
+  rowIcon: {
+    flexShrink: 0,
+    width: '44px',
+    height: '44px',
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowTexts: {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  rowProgram: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '13px',
+    color: '#6B7684',
+    minWidth: 0,
+  },
+  ddayBadge: {
+    flexShrink: 0,
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#D97706',
+    backgroundColor: '#FFF4E5',
+    borderRadius: '6px',
+    padding: '2px 6px',
+  },
+  rowHeadline: {
+    fontSize: '17px',
+    fontWeight: 700,
+    color: '#191F28',
+    letterSpacing: '-0.3px',
+    lineHeight: 1.4,
+  },
+  rowSub: {
+    fontSize: '13px',
+    color: '#8B95A1',
+  },
+  ellipsis: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    minWidth: 0,
+  },
+  heartBtn: {
+    flexShrink: 0,
+    width: '40px',
+    height: '40px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '16px',
+    fontSize: '18px',
     padding: 0,
     WebkitTapHighlightColor: 'transparent',
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: '16px',
-    padding: '16px',
-    borderLeft: '4px solid transparent',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  cardUrgent: {
-    borderLeft: '4px solid #F59E0B',
-  },
-  cardMeta: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingRight: '60px',
-  },
-  cardTitle: {
-    letterSpacing: '-0.3px',
-    lineHeight: 1.4,
-  },
-  cardDesc: {
-    lineHeight: 1.6,
-    display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-  },
-  cardBottom: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: '6px',
-    paddingTop: '4px',
-  },
-  cardSource: {
-    margin: 0,
   },
   empty: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '60px 0',
-    gap: '12px',
+    padding: '48px 0',
+    gap: '8px',
   },
-  emptyResetBtn: {
+  emptyTitle: {
+    fontSize: '17px',
+    fontWeight: 700,
+    color: '#191F28',
     marginTop: '8px',
   },
-  emptyIcon: {
-    fontSize: '48px',
+  emptySub: {
+    fontSize: '14px',
+    color: '#8B95A1',
   },
   moreWrap: {
-    padding: '8px 16px 32px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '16px 16px 40px',
+  },
+  moreBtn: {
+    border: 'none',
+    background: 'none',
+    padding: '10px 12px',
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#4E5968',
+    cursor: 'pointer',
   },
 };

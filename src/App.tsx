@@ -4,6 +4,7 @@ import { AdNoticePage } from './pages/AdNoticePage';
 import { FilterPage } from './pages/FilterPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { preloadInterstitial, shouldShowInterstitial } from './lib/ads';
+import { popBackHandler } from './lib/backStack';
 import type { AgeGroup, Gender } from './data/subsidies';
 
 type Page = 'filter' | 'ad' | 'results';
@@ -33,6 +34,8 @@ export function App() {
   useEffect(() => {
     const unsubscribe = graniteEvent.addEventListener('backEvent', {
       onEvent: () => {
+        // 상세 화면처럼 위에 덧씌운 화면이 열려 있으면 그것부터 닫는다.
+        if (popBackHandler()) return;
         if (pageRef.current === 'results' || pageRef.current === 'ad') {
           setPage('filter');
         } else {
