@@ -182,7 +182,7 @@ export const subsidies: Subsidy[] = [
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
     source: '금융위원회',
-    url: 'https://lifeinfos.com/%EC%B2%AD%EB%85%84%EB%AF%B8%EB%9E%98%EC%A0%81%EA%B8%88-%EC%B4%9D%EC%A0%95%EB%A6%AC/',
+    url: 'https://www.fsc.go.kr',
   },
   {
     id: 13,
@@ -275,7 +275,7 @@ export const subsidies: Subsidy[] = [
     ageGroups: ['20대', '30대', '40대'],
     genders: ['전체'],
     source: '보건복지부',
-    url: 'https://welfare-mom.com/korea-child-benefit-guide-2026/',
+    url: 'https://www.bokjiro.go.kr',
   },
   {
     id: 20,
@@ -693,6 +693,22 @@ export const CATEGORY_EMOJI: Record<Category, string> = {
   '교육': '📚',
   '건강': '❤️',
   '문화·여가': '🎭',
+};
+
+/** 토스 2D 이모지(정적 CDN). 이미지가 안 뜨면 CATEGORY_EMOJI 글자로 대신 보여준다. */
+export function tossEmojiUrl(codepoint: string): string {
+  return `https://static.toss.im/2d-emojis/png/4x/u${codepoint}.png`;
+}
+
+/** 카테고리별 아이콘(토스 이모지 코드포인트)과 아이콘 배경색 */
+export const CATEGORY_ICON: Record<Category, { codepoint: string; bg: string }> = {
+  '주거': { codepoint: '1F3E0', bg: '#EAF3FF' },
+  '취업·창업': { codepoint: '1F4BC', bg: '#FFF3E6' },
+  '금융': { codepoint: '1F4B0', bg: '#FFF8DB' },
+  '복지·돌봄': { codepoint: '1F91D', bg: '#FDEEF4' },
+  '교육': { codepoint: '1F4DA', bg: '#EDF8F0' },
+  '건강': { codepoint: '1F48A', bg: '#E9F7F9' },
+  '문화·여가': { codepoint: '1F3AD', bg: '#F2EEFF' },
 };
 
 export function filterSubsidies(
