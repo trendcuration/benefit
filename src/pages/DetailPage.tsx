@@ -54,6 +54,7 @@ export function DetailPage({
 
   const icon = CATEGORY_ICON[item.category];
   const regionLabel = item.regions.includes('전국') ? '전국' : item.regions.join('·');
+  const dday = getDday(item.deadline);
 
   const handleApply = () => {
     logClick('subsidy_apply_click', { subsidy_id: item.id, category: item.category });
@@ -90,22 +91,27 @@ export function DetailPage({
 
         <div style={s.divider} />
 
-        <Section codepoint="1F4A1" fallback="💡" title="어떤 혜택이에요?">
-          <p style={s.bodyText}>{detail?.summary ?? item.description}</p>
+        <Section codepoint="1F4A1" fallback="💡" title="지원금 요약">
+          {detail && <p style={s.summary}>{detail.summary}</p>}
+          <p style={detail ? s.subText : s.bodyText}>{item.description}</p>
         </Section>
 
-        <Section codepoint="1F4B0" fallback="💰" title="이렇게 지원해요">
-          <Bullets items={detail?.support ?? [item.amount]} />
+        <Section codepoint="1F4B0" fallback="💰" title="지원금액">
+          <div style={s.amountBox}>{item.amount}</div>
+          {detail && <Bullets items={withoutAmountRepeat(detail.support, item.amount)} />}
+        </Section>
+
+        <Section codepoint="1F64B" fallback="🙋" title="지원대상">
+          {detail && <Bullets items={detail.who} />}
+          <dl style={s.facts}>
+            <Fact label="연령" value={item.ageGroups.join(' · ')} />
+            <Fact label="성별" value={item.genders.includes('전체') ? '제한 없음' : item.genders.join(' · ')} />
+            <Fact label="지역" value={regionLabel === '전국' ? '전국 어디서나' : `${regionLabel} 거주자`} />
+          </dl>
         </Section>
 
         {detail && (
-          <Section codepoint="1F64B" fallback="🙋" title="이런 분이 받을 수 있어요">
-            <Bullets items={detail.who} />
-          </Section>
-        )}
-
-        {detail && (
-          <Section codepoint="1F4DD" fallback="📝" title="이렇게 신청해요">
+          <Section codepoint="1F4DD" fallback="📝" title="신청방법">
             <ol style={s.steps}>
               {detail.how.map((step, i) => (
                 <li key={i} style={s.step}>
@@ -117,29 +123,31 @@ export function DetailPage({
           </Section>
         )}
 
-        <Section codepoint="23F0" fallback="⏰" title="언제까지 신청해요?">
-          <p style={s.bodyText}>{item.deadline}</p>
+        <Section codepoint="23F0" fallback="⏰" title="신청기간">
+          <p style={s.bodyText}>
+            {item.deadline}
+            {dday && <span style={s.dday}>{dday}</span>}
+          </p>
         </Section>
 
-        {detail?.contact && (
-          <Section codepoint="1F4DE" fallback="📞" title="궁금하면 여기로 물어봐요">
-            <div style={s.contactRow}>
-              <div>
-                <p style={s.bodyText}>{detail.contact.name}</p>
-                {detail.contact.tel && <p style={s.tel}>{detail.contact.tel}</p>}
-              </div>
-              {detail.contact.tel && (
-                <button
-                  type="button"
-                  style={s.callBtn}
-                  onClick={() => handleCall(detail.contact!.tel!)}
-                >
-                  전화
-                </button>
-              )}
+        <Section codepoint="1F4DE" fallback="📞" title="문의처">
+          <div style={s.contactRow}>
+            <div>
+              <p style={s.bodyText}>{detail?.contact?.name ?? item.source}</p>
+              {detail?.contact?.tel && <p style={s.tel}>{detail.contact.tel}</p>}
+              <p style={s.subText}>소관 기관 · {item.source}</p>
             </div>
-          </Section>
-        )}
+            {detail?.contact?.tel && (
+              <button
+                type="button"
+                style={s.callBtn}
+                onClick={() => handleCall(detail.contact!.tel!)}
+              >
+                전화
+              </button>
+            )}
+          </div>
+        </Section>
 
         <div ref={bannerRef} style={s.banner} />
 
@@ -198,6 +206,33 @@ function Section({
       {children}
     </section>
   );
+}
+
+/** 금액 상자와 숫자가 똑같은 줄(같은 내용의 반복)은 목록에서 뺀다. */
+function withoutAmountRepeat(lines: string[], amount: string): string[] {
+  const nums = (text: string) => text.replace(/,/g, '').match(/\d+(\.\d+)?/g) ?? [];
+  const amountNums = new Set(nums(amount));
+  return lines.filter((line) => {
+    const lineNums = nums(line);
+    return lineNums.length === 0 || !lineNums.every((n) => amountNums.has(n));
+  });
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={s.fact}>
+      <dt style={s.factLabel}>{label}</dt>
+      <dd style={s.factValue}>{value}</dd>
+    </div>
+  );
+}
+
+/** 신청기간이 날짜(YYYY-MM-DD)일 때만 D-day를 계산한다. */
+function getDday(deadline: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return null;
+  const days = Math.ceil((new Date(`${deadline}T23:59:59`).getTime() - Date.now()) / 86_400_000);
+  if (days < 0) return null;
+  return days === 0 ? 'D-day' : `D-${days}`;
 }
 
 function Bullets({ items }: { items: string[] }) {
@@ -289,16 +324,71 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    fontSize: '18px',
+    fontSize: '19px',
     fontWeight: 700,
     color: '#191F28',
     marginBottom: '12px',
     letterSpacing: '-0.3px',
   },
   bodyText: {
-    fontSize: '16px',
+    fontSize: '17px',
     lineHeight: 1.6,
     color: '#333D4B',
+  },
+  summary: {
+    fontSize: '17px',
+    fontWeight: 600,
+    lineHeight: 1.6,
+    color: '#191F28',
+    marginBottom: '8px',
+  },
+  subText: {
+    fontSize: '15px',
+    lineHeight: 1.65,
+    color: '#6B7684',
+    marginTop: '4px',
+  },
+  amountBox: {
+    fontSize: '17px',
+    fontWeight: 700,
+    lineHeight: 1.5,
+    color: '#1B64DA',
+    backgroundColor: '#F2F7FF',
+    borderRadius: '12px',
+    padding: '12px 14px',
+    marginBottom: '12px',
+  },
+  facts: {
+    marginTop: '14px',
+    borderRadius: '12px',
+    backgroundColor: '#F9FAFB',
+    padding: '6px 14px',
+  },
+  fact: {
+    display: 'flex',
+    gap: '12px',
+    padding: '5px 0',
+  },
+  factLabel: {
+    flexShrink: 0,
+    width: '36px',
+    fontSize: '15px',
+    color: '#8B95A1',
+  },
+  factValue: {
+    fontSize: '15px',
+    color: '#333D4B',
+    fontWeight: 600,
+  },
+  dday: {
+    marginLeft: '8px',
+    fontSize: '13px',
+    fontWeight: 700,
+    color: '#D97706',
+    backgroundColor: '#FFF4E5',
+    borderRadius: '6px',
+    padding: '2px 6px',
+    verticalAlign: 'middle',
   },
   bullets: {
     listStyle: 'none',

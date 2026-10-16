@@ -28,6 +28,8 @@ const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
 const REWARDED_AD_ID = 'ait.v2.live.327ced0813c8420f';
 const INFEED_BANNER_INTERVAL = 6;
+/** 부록 미니앱 '2027 바뀌는 지원금'(miniApp 85249) */
+const BENEFIT_2027_APP_URL = 'intoss://benefit-2027';
 
 type SortKey = 'default' | 'amount' | 'deadline';
 
@@ -51,7 +53,6 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [confirmUnlockId, setConfirmUnlockId] = useState<number | null>(null);
   // 상세 요약 화면에 띄운 지원금
   const [detailItem, setDetailItem] = useState<Subsidy | null>(null);
-  const [showScamTips, setShowScamTips] = useState(false);
   const {
     isBookmarked,
     toggle: toggleBookmark,
@@ -77,6 +78,11 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   };
 
   const closeDetail = useCallback(() => setDetailItem(null), []);
+
+  const open2027App = () => {
+    logClick('benefit2027_banner_click');
+    openExternal(BENEFIT_2027_APP_URL);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -206,10 +212,12 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
         <p style={s.heroSub}>
           <span style={s.heroCond}>
             {ageGroup ?? '전체 연령'} · {gender}
-          </span>
-          에 맞는
+          </span>{' '}
+          조건으로 골랐어요
         </p>
-        <h1 style={s.heroTitle}>{loading ? '지원금을 찾고 있어요' : `지원금 ${subsidies.length}개 찾았어요`}</h1>
+        <h1 style={s.heroTitle}>
+          {loading ? '지원금을 고르고 있어요' : `놓치면 아까운 지원금 ${subsidies.length}개`}
+        </h1>
         <p style={s.heroNote}>
           {LAST_UPDATED} 업데이트
           {urgentCount > 0 && <span style={s.heroUrgent}> · 🔥 마감 임박 {urgentCount}개</span>}
@@ -228,31 +236,16 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
         </div>
       )}
 
-      {/* 지원금 사기 예방 안내 */}
+      {/* 부록 미니앱 '2027 바뀌는 지원금'으로 연결 */}
       <div style={s.infoCardWrap}>
-        <button
-          type="button"
-          style={s.infoCard}
-          onClick={() => setShowScamTips((v) => !v)}
-          aria-expanded={showScamTips}
-        >
-          <EmojiIcon codepoint="1F6E1" fallback="🛡️" size={28} />
+        <button type="button" style={s.infoCard} onClick={open2027App}>
+          <EmojiIcon codepoint="1F4C5" fallback="📅" size={32} />
           <span style={s.infoCardTexts}>
-            <span style={s.infoCardTitle}>지원금 사기 문자 예방법</span>
-            <span style={s.infoCardSub}>신청 전에 미리 알아두세요</span>
+            <span style={s.infoCardTitle}>2027 바뀌는 지원금</span>
+            <span style={s.infoCardSub}>내년에 달라지는 지원금 미리 보기</span>
           </span>
-          <span style={s.chevron}>{showScamTips ? '⌃' : '⌄'}</span>
+          <span style={s.chevron}>›</span>
         </button>
-        {showScamTips && (
-          <ul style={s.tips}>
-            {SCAM_TIPS.map((tip) => (
-              <li key={tip} style={s.tip}>
-                <span style={s.tipDot}>•</span>
-                {tip}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
       {/* 배너 광고 */}
@@ -422,7 +415,7 @@ function SubsidyRow({ item, bookmarked, unlocking, onToggleBookmark, onOpen }: S
   const icon = CATEGORY_ICON[item.category];
   const dday = item.isUrgent ? getDday(item.deadline) : null;
   const regionLabel = item.regions.includes('전국') ? null : item.regions.join('·');
-  const sub = [regionLabel, detail?.target ?? item.source].filter(Boolean).join(' · ');
+  const sub = [regionLabel, detail?.target ?? item.description].filter(Boolean).join(' · ');
 
   return (
     <div style={s.row}>
@@ -440,7 +433,7 @@ function SubsidyRow({ item, bookmarked, unlocking, onToggleBookmark, onOpen }: S
         }}
       >
         <div style={{ ...s.rowIcon, backgroundColor: icon.bg }}>
-          <EmojiIcon codepoint={icon.codepoint} fallback={CATEGORY_EMOJI[item.category]} size={26} />
+          <EmojiIcon codepoint={icon.codepoint} fallback={CATEGORY_EMOJI[item.category]} size={28} />
         </div>
         <div style={s.rowTexts}>
           <div style={s.rowProgram}>
@@ -449,6 +442,9 @@ function SubsidyRow({ item, bookmarked, unlocking, onToggleBookmark, onOpen }: S
           </div>
           <p style={{ ...s.rowHeadline, ...s.ellipsis }}>{detail?.headline ?? item.amount}</p>
           <p style={{ ...s.rowSub, ...s.ellipsis }}>{sub}</p>
+          <p style={{ ...s.rowMeta, ...s.ellipsis }}>
+            {item.source} · 신청 {item.deadline}
+          </p>
         </div>
       </div>
       <button
@@ -515,12 +511,6 @@ const SORT_LABEL: Record<SortKey, string> = {
   deadline: '마감순',
 };
 
-const SCAM_TIPS = [
-  '정부·기관은 문자로 링크를 보내 지원금 신청을 받지 않아요. 문자 속 링크는 누르지 마세요.',
-  '지원금을 주겠다며 수수료·보증금·개인정보 입력이나 앱 설치를 요구하면 사기예요.',
-  '신청은 복지로·정부24·고용24 등 공식 사이트나 행정복지센터에서만 하세요.',
-  '의심되면 국번 없이 118(불법스팸) 또는 112(경찰)에 신고하세요.',
-];
 
 // ── 스타일 ──
 const s: Record<string, React.CSSProperties> = {
@@ -578,11 +568,11 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '14px 16px',
+    gap: '14px',
+    padding: '16px 18px',
     border: 'none',
     borderRadius: '16px',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#EEF4FF',
     textAlign: 'left',
     cursor: 'pointer',
   },
@@ -590,37 +580,20 @@ const s: Record<string, React.CSSProperties> = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    gap: '2px',
+    gap: '3px',
   },
   infoCardTitle: {
-    fontSize: '15px',
-    fontWeight: 600,
-    color: '#333D4B',
+    fontSize: '17px',
+    fontWeight: 700,
+    color: '#1B64DA',
   },
   infoCardSub: {
-    fontSize: '13px',
-    color: '#8B95A1',
+    fontSize: '14px',
+    color: '#4E5968',
   },
   chevron: {
-    fontSize: '18px',
-    color: '#B0B8C1',
-  },
-  tips: {
-    listStyle: 'none',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    padding: '12px 8px 4px',
-  },
-  tip: {
-    fontSize: '14px',
-    lineHeight: 1.55,
-    color: '#4E5968',
-    display: 'flex',
-    gap: '6px',
-  },
-  tipDot: {
-    color: '#B0B8C1',
+    fontSize: '24px',
+    color: '#8BB4F5',
   },
   banner: {
     width: '100%',
@@ -756,14 +729,14 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '14px',
-    padding: '14px 4px 14px 20px',
+    padding: '16px 4px 16px 20px',
     cursor: 'pointer',
     WebkitTapHighlightColor: 'transparent',
   },
   rowIcon: {
     flexShrink: 0,
-    width: '44px',
-    height: '44px',
+    width: '48px',
+    height: '48px',
     borderRadius: '14px',
     display: 'flex',
     alignItems: 'center',
@@ -780,13 +753,13 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
-    fontSize: '13px',
+    fontSize: '14px',
     color: '#6B7684',
     minWidth: 0,
   },
   ddayBadge: {
     flexShrink: 0,
-    fontSize: '11px',
+    fontSize: '12px',
     fontWeight: 700,
     color: '#D97706',
     backgroundColor: '#FFF4E5',
@@ -794,13 +767,18 @@ const s: Record<string, React.CSSProperties> = {
     padding: '2px 6px',
   },
   rowHeadline: {
-    fontSize: '17px',
+    fontSize: '19px',
     fontWeight: 700,
     color: '#191F28',
     letterSpacing: '-0.3px',
     lineHeight: 1.4,
   },
   rowSub: {
+    fontSize: '15px',
+    color: '#6B7684',
+  },
+  rowMeta: {
+    marginTop: '2px',
     fontSize: '13px',
     color: '#8B95A1',
   },
