@@ -1,5 +1,5 @@
 /**
- * 정부24 공공서비스 데이터(매주 월요일 새벽 scripts/gov24-publish.sh 가 benefit 저장소 `data` 브랜치에 올린다).
+ * 정부24 공공서비스 데이터(매주 토요일 새벽 scripts/gov24-publish.sh 가 benefit 저장소 `data` 브랜치에 올린다).
  *
  * 읽는 순서: pointer.json(브랜치 최신, 게시할 때마다 jsDelivr 캐시를 비움) → 거기 적힌 커밋으로 고정된
  * 주소에서 meta/list/detail을 읽는다. 커밋 주소는 내용이 바뀌지 않아 CDN·브라우저 캐시를 그대로 쓸 수 있다.
