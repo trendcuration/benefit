@@ -5,12 +5,19 @@ const UNLIMITED_KEY = 'benefit:bookmarks-unlimited';
 
 export const FREE_BOOKMARK_LIMIT = 5;
 
-function readStoredIds(): number[] {
+/**
+ * 찜 키는 'c12'(직접 정리한 지원금)·'g서비스ID'(정부24) 문자열이다.
+ * 예전 버전은 직접 정리한 지원금 id 숫자만 저장했으므로 숫자는 'c'를 붙여 옮긴다.
+ */
+function readStoredIds(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === 'number') : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((v) => (typeof v === 'number' ? `c${v}` : v))
+      .filter((v): v is string => typeof v === 'string');
   } catch {
     return [];
   }
@@ -25,7 +32,7 @@ function readUnlimited(): boolean {
 }
 
 export function useBookmarks() {
-  const [ids, setIds] = useState<number[]>(() => readStoredIds());
+  const [ids, setIds] = useState<string[]>(() => readStoredIds());
   const [isUnlimited, setIsUnlimited] = useState<boolean>(() => readUnlimited());
 
   useEffect(() => {
@@ -44,13 +51,13 @@ export function useBookmarks() {
     }
   }, [isUnlimited]);
 
-  const isBookmarked = useCallback((id: number) => ids.includes(id), [ids]);
+  const isBookmarked = useCallback((id: string) => ids.includes(id), [ids]);
 
   const isLimitReached = !isUnlimited && ids.length >= FREE_BOOKMARK_LIMIT;
 
   /** 무료 한도 내에서만 토글. 한도 초과 시 아무 동작도 하지 않으며 호출부에서 리워드 광고 유도를 처리합니다. */
   const toggle = useCallback(
-    (id: number) => {
+    (id: string) => {
       setIds((prev) => {
         if (prev.includes(id)) return prev.filter((v) => v !== id);
         if (!isUnlimited && prev.length >= FREE_BOOKMARK_LIMIT) return prev;
@@ -60,7 +67,7 @@ export function useBookmarks() {
     [isUnlimited]
   );
 
-  const add = useCallback((id: number) => {
+  const add = useCallback((id: string) => {
     setIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
   }, []);
 

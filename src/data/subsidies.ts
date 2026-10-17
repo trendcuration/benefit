@@ -1,6 +1,15 @@
 export type AgeGroup = '10대' | '20대' | '30대' | '40대' | '50대' | '60대' | '70대이상';
 export type Gender = '전체' | '남성' | '여성';
-export type Category = '주거' | '취업·창업' | '금융' | '복지·돌봄' | '교육' | '건강' | '문화·여가';
+export type Category =
+  | '생활·금융'
+  | '주거'
+  | '일자리'
+  | '임신·육아'
+  | '교육'
+  | '건강'
+  | '돌봄'
+  | '문화·여가'
+  | '생활·안전';
 /** '전국'은 어디 거주해도 해당되는 국가 사업. 나머지는 해당 지자체 거주자 전용 사업입니다. */
 export type Region = '전국' | '서울' | '부산' | '경기' | '인천';
 
@@ -85,7 +94,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 60만원 × 최대 6개월 (총 360만원)',
     deadline: '상시',
     regions: ['전국'],
-    category: '취업·창업',
+    category: '일자리',
     ageGroups: ['20대', '30대', '40대', '50대'],
     genders: ['전체'],
     source: '고용노동부',
@@ -98,7 +107,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 최대 28.4만원 (취업활동비)',
     deadline: '상시',
     regions: ['전국'],
-    category: '취업·창업',
+    category: '일자리',
     ageGroups: ['20대', '30대', '40대', '50대', '60대'],
     genders: ['전체'],
     source: '고용노동부',
@@ -111,7 +120,7 @@ export const subsidies: Subsidy[] = [
     amount: '최대 350만원 (참여수당+인센티브)',
     deadline: '상시',
     regions: ['전국'],
-    category: '취업·창업',
+    category: '일자리',
     ageGroups: ['10대', '20대', '30대'],
     genders: ['전체'],
     source: '고용노동부',
@@ -124,7 +133,7 @@ export const subsidies: Subsidy[] = [
     amount: '훈련비 지원 + 취업장려금',
     deadline: '상시',
     regions: ['전국'],
-    category: '취업·창업',
+    category: '일자리',
     ageGroups: ['20대', '30대', '40대', '50대'],
     genders: ['여성'],
     source: '여성가족부',
@@ -137,7 +146,7 @@ export const subsidies: Subsidy[] = [
     amount: '평균 4,700만원 (최대 1억원)',
     deadline: '상시',
     regions: ['전국'],
-    category: '취업·창업',
+    category: '일자리',
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
     source: '중소벤처기업부 (창업진흥원)',
@@ -150,7 +159,7 @@ export const subsidies: Subsidy[] = [
     amount: '일반형·투자연계형 최대 1억원 / 딥테크 특화형 최대 1억 5천만원',
     deadline: '상시',
     regions: ['전국'],
-    category: '취업·창업',
+    category: '일자리',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['전체'],
     source: '중소벤처기업부 (창업진흥원)',
@@ -163,7 +172,7 @@ export const subsidies: Subsidy[] = [
     amount: '무료 훈련 제공',
     deadline: '상시',
     regions: ['전국'],
-    category: '취업·창업',
+    category: '일자리',
     ageGroups: ['40대', '50대', '60대'],
     genders: ['전체'],
     source: '고용노동부',
@@ -178,7 +187,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 최대 50만원 납입 (정부기여금 6~12%, 3년 만기)',
     deadline: '2026년 12월경 (2차 모집 예정)',
     regions: ['전국'],
-    category: '금융',
+    category: '생활·금융',
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
     source: '금융위원회',
@@ -191,7 +200,7 @@ export const subsidies: Subsidy[] = [
     amount: '최대 5,000만원 (5년 만기, 기존 가입자 한정)',
     deadline: '신규가입 마감(2025-12-31), 기존 가입자는 만기까지 유지',
     regions: ['전국'],
-    category: '금융',
+    category: '생활·금융',
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
     source: '금융위원회',
@@ -204,7 +213,7 @@ export const subsidies: Subsidy[] = [
     amount: '단독 최대 165만원 / 홑벌이 285만원 / 맞벌이 330만원',
     deadline: '정기신청 5월 · 반기신청 3월·9월(1~15일)',
     regions: ['전국'],
-    category: '금융',
+    category: '생활·금융',
     ageGroups: ['20대', '30대', '40대', '50대', '60대', '70대이상'],
     genders: ['전체'],
     source: '국세청',
@@ -217,7 +226,7 @@ export const subsidies: Subsidy[] = [
     amount: '자녀 1인당 최대 100만원',
     deadline: '상시 (정기신청 매년 5월)',
     regions: ['전국'],
-    category: '금융',
+    category: '생활·금융',
     ageGroups: ['20대', '30대', '40대', '50대'],
     genders: ['전체'],
     source: '국세청',
@@ -230,7 +239,7 @@ export const subsidies: Subsidy[] = [
     amount: '최대 7,000만원 (연 2~3% 저금리)',
     deadline: '상시',
     regions: ['전국'],
-    category: '금융',
+    category: '생활·금융',
     ageGroups: ['20대', '30대', '40대', '50대', '60대'],
     genders: ['전체'],
     source: '소상공인시장진흥공단',
@@ -245,7 +254,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 최대 34만 9,700원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '돌봄',
     ageGroups: ['60대', '70대이상'],
     genders: ['전체'],
     source: '보건복지부',
@@ -258,7 +267,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 50~100만원 (총 최대 1,800만원)',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['전체'],
     source: '보건복지부',
@@ -271,7 +280,7 @@ export const subsidies: Subsidy[] = [
     amount: '첫째 200만원 / 둘째 이상 300만원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['전체'],
     source: '보건복지부',
@@ -284,7 +293,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 10~12만원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['전체'],
     source: '보건복지부',
@@ -297,7 +306,7 @@ export const subsidies: Subsidy[] = [
     amount: '아동 1인당 월 양육비 지원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['전체'],
     source: '여성가족부',
@@ -310,7 +319,7 @@ export const subsidies: Subsidy[] = [
     amount: '미성년 자녀 1인당 월 최대 20만원 (성년까지)',
     deadline: '소득기준 폐지 2026-10-29 시행',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대', '50대'],
     genders: ['전체'],
     source: '여성가족부 (양육비이행관리원)',
@@ -323,7 +332,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 최대 43만 9,700원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '돌봄',
     ageGroups: ['10대', '20대', '30대', '40대', '50대', '60대', '70대이상'],
     genders: ['전체'],
     source: '보건복지부',
@@ -336,7 +345,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 최대 76만원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '일자리',
     ageGroups: ['60대', '70대이상'],
     genders: ['전체'],
     source: '보건복지부',
@@ -349,7 +358,7 @@ export const subsidies: Subsidy[] = [
     amount: '서비스 비용의 85% 지원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '돌봄',
     ageGroups: ['60대', '70대이상'],
     genders: ['전체'],
     source: '국민건강보험공단',
@@ -362,7 +371,7 @@ export const subsidies: Subsidy[] = [
     amount: '1인가구 월 82만원 / 2인가구 134만원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '생활·금융',
     ageGroups: ['10대', '20대', '30대', '40대', '50대', '60대', '70대이상'],
     genders: ['전체'],
     source: '보건복지부',
@@ -375,7 +384,7 @@ export const subsidies: Subsidy[] = [
     amount: '단태아 100만원 / 다태아 140만원',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['여성'],
     source: '보건복지부',
@@ -388,7 +397,7 @@ export const subsidies: Subsidy[] = [
     amount: '1인가구 29만 5,200원 / 2인 40만 7,500원 / 3인 53만 2,700원 / 4인 이상 70만 1,300원 (연간 총액)',
     deadline: '신청 ~2026-12-31 · 동절기 사용 2026-10-01부터',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '생활·금융',
     ageGroups: ['10대', '20대', '30대', '40대', '50대', '60대', '70대이상'],
     genders: ['전체'],
     source: '한국에너지공단',
@@ -442,7 +451,7 @@ export const subsidies: Subsidy[] = [
     amount: '소득세·법인세 50~100% 감면 (최대 5년)',
     deadline: '상시',
     regions: ['전국'],
-    category: '교육',
+    category: '일자리',
     ageGroups: ['10대', '20대', '30대'],
     genders: ['전체'],
     source: '중소벤처기업부',
@@ -566,7 +575,7 @@ export const subsidies: Subsidy[] = [
     amount: '3년 만기 시 총 1,440만원 이상 수령(본인납입 360만원+정부적립 1,080만원+이자)',
     deadline: '상시 (연 1회 모집, 정확한 회차 일정은 복지로 확인)',
     regions: ['전국'],
-    category: '금융',
+    category: '생활·금융',
     ageGroups: ['10대', '20대', '30대'],
     genders: ['전체'],
     source: '보건복지부',
@@ -592,7 +601,7 @@ export const subsidies: Subsidy[] = [
     amount: '방문·안전확인·생활교육 등 서비스 제공(본인부담 없음)',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '돌봄',
     ageGroups: ['60대', '70대이상'],
     genders: ['전체'],
     source: '보건복지부',
@@ -605,7 +614,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 최대 20만원 (기저귀+조제분유 병행 시)',
     deadline: '상시 (출생 후 만 2세 전날까지 신청)',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['전체'],
     source: '보건복지부',
@@ -618,7 +627,7 @@ export const subsidies: Subsidy[] = [
     amount: '소득·서비스 유형별 차등 지원(바우처, 정확한 금액은 관할 보건소 확인)',
     deadline: '상시',
     regions: ['전국'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['여성'],
     source: '보건복지부',
@@ -633,7 +642,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 55,000원(따릉이 미포함)·58,000원(포함) — 일반가 대비 월 7,000원 할인',
     deadline: '상시',
     regions: ['서울'],
-    category: '복지·돌봄',
+    category: '생활·금융',
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
     source: '서울특별시',
@@ -646,7 +655,7 @@ export const subsidies: Subsidy[] = [
     amount: '24개월형 480만원+이자 / 36개월형 720만원+이자',
     deadline: '상시 (연 1회 모집, 정확한 공고 일정은 부산청년플랫폼 확인)',
     regions: ['부산'],
-    category: '금융',
+    category: '생활·금융',
     ageGroups: ['20대', '30대'],
     genders: ['전체'],
     source: '부산광역시',
@@ -659,7 +668,7 @@ export const subsidies: Subsidy[] = [
     amount: '분기 25만원 (연 최대 100만원, 지역화폐)',
     deadline: '상시 (분기별 신청, 정확한 신청기간은 경기청년포털 확인)',
     regions: ['경기'],
-    category: '금융',
+    category: '생활·금융',
     ageGroups: ['20대'],
     genders: ['전체'],
     source: '경기도',
@@ -672,7 +681,7 @@ export const subsidies: Subsidy[] = [
     amount: '월 5만원 또는 10만원 (출생연도별 상이)',
     deadline: '상시',
     regions: ['인천'],
-    category: '복지·돌봄',
+    category: '임신·육아',
     ageGroups: ['20대', '30대', '40대'],
     genders: ['전체'],
     source: '인천광역시',
@@ -683,16 +692,28 @@ export const subsidies: Subsidy[] = [
 export const AGE_GROUPS: AgeGroup[] = ['10대', '20대', '30대', '40대', '50대', '60대', '70대이상'];
 export const GENDERS: Gender[] = ['전체', '남성', '여성'];
 export const REGIONS: Region[] = ['전국', '서울', '부산', '경기', '인천'];
-export const CATEGORIES: Category[] = ['주거', '취업·창업', '금융', '복지·돌봄', '교육', '건강', '문화·여가'];
+export const CATEGORIES: Category[] = [
+  '생활·금융',
+  '주거',
+  '일자리',
+  '임신·육아',
+  '교육',
+  '건강',
+  '돌봄',
+  '문화·여가',
+  '생활·안전',
+];
 
 export const CATEGORY_EMOJI: Record<Category, string> = {
+  '생활·금융': '💰',
   '주거': '🏠',
-  '취업·창업': '💼',
-  '금융': '💰',
-  '복지·돌봄': '🤝',
+  '일자리': '💼',
+  '임신·육아': '🍼',
   '교육': '📚',
-  '건강': '❤️',
+  '건강': '💊',
+  '돌봄': '🤝',
   '문화·여가': '🎭',
+  '생활·안전': '🛡️',
 };
 
 /** 토스 2D 이모지(정적 CDN). 이미지가 안 뜨면 CATEGORY_EMOJI 글자로 대신 보여준다. */
@@ -702,25 +723,51 @@ export function tossEmojiUrl(codepoint: string): string {
 
 /** 카테고리별 아이콘(토스 이모지 코드포인트)과 아이콘 배경색 */
 export const CATEGORY_ICON: Record<Category, { codepoint: string; bg: string }> = {
+  '생활·금융': { codepoint: '1F4B0', bg: '#FFF8DB' },
   '주거': { codepoint: '1F3E0', bg: '#EAF3FF' },
-  '취업·창업': { codepoint: '1F4BC', bg: '#FFF3E6' },
-  '금융': { codepoint: '1F4B0', bg: '#FFF8DB' },
-  '복지·돌봄': { codepoint: '1F91D', bg: '#FDEEF4' },
+  '일자리': { codepoint: '1F4BC', bg: '#FFF3E6' },
+  '임신·육아': { codepoint: '1F37C', bg: '#FDEEF4' },
   '교육': { codepoint: '1F4DA', bg: '#EDF8F0' },
   '건강': { codepoint: '1F48A', bg: '#E9F7F9' },
-  '문화·여가': { codepoint: '1F3AD', bg: '#F2EEFF' },
+  '돌봄': { codepoint: '1F91D', bg: '#F2EEFF' },
+  '문화·여가': { codepoint: '1F3AD', bg: '#FFF0EC' },
+  '생활·안전': { codepoint: '1F6E1', bg: '#F2F4F6' },
 };
 
+export function isCategory(v: string): v is Category {
+  return (CATEGORIES as string[]).includes(v);
+}
+
+/** 출생연도로 올해 만 나이 범위를 구한다(생일 전이면 한 살 적다). */
+export function ageRange(birthYear: number | null): [number, number] | null {
+  if (birthYear == null) return null;
+  const y = new Date().getFullYear();
+  return [y - birthYear - 1, y - birthYear];
+}
+
+function ageGroupOf(age: number): AgeGroup {
+  if (age < 20) return '10대';
+  if (age >= 70) return '70대이상';
+  return `${Math.floor(age / 10) * 10}대` as AgeGroup;
+}
+
+/**
+ * 직접 정리한 지원금 중 조건에 맞는 것.
+ * sidoShort가 있으면 전국 사업 + 그 시도 사업만, 없으면 전부.
+ */
 export function filterSubsidies(
-  ageGroup: AgeGroup | null,
+  birthYear: number | null,
   gender: Gender,
+  sidoShort: string | null,
 ): Subsidy[] {
+  const range = ageRange(birthYear);
+  const groups = range ? new Set([ageGroupOf(range[0]), ageGroupOf(range[1])]) : null;
   return subsidies.filter((s) => {
-    const ageMatch = ageGroup == null || s.ageGroups.includes(ageGroup);
+    const ageMatch = groups == null || s.ageGroups.some((g) => groups.has(g));
     const genderMatch =
-      gender === '전체' ||
-      s.genders.includes('전체') ||
-      s.genders.includes(gender);
-    return ageMatch && genderMatch;
+      gender === '전체' || s.genders.includes('전체') || s.genders.includes(gender);
+    const regionMatch =
+      sidoShort == null || s.regions.includes('전국') || (s.regions as string[]).includes(sidoShort);
+    return ageMatch && genderMatch && regionMatch;
   });
 }

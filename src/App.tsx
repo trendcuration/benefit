@@ -1,22 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
 import { graniteEvent, Screen } from '@apps-in-toss/web-framework';
 import { AdNoticePage } from './pages/AdNoticePage';
-import { FilterPage } from './pages/FilterPage';
+import { FilterPage, type SearchParams } from './pages/FilterPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { preloadInterstitial, shouldShowInterstitial } from './lib/ads';
 import { popBackHandler } from './lib/backStack';
-import type { AgeGroup, Gender } from './data/subsidies';
 
 type Page = 'filter' | 'ad' | 'results';
 
-interface SearchParams {
-  ageGroup: AgeGroup | null;
-  gender: Gender;
+const PARAMS_KEY = 'benefit:search-params';
+const EMPTY_PARAMS: SearchParams = { birthYear: null, gender: '전체', sido: null, sidoName: null, sgg: null };
+
+/** 다시 들어왔을 때 같은 조건을 바로 고를 수 있도록 마지막 검색 조건을 기억한다. */
+function readSavedParams(): SearchParams {
+  try {
+    const raw = localStorage.getItem(PARAMS_KEY);
+    return raw ? { ...EMPTY_PARAMS, ...(JSON.parse(raw) as Partial<SearchParams>) } : EMPTY_PARAMS;
+  } catch {
+    return EMPTY_PARAMS;
+  }
 }
 
 export function App() {
   const [page, setPage] = useState<Page>('filter');
-  const [params, setParams] = useState<SearchParams>({ ageGroup: null, gender: '전체' });
+  const [params, setParams] = useState<SearchParams>(readSavedParams);
 
   // 필터 화면에 있는 동안 전면광고를 미리 로드해 둔다.
   useEffect(() => {
@@ -49,8 +56,13 @@ export function App() {
     return unsubscribe;
   }, []);
 
-  const handleSearch = (ageGroup: AgeGroup | null, gender: Gender) => {
-    setParams({ ageGroup, gender });
+  const handleSearch = (next: SearchParams) => {
+    setParams(next);
+    try {
+      localStorage.setItem(PARAMS_KEY, JSON.stringify(next));
+    } catch {
+      /* 저장 실패는 무시 */
+    }
     // 광고 안내 → 광고 노출(닫힘/실패 모두 대기) → 결과. 결과 화면 위로 광고가 뒤늦게 끼어들지 않는다.
     // 광고를 보여줄 수 없는 상황(직전 광고 60초 이내 등)이면 안내 없이 바로 결과로 간다.
     setPage(shouldShowInterstitial() ? 'ad' : 'results');
@@ -58,14 +70,10 @@ export function App() {
 
   return (
     <>
-      {page === 'filter' && <FilterPage onSearch={handleSearch} />}
+      {page === 'filter' && <FilterPage initial={params} onSearch={handleSearch} />}
       {page === 'ad' && <AdNoticePage onDone={() => setPage('results')} />}
       {page === 'results' && (
-        <ResultsPage
-          ageGroup={params.ageGroup}
-          gender={params.gender}
-          onBack={() => setPage('filter')}
-        />
+        <ResultsPage params={params} onBack={() => setPage('filter')} />
       )}
     </>
   );
