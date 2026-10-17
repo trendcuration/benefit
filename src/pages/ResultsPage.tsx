@@ -115,7 +115,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     return [...curated, ...gov];
   }, [govItems, birthYear, gender, sido, sgg]);
 
-  // 특정 대상(장애인·임산부 등) 전용 사업은 기본으로 숨기고, '우리 구' 탭에서는 모두 보여준다.
+  // 특정 대상(소상공인·장애인·임산부 등) 전용 사업은 기본으로 숨기고, '우리 구' 탭에서는 모두 보여준다.
   const baseItems = includeSpecial ? allItems : allItems.filter((x) => !x.special);
   const localItems = sgg ? allItems.filter((x) => x.sgg === sgg) : [];
 
@@ -333,7 +333,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           />
           {specialCount > 0 && (
             <Pill
-              label={`장애인·임산부 등 특정 대상 ${specialCount}개도 보기`}
+              label={`소상공인·장애인 등 특정 대상 ${specialCount}개도 보기`}
               active={includeSpecial}
               onClick={() => setIncludeSpecial((v) => !v)}
             />
