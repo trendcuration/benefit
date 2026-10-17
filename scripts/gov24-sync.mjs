@@ -139,6 +139,49 @@ function conditionInfo(c) {
   };
 }
 
+// ── 끝난 사업 거르기 ──
+const FULL_DATE = /(20\d{2}|\d{2})\s*[.\-년]\s*(\d{1,2})\s*[.\-월]\s*(\d{1,2})/g;
+const MONTH_DAY = /^\s*(\d{1,2})\s*[.\-월]\s*(\d{1,2})/;
+
+function toDate(y, mo, d) {
+  return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? new Date(y, mo - 1, d, 23, 59, 59) : null;
+}
+
+/**
+ * 신청기한의 마감일(모르면 null).
+ * - '~' 뒤(마지막 구간)를 마감으로 본다. '~ 10.30.'처럼 연도가 없으면 앞 날짜의 연도를 쓴다.
+ * - '~ 예산 소진 시'처럼 '~' 뒤에 날짜가 없으면 마감일을 모르는 것으로 본다(끝난 사업으로 치지 않음).
+ * - '~'가 없으면 적힌 날짜 중 가장 늦은 날('2026. 2. 6.까지').
+ */
+function lastDate(text) {
+  const t = clean(text);
+  const years = [...t.matchAll(FULL_DATE)].map((m) => (m[1].length === 2 ? 2000 + Number(m[1]) : Number(m[1])));
+  if (!t.includes('~')) {
+    const ds = [...t.matchAll(FULL_DATE)]
+      .map((m) => toDate(m[1].length === 2 ? 2000 + Number(m[1]) : Number(m[1]), Number(m[2]), Number(m[3])))
+      .filter(Boolean);
+    return ds.length ? new Date(Math.max(...ds.map((x) => x.getTime()))) : null;
+  }
+  const tail = t.slice(t.lastIndexOf('~') + 1);
+  const full = [...tail.matchAll(FULL_DATE)][0];
+  if (full) return toDate(full[1].length === 2 ? 2000 + Number(full[1]) : Number(full[1]), Number(full[2]), Number(full[3]));
+  const md = tail.match(MONTH_DAY);
+  if (md && years.length) return toDate(years[years.length - 1], Number(md[1]), Number(md[2]));
+  return null;
+}
+
+const ENDED_PATTERNS = /신규\s*(지원|가입|모집|신청)\s*(이\s*)?(중단|종료)|사업\s*종료|운영\s*종료/;
+
+/** 신청기한이 날짜로만 적혀 있고 그 날짜가 지났거나, 신규 지원이 중단됐다고 적힌 사업. */
+function isEnded(deadlineText, howText, supportText, now) {
+  if (ENDED_PATTERNS.test(`${clean(howText)} ${clean(supportText)} ${clean(deadlineText)}`)) return true;
+  const t = clean(deadlineText);
+  // '상시'·'매년' 같은 반복 신청은 날짜가 지나도 끝난 게 아니다.
+  if (!t || /상시|매년|연중|수시|분기|매월|별도|상이/.test(t)) return false;
+  const last = lastDate(t);
+  return !!last && last < now;
+}
+
 const CATEGORY = {
   생활안정: '생활·금융', '주거·자립': '주거', '고용·창업': '일자리', '보육·교육': '교육',
   '임신·출산': '임신·육아', '보건·의료': '건강', '보호·돌봄': '돌봄', '문화·환경': '문화·여가',
@@ -236,9 +279,13 @@ async function main() {
   mkdirSync(join(OUT, 'v1/list'), { recursive: true });
 
   let kept = 0;
+  let ended = 0;
+  const NOW = new Date();
   for (const x of list) {
     const users = clean(x['사용자구분']);
-    if (!users.includes('개인') && !users.includes('가구')) continue; // 법인·단체 전용 제외
+    const forPerson = users.includes('개인') || users.includes('가구');
+    const forSmallBiz = users.includes('소상공인');
+    if (!forPerson && !forSmallBiz) continue; // 법인·단체 전용 제외
     const field = clean(x['서비스분야']);
     const cat = CATEGORY[field];
     if (!cat) continue; // 농림축산어업 등 개인 생활과 거리가 먼 분야 제외
@@ -247,8 +294,17 @@ async function main() {
 
     const id = x['서비스ID'];
     const d = detailById.get(id) ?? {};
-    const cond = conditionInfo(condById.get(id));
     const support = d['지원내용'] ?? x['지원내용'];
+    if (isEnded(d['신청기한'] ?? x['신청기한'], d['신청방법'] ?? x['신청방법'], support, NOW)) {
+      ended++;
+      continue;
+    }
+    const cond = conditionInfo(condById.get(id));
+    // 소상공인 전용 사업은 '특정 대상'으로 묶어 기본 목록에서는 숨기고 태그를 단다.
+    if (!forPerson) {
+      cond.gen = false;
+      cond.tags = ['소상공인', ...cond.tags.filter((t) => t !== '소상공인')].slice(0, 3);
+    }
     const item = {
       i: id,
       n: clean(x['서비스명']),
@@ -325,7 +381,7 @@ async function main() {
     sidos,
   };
   writeFileSync(join(OUT, 'v1/meta.json'), JSON.stringify(meta));
-  console.log(`정리: ${kept}건(전국 ${national.length}, 시도 ${sidos.length}곳) · ${Math.round((Date.now() - started) / 1000)}초`);
+  console.log(`정리: ${kept}건(전국 ${national.length}, 시도 ${sidos.length}곳) · 끝난 사업 ${ended}건 제외 · ${Math.round((Date.now() - started) / 1000)}초`);
 }
 
 if (!existsSync(OUT)) mkdirSync(OUT, { recursive: true });
