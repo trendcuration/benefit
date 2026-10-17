@@ -34,6 +34,19 @@ export interface ListItem {
 
 const CURATED_RANK = Number.MAX_SAFE_INTEGER;
 
+/**
+ * 목록 맨 아랫줄의 신청기간 문구. 원문이 '신청불필요'·'상시신청'처럼 이미 '신청'을 품고 있으면
+ * 앞에 '신청'을 또 붙이지 않는다('신청 신청불필요' 같은 중복 방지).
+ */
+export function deadlineLabel(d: string): string {
+  const t = d.trim();
+  if (!t) return '';
+  if (/불필요|신청\s*절차가\s*없|신청\s*없/.test(t)) return '별도 신청 없이 받아요';
+  if (/^상시/.test(t)) return `신청 ${t.replace(/^상시\s*(신청|접수)/, '상시')}`;
+  if (/신청|접수|마감|모집/.test(t)) return t;
+  return `신청 ${t}`;
+}
+
 export function fromCurated(s: Subsidy): ListItem {
   const d = getSubsidyDetail(s.id);
   return {
@@ -42,7 +55,7 @@ export function fromCurated(s: Subsidy): ListItem {
     label: s.title,
     headline: d?.headline ?? s.amount,
     sub: d?.target ?? s.description,
-    meta: `${s.source} · 신청 ${s.deadline}`,
+    meta: `${s.source} · ${deadlineLabel(s.deadline)}`,
     category: s.category,
     deadline: s.deadline,
     isUrgent: !!s.isUrgent,
@@ -64,7 +77,7 @@ export function fromGov(g: GovItem): ListItem {
     label: g.o,
     headline: g.n,
     sub: g.a ? `${g.a} · ${g.s}` : g.s,
-    meta: g.d ? `신청 ${g.d}` : '',
+    meta: deadlineLabel(g.d),
     category,
     deadline: g.d,
     isUrgent: false,
