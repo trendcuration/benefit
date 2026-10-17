@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 정부24 데이터를 새로 받아 benefit 저장소 `data` 브랜치에 올린다(매일 새벽 cron).
+# 정부24 데이터를 새로 받아 benefit 저장소 `data` 브랜치에 올린다(매주 월요일 새벽 cron).
 #  1) gov24-sync.mjs 로 ../benefit-data/v1 생성
 #  2) 데이터 커밋(A) → pointer.json 에 A를 적어 커밋(B) → 푸시
 #  3) jsDelivr 의 @data/pointer.json 캐시를 비워 앱이 새 커밋을 보게 한다

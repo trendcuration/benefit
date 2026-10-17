@@ -195,7 +195,7 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
           지원금 찾기
         </Button>
         <Paragraph typography="t5" color="#8B95A1" style={s.footerNote}>
-          {'정부24 공공서비스 정보 기준 · 매일 새로 반영'}
+          {'정부24 공공서비스 정보 기준 · 매주 새로 반영'}
         </Paragraph>
       </div>
     </div>
