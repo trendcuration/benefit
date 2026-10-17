@@ -12,6 +12,7 @@ import { CURATED_DUP_IDS, fromCurated, fromGov, govMatches, type ListItem } from
 import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { EmojiIcon } from '../components/EmojiIcon';
+import { CrossPromoSheet, PROMO_APPS, type PromoApp } from '../components/CrossPromoSheet';
 import { DetailPage, govPageUrl } from './DetailPage';
 import type { SearchParams } from './FilterPage';
 import { logClick } from '../lib/analytics';
@@ -28,6 +29,25 @@ const MAX_INFEED_BANNERS = 4;
 const PAGE_SIZE = 30;
 /** 부록 미니앱 '2027 바뀌는 지원금'(miniApp 85249) */
 const BENEFIT_2027_APP_URL = 'intoss://benefit-2027';
+
+/** 지원금 상세를 이만큼 보고 목록으로 돌아오면 자매 앱 안내 시트를 띄운다(하루 한 번). */
+const CROSS_PROMO_AFTER_VIEWS = 3;
+const CROSS_PROMO_DATE_KEY = 'benefit:cross-promo-date';
+const CROSS_PROMO_NEXT_KEY = 'benefit:cross-promo-next';
+
+/** 오늘 아직 안 보여줬으면 이번에 보여줄 앱(두 앱을 번갈아)을 고르고 '오늘 보여줌'으로 기록한다. */
+function pickCrossPromo(): PromoApp | null {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem(CROSS_PROMO_DATE_KEY) === today) return null;
+    const next = Number(localStorage.getItem(CROSS_PROMO_NEXT_KEY)) || 0;
+    localStorage.setItem(CROSS_PROMO_DATE_KEY, today);
+    localStorage.setItem(CROSS_PROMO_NEXT_KEY, String((next + 1) % PROMO_APPS.length));
+    return PROMO_APPS[next % PROMO_APPS.length];
+  } catch {
+    return null; // 저장소를 못 쓰면 매번 뜨는 걸 막기 위해 아예 띄우지 않는다
+  }
+}
 
 type SortKey = 'default' | 'amount' | 'deadline';
 /** 탭: 전체 | 우리 구 | 카테고리 */
@@ -54,6 +74,8 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   const [confirmUnlockId, setConfirmUnlockId] = useState<string | null>(null);
   // 상세 요약 화면에 띄운 지원금
   const [detailItem, setDetailItem] = useState<ListItem | null>(null);
+  const [promoApp, setPromoApp] = useState<PromoApp | null>(null);
+  const viewedCount = useRef(0);
   const {
     isBookmarked,
     toggle: toggleBookmark,
@@ -111,7 +133,16 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     });
   };
 
-  const closeDetail = useCallback(() => setDetailItem(null), []);
+  const closeDetail = useCallback(() => {
+    setDetailItem(null);
+    viewedCount.current += 1;
+    if (viewedCount.current === CROSS_PROMO_AFTER_VIEWS) {
+      const app = pickCrossPromo();
+      // 상세가 닫히고 목록이 보인 뒤에 올라오도록 살짝 늦춘다.
+      if (app) setTimeout(() => setPromoApp(app), 350);
+    }
+  }, []);
+  const closePromo = useCallback(() => setPromoApp(null), []);
 
   const open2027App = () => {
     logClick('benefit2027_banner_click');
@@ -233,6 +264,8 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           onClose={closeDetail}
         />
       )}
+
+      {promoApp && !detailItem && <CrossPromoSheet app={promoApp} onClose={closePromo} />}
 
       {/* 조건 요약 (토스 네이티브 내비게이션 바의 뒤로가기 버튼과 중복되지 않도록
           자체 헤더/뒤로가기 버튼 없이 본문 상단에만 표기) */}
