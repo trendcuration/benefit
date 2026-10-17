@@ -13,6 +13,8 @@ import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { EmojiIcon } from '../components/EmojiIcon';
 import { CrossPromoSheet, PROMO_APPS, type PromoApp } from '../components/CrossPromoSheet';
+import { ReviewPromptSheet } from '../components/ReviewPromptSheet';
+import { markAsked, recordDetailView, shouldAskReview } from '../lib/reviewPrompt';
 import { DetailPage, govPageUrl } from './DetailPage';
 import type { SearchParams } from './FilterPage';
 import { logClick } from '../lib/analytics';
@@ -75,6 +77,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   // 상세 요약 화면에 띄운 지원금
   const [detailItem, setDetailItem] = useState<ListItem | null>(null);
   const [promoApp, setPromoApp] = useState<PromoApp | null>(null);
+  const [showReview, setShowReview] = useState(false);
   const viewedCount = useRef(0);
   const {
     isBookmarked,
@@ -126,6 +129,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   const handleOpenDetail = (item: ListItem) => {
     // 전환지표: 지원금을 눌러 자세히 보는 것이 이 앱의 서비스 가치 완료 시점(신청 사이트 이동은 subsidy_apply_click)
     logClick('subsidy_click', { subsidy_id: item.key, category: item.category, kind: item.kind });
+    recordDetailView();
     setDetailItem(item);
     if (!fromBenefitMission) return;
     void grantSubsidyDetailReward().then((outcome) => {
@@ -136,13 +140,19 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   const closeDetail = useCallback(() => {
     setDetailItem(null);
     viewedCount.current += 1;
-    if (viewedCount.current === CROSS_PROMO_AFTER_VIEWS) {
+    // 앱을 잘 쓰고 있다는 신호(상세 5번 이상 + 신청 이동 경험)가 있는 사용자에게만 별점을 묻고,
+    // 그날은 자매 앱 시트를 띄우지 않는다. 조건이 안 되면 기존대로 자매 앱 시트를 고려한다.
+    if (shouldAskReview()) {
+      markAsked();
+      setTimeout(() => setShowReview(true), 350);
+    } else if (viewedCount.current === CROSS_PROMO_AFTER_VIEWS) {
       const app = pickCrossPromo();
       // 상세가 닫히고 목록이 보인 뒤에 올라오도록 살짝 늦춘다.
       if (app) setTimeout(() => setPromoApp(app), 350);
     }
   }, []);
   const closePromo = useCallback(() => setPromoApp(null), []);
+  const closeReview = useCallback(() => setShowReview(false), []);
 
   const open2027App = () => {
     logClick('benefit2027_banner_click');
@@ -266,6 +276,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
       )}
 
       {promoApp && !detailItem && <CrossPromoSheet app={promoApp} onClose={closePromo} />}
+      {showReview && !detailItem && <ReviewPromptSheet onClose={closeReview} />}
 
       {/* 조건 요약 (토스 네이티브 내비게이션 바의 뒤로가기 버튼과 중복되지 않도록
           자체 헤더/뒤로가기 버튼 없이 본문 상단에만 표기) */}

@@ -9,6 +9,7 @@ import { logClick } from '../lib/analytics';
 import { pushBackHandler } from '../lib/backStack';
 import { attachTossBanner } from '../lib/banner';
 import { openExternal } from '../lib/links';
+import { recordApplyClick } from '../lib/reviewPrompt';
 
 const DETAIL_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
 
@@ -75,6 +76,7 @@ export function DetailPage({
 
   const handleApply = () => {
     logClick('subsidy_apply_click', { subsidy_id: item.key, category: item.category, official: !!applyUrl });
+    recordApplyClick();
     openExternal(applyUrl ?? fallbackUrl!);
   };
 
