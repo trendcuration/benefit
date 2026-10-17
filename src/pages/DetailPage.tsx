@@ -1,8 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@toss/tds-mobile';
 import { EmojiIcon } from '../components/EmojiIcon';
 import { CATEGORY_EMOJI, CATEGORY_ICON, LAST_UPDATED, type Subsidy } from '../data/subsidies';
-import type { SubsidyDetail } from '../data/subsidyDetails';
+import { getSubsidyDetail } from '../data/subsidyDetails';
+import { loadDetail, type GovDetail, type GovItem } from '../data/gov24';
+import type { ListItem } from '../data/items';
 import { logClick } from '../lib/analytics';
 import { pushBackHandler } from '../lib/backStack';
 import { attachTossBanner } from '../lib/banner';
@@ -11,13 +13,16 @@ import { openExternal } from '../lib/links';
 const DETAIL_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
 
 interface DetailPageProps {
-  item: Subsidy;
-  detail?: SubsidyDetail;
+  item: ListItem;
   bookmarked: boolean;
   unlocking: boolean;
   onToggleBookmark: () => void;
   onShare: () => void;
   onClose: () => void;
+}
+
+export function govPageUrl(id: string): string {
+  return `https://www.gov.kr/portal/rcvfvrSvc/dtlEx/${id}`;
 }
 
 /**
@@ -28,7 +33,6 @@ interface DetailPageProps {
  */
 export function DetailPage({
   item,
-  detail,
   bookmarked,
   unlocking,
   onToggleBookmark,
@@ -36,8 +40,21 @@ export function DetailPage({
   onClose,
 }: DetailPageProps) {
   const bannerRef = useRef<HTMLDivElement>(null);
+  const [gov, setGov] = useState<GovDetail | null>(null);
+  const [govError, setGovError] = useState(false);
 
   useEffect(() => pushBackHandler(onClose), [onClose]);
+
+  useEffect(() => {
+    if (!item.gov) return;
+    let alive = true;
+    loadDetail(item.gov.i)
+      .then((d) => alive && setGov(d))
+      .catch(() => alive && setGovError(true));
+    return () => {
+      alive = false;
+    };
+  }, [item.gov]);
 
   useEffect(() => {
     const el = bannerRef.current;
@@ -53,21 +70,27 @@ export function DetailPage({
   }, []);
 
   const icon = CATEGORY_ICON[item.category];
-  const regionLabel = item.regions.includes('전국') ? '전국' : item.regions.join('·');
-  const dday = getDday(item.deadline);
+  const applyUrl = item.curated?.url ?? gov?.apply ?? null;
+  const fallbackUrl = item.gov ? (gov?.gov ?? govPageUrl(item.gov.i)) : null;
 
   const handleApply = () => {
-    logClick('subsidy_apply_click', { subsidy_id: item.id, category: item.category });
-    openExternal(item.url);
+    logClick('subsidy_apply_click', { subsidy_id: item.key, category: item.category, official: !!applyUrl });
+    openExternal(applyUrl ?? fallbackUrl!);
   };
 
   const handleCall = (tel: string) => {
-    logClick('subsidy_call_click', { subsidy_id: item.id });
+    logClick('subsidy_call_click', { subsidy_id: item.key });
     openExternal(`tel:${tel.replace(/[^0-9]/g, '')}`);
   };
 
+  const regionLabel = item.curated
+    ? item.curated.regions.includes('전국')
+      ? '전국'
+      : item.curated.regions.join('·')
+    : item.sgg ?? (item.gov && isNationalOrg(item.gov) ? '전국' : item.label);
+
   return (
-    <div style={s.overlay} role="dialog" aria-label={`${item.title} 자세히 보기`}>
+    <div style={s.overlay} role="dialog" aria-label={`${item.headline} 자세히 보기`}>
       <div style={s.content}>
         {/* 제목 영역 */}
         <div style={s.top}>
@@ -76,83 +99,41 @@ export function DetailPage({
               <EmojiIcon codepoint={icon.codepoint} fallback={CATEGORY_EMOJI[item.category]} size={22} />
             </div>
             <span style={s.metaText}>
-              {item.source} · {item.category}
+              {item.curated ? item.curated.source : item.label} · {item.category}
             </span>
           </div>
-          <h1 style={s.title}>{item.title}</h1>
-          <p style={s.headline}>{detail?.headline ?? item.amount}</p>
+          <h1 style={s.title}>{item.curated ? item.curated.title : item.headline}</h1>
+          {(item.curated ? item.headline : item.gov?.a) && (
+            <p style={s.headline}>{item.curated ? item.headline : item.gov?.a}</p>
+          )}
           <div style={s.chips}>
             <span style={s.chip}>📍 {regionLabel}</span>
-            <span style={item.isUrgent ? { ...s.chip, ...s.chipUrgent } : s.chip}>
-              ⏰ {item.deadline}
-            </span>
+            {item.deadline && (
+              <span style={item.isUrgent ? { ...s.chip, ...s.chipUrgent } : s.chip}>
+                ⏰ {item.deadline}
+              </span>
+            )}
+            {item.tags.map((t) => (
+              <span key={t} style={{ ...s.chip, ...s.chipTag }}>
+                {t} 대상
+              </span>
+            ))}
           </div>
         </div>
 
         <div style={s.divider} />
 
-        <Section codepoint="1F4A1" fallback="💡" title="지원금 요약">
-          {detail && <p style={s.summary}>{detail.summary}</p>}
-          <p style={detail ? s.subText : s.bodyText}>{item.description}</p>
-        </Section>
-
-        <Section codepoint="1F4B0" fallback="💰" title="지원금액">
-          <div style={s.amountBox}>{item.amount}</div>
-          {detail && <Bullets items={withoutAmountRepeat(detail.support, item.amount)} />}
-        </Section>
-
-        <Section codepoint="1F64B" fallback="🙋" title="지원대상">
-          {detail && <Bullets items={detail.who} />}
-          <dl style={s.facts}>
-            <Fact label="연령" value={item.ageGroups.join(' · ')} />
-            <Fact label="성별" value={item.genders.includes('전체') ? '제한 없음' : item.genders.join(' · ')} />
-            <Fact label="지역" value={regionLabel === '전국' ? '전국 어디서나' : `${regionLabel} 거주자`} />
-          </dl>
-        </Section>
-
-        {detail && (
-          <Section codepoint="1F4DD" fallback="📝" title="신청방법">
-            <ol style={s.steps}>
-              {detail.how.map((step, i) => (
-                <li key={i} style={s.step}>
-                  <span style={s.stepNum}>{i + 1}</span>
-                  <span style={s.bodyText}>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </Section>
+        {item.curated && <CuratedBody item={item.curated} regionLabel={regionLabel} onCall={handleCall} />}
+        {item.gov && (
+          <GovBody item={item.gov} detail={gov} error={govError} regionLabel={regionLabel} onCall={handleCall} />
         )}
-
-        <Section codepoint="23F0" fallback="⏰" title="신청기간">
-          <p style={s.bodyText}>
-            {item.deadline}
-            {dday && <span style={s.dday}>{dday}</span>}
-          </p>
-        </Section>
-
-        <Section codepoint="1F4DE" fallback="📞" title="문의처">
-          <div style={s.contactRow}>
-            <div>
-              <p style={s.bodyText}>{detail?.contact?.name ?? item.source}</p>
-              {detail?.contact?.tel && <p style={s.tel}>{detail.contact.tel}</p>}
-              <p style={s.subText}>소관 기관 · {item.source}</p>
-            </div>
-            {detail?.contact?.tel && (
-              <button
-                type="button"
-                style={s.callBtn}
-                onClick={() => handleCall(detail.contact!.tel!)}
-              >
-                전화
-              </button>
-            )}
-          </div>
-        </Section>
 
         <div ref={bannerRef} style={s.banner} />
 
         <p style={s.disclaimer}>
-          {`${LAST_UPDATED} 기준으로 핵심만 요약했어요.\n정확한 자격·금액은 신청 전 공식 안내에서 꼭 확인해 주세요.`}
+          {item.curated
+            ? `${LAST_UPDATED} 기준으로 핵심만 요약했어요.\n정확한 자격·금액은 신청 전 공식 안내에서 꼭 확인해 주세요.`
+            : `정부24 공공서비스 정보${gov?.updated ? `(${gov.updated} 수정)` : ''}를 정리했어요.\n정확한 자격·금액은 신청 전 공식 안내에서 꼭 확인해 주세요.`}
         </p>
 
         <div style={s.backWrap}>
@@ -178,11 +159,224 @@ export function DetailPage({
         </button>
         <div style={s.applyWrap}>
           <Button display="full" size="large" color="primary" variant="fill" onClick={handleApply}>
-            신청하러 가기
+            {applyUrl ? '신청하러 가기' : '정부24에서 신청 안내 보기'}
           </Button>
         </div>
       </div>
     </div>
+  );
+}
+
+function isNationalOrg(g: GovItem): boolean {
+  return !g.g && !/(특별시|광역시|특별자치시|도|통합특별시)(\s|$)/.test(g.o);
+}
+
+// ── 직접 정리한 지원금 ──
+function CuratedBody({
+  item,
+  regionLabel,
+  onCall,
+}: {
+  item: Subsidy;
+  regionLabel: string;
+  onCall: (tel: string) => void;
+}) {
+  const detail = getSubsidyDetail(item.id);
+  const dday = getDday(item.deadline);
+  return (
+    <>
+      <Section codepoint="1F4A1" fallback="💡" title="지원금 요약">
+        {detail && <p style={s.summary}>{detail.summary}</p>}
+        <p style={detail ? s.subText : s.bodyText}>{item.description}</p>
+      </Section>
+
+      <Section codepoint="1F4B0" fallback="💰" title="지원금액">
+        <div style={s.amountBox}>{item.amount}</div>
+        {detail && <Bullets items={withoutAmountRepeat(detail.support, item.amount)} />}
+      </Section>
+
+      <Section codepoint="1F64B" fallback="🙋" title="지원대상">
+        {detail && <Bullets items={detail.who} />}
+        <dl style={s.facts}>
+          <Fact label="연령" value={item.ageGroups.join(' · ')} />
+          <Fact label="성별" value={item.genders.includes('전체') ? '제한 없음' : item.genders.join(' · ')} />
+          <Fact label="지역" value={regionLabel === '전국' ? '전국 어디서나' : `${regionLabel} 거주자`} />
+        </dl>
+      </Section>
+
+      {detail && (
+        <Section codepoint="1F4DD" fallback="📝" title="신청방법">
+          <Steps items={detail.how} />
+        </Section>
+      )}
+
+      <Section codepoint="23F0" fallback="⏰" title="신청기간">
+        <p style={s.bodyText}>
+          {item.deadline}
+          {dday && <span style={s.dday}>{dday}</span>}
+        </p>
+      </Section>
+
+      <Section codepoint="1F4DE" fallback="📞" title="문의처">
+        <div style={s.contactRow}>
+          <div>
+            <p style={s.bodyText}>{detail?.contact?.name ?? item.source}</p>
+            {detail?.contact?.tel && <p style={s.tel}>{detail.contact.tel}</p>}
+            <p style={s.subText}>소관 기관 · {item.source}</p>
+          </div>
+          {detail?.contact?.tel && (
+            <button type="button" style={s.callBtn} onClick={() => onCall(detail.contact!.tel!)}>
+              전화
+            </button>
+          )}
+        </div>
+      </Section>
+    </>
+  );
+}
+
+// ── 정부24 지원금 ──
+function GovBody({
+  item,
+  detail,
+  error,
+  regionLabel,
+  onCall,
+}: {
+  item: GovItem;
+  detail: GovDetail | null;
+  error: boolean;
+  regionLabel: string;
+  onCall: (tel: string) => void;
+}) {
+  const age =
+    item.lo != null || item.hi != null
+      ? `만 ${item.lo ?? 0}세 ~ ${item.hi != null ? `${item.hi}세` : ''}`.replace(/~ $/, '이상')
+      : '제한 없음';
+
+  return (
+    <>
+      <Section codepoint="1F4A1" fallback="💡" title="지원금 요약">
+        <p style={s.summary}>{item.s}</p>
+        {detail && <Lines items={detail.purpose.filter((l) => l !== item.s)} limit={3} gray />}
+      </Section>
+
+      {!detail && (
+        <p style={s.loading}>{error ? '자세한 내용을 불러오지 못했어요. 아래 버튼으로 정부24에서 확인해 주세요.' : '자세한 내용을 불러오고 있어요…'}</p>
+      )}
+
+      {detail && (
+        <>
+          <Section codepoint="1F4B0" fallback="💰" title="지원금액">
+            {item.a && <div style={s.amountBox}>{item.a}</div>}
+            <Lines items={detail.support} limit={6} />
+            {detail.type && <p style={s.subText}>지원 형태 · {detail.type}</p>}
+          </Section>
+
+          <Section codepoint="1F64B" fallback="🙋" title="지원대상">
+            <Lines items={detail.target} limit={5} />
+            <dl style={s.facts}>
+              <Fact label="연령" value={age} />
+              <Fact label="성별" value={item.sx === 'M' ? '남성' : item.sx === 'F' ? '여성' : '제한 없음'} />
+              <Fact label="지역" value={regionLabel === '전국' ? '전국 어디서나' : `${regionLabel} 거주자`} />
+            </dl>
+            {detail.criteria.length > 0 && (
+              <Fold title="선정기준 자세히 보기">
+                <Lines items={detail.criteria} limit={40} />
+              </Fold>
+            )}
+          </Section>
+
+          <Section codepoint="1F4DD" fallback="📝" title="신청방법">
+            <Steps items={detail.how.slice(0, 8)} />
+            {detail.receipt && <p style={s.subText}>접수 기관 · {detail.receipt}</p>}
+            {detail.docs.length > 0 && (
+              <Fold title="구비서류 보기">
+                <Lines items={detail.docs} limit={20} />
+              </Fold>
+            )}
+          </Section>
+
+          <Section codepoint="23F0" fallback="⏰" title="신청기간">
+            <Lines items={detail.deadline.length ? detail.deadline : ['기관에 문의해 주세요']} limit={6} />
+          </Section>
+
+          <Section codepoint="1F4DE" fallback="📞" title="문의처">
+            <div style={s.contactList}>
+              {(detail.contact.length ? detail.contact : [item.o]).slice(0, 4).map((line) => {
+                const tel = line.match(/(\d{2,4}-\d{3,4}-\d{4}|1\d{3}-\d{4}|\b1\d{2}\b)/)?.[0];
+                return (
+                  <div key={line} style={s.contactRow}>
+                    <p style={s.bodyText}>{line}</p>
+                    {tel && (
+                      <button type="button" style={s.callBtn} onClick={() => onCall(tel)}>
+                        전화
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              <p style={s.subText}>소관 기관 · {item.o}</p>
+            </div>
+          </Section>
+        </>
+      )}
+    </>
+  );
+}
+
+/** ※ 로 시작하는 줄은 참고 문구로 흐리게, 나머지는 점 목록으로. limit을 넘으면 '더 보기'. */
+function Lines({ items, limit, gray }: { items: string[]; limit: number; gray?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const shown = open ? items : items.slice(0, limit);
+  if (items.length === 0) return null;
+  return (
+    <>
+      <ul style={s.bullets}>
+        {shown.map((text, i) =>
+          text.startsWith('※') ? (
+            <li key={i} style={s.note}>
+              {text}
+            </li>
+          ) : (
+            <li key={i} style={s.bullet}>
+              <span style={s.dot} />
+              <span style={gray ? s.subText : s.bodyText}>{text}</span>
+            </li>
+          )
+        )}
+      </ul>
+      {items.length > limit && (
+        <button type="button" style={s.moreBtn} onClick={() => setOpen((v) => !v)}>
+          {open ? '접기' : `${items.length - limit}줄 더 보기`}
+        </button>
+      )}
+    </>
+  );
+}
+
+function Fold({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={s.fold}>
+      <button type="button" style={s.foldBtn} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        {title} <span style={s.foldChevron}>{open ? '⌃' : '⌄'}</span>
+      </button>
+      {open && <div style={s.foldBody}>{children}</div>}
+    </div>
+  );
+}
+
+function Steps({ items }: { items: string[] }) {
+  return (
+    <ol style={s.steps}>
+      {items.map((step, i) => (
+        <li key={i} style={s.step}>
+          <span style={s.stepNum}>{i + 1}</span>
+          <span style={s.bodyText}>{step}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -308,6 +502,58 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: '8px',
     padding: '5px 9px',
     lineHeight: 1.4,
+  },
+  chipTag: {
+    color: '#7C3AED',
+    backgroundColor: '#F3EEFF',
+  },
+  loading: {
+    padding: '24px 20px',
+    fontSize: '15px',
+    color: '#8B95A1',
+  },
+  note: {
+    fontSize: '14px',
+    lineHeight: 1.6,
+    color: '#8B95A1',
+  },
+  moreBtn: {
+    marginTop: '8px',
+    border: 'none',
+    background: 'none',
+    padding: '4px 0',
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#3182F6',
+    cursor: 'pointer',
+  },
+  fold: {
+    marginTop: '14px',
+    borderTop: '1px solid #F2F4F6',
+  },
+  foldBtn: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    border: 'none',
+    background: 'none',
+    padding: '14px 0 6px',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#4E5968',
+    cursor: 'pointer',
+  },
+  foldChevron: {
+    color: '#B0B8C1',
+  },
+  foldBody: {
+    paddingTop: '6px',
+  },
+  contactList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
   },
   chipUrgent: {
     color: '#B45309',

@@ -1,23 +1,19 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TextField } from '@toss/tds-mobile';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
   CATEGORY_ICON,
   filterSubsidies,
-  LAST_UPDATED,
-  REGIONS,
-  type AgeGroup,
   type Category,
-  type Gender,
-  type Region,
-  type Subsidy,
 } from '../data/subsidies';
-import { getSubsidyDetail } from '../data/subsidyDetails';
+import { loadNational, loadSido, type GovItem } from '../data/gov24';
+import { CURATED_DUP_IDS, fromCurated, fromGov, govMatches, type ListItem } from '../data/items';
 import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { EmojiIcon } from '../components/EmojiIcon';
-import { DetailPage } from './DetailPage';
+import { DetailPage, govPageUrl } from './DetailPage';
+import type { SearchParams } from './FilterPage';
 import { logClick } from '../lib/analytics';
 import { attachTossBanner } from '../lib/banner';
 import { openExternal } from '../lib/links';
@@ -28,31 +24,36 @@ const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
 const REWARDED_AD_ID = 'ait.v2.live.327ced0813c8420f';
 const INFEED_BANNER_INTERVAL = 6;
+const MAX_INFEED_BANNERS = 4;
+const PAGE_SIZE = 30;
 /** 부록 미니앱 '2027 바뀌는 지원금'(miniApp 85249) */
 const BENEFIT_2027_APP_URL = 'intoss://benefit-2027';
 
 type SortKey = 'default' | 'amount' | 'deadline';
+/** 탭: 전체 | 우리 구 | 카테고리 */
+type TabKey = 'all' | 'local' | Category;
 
 interface ResultsPageProps {
-  ageGroup: AgeGroup | null;
-  gender: Gender;
+  params: SearchParams;
   onBack: () => void;
 }
 
-export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
+export function ResultsPage({ params, onBack }: ResultsPageProps) {
+  const { birthYear, gender, sido, sidoName, sgg } = params;
   const [sort, setSort] = useState<SortKey>('default');
-  const [activeCategory, setActiveCategory] = useState<Category | null>(null);
-  const [activeRegion, setActiveRegion] = useState<Region | null>(null);
+  const [tab, setTab] = useState<TabKey>('all');
   const [query, setQuery] = useState('');
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
-  const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [includeSpecial, setIncludeSpecial] = useState(false);
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [govItems, setGovItems] = useState<GovItem[] | null>(null);
+  const [govFailed, setGovFailed] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
-  const [unlockingId, setUnlockingId] = useState<number | null>(null);
-  // 무료 한도 초과 시 리워드 광고를 보기 전에 안내/확인을 받기 위한 대상 항목 id
-  const [confirmUnlockId, setConfirmUnlockId] = useState<number | null>(null);
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  // 무료 한도 초과 시 리워드 광고를 보기 전에 안내/확인을 받기 위한 대상 항목 키
+  const [confirmUnlockId, setConfirmUnlockId] = useState<string | null>(null);
   // 상세 요약 화면에 띄운 지원금
-  const [detailItem, setDetailItem] = useState<Subsidy | null>(null);
+  const [detailItem, setDetailItem] = useState<ListItem | null>(null);
   const {
     isBookmarked,
     toggle: toggleBookmark,
@@ -67,9 +68,42 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   const [fromBenefitMission] = useState(() => IS_PROMOTION_TEST || isFromBenefitMission());
   const [rewardGranted, setRewardGranted] = useState(false);
 
-  const handleOpenDetail = (item: Subsidy) => {
+  // 정부24 데이터: 전국 + 고른 시도. 실패해도 직접 정리한 지원금만으로 화면이 동작한다.
+  useEffect(() => {
+    let alive = true;
+    setGovItems(null);
+    setGovFailed(false);
+    Promise.all([loadNational(), sido ? loadSido(sido) : Promise.resolve([])])
+      .then(([national, local]) => alive && setGovItems([...local, ...national]))
+      .catch(() => {
+        if (!alive) return;
+        setGovFailed(true);
+        setGovItems([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [sido]);
+
+  const allItems = useMemo(() => {
+    const curated = filterSubsidies(birthYear, gender, sido).map(fromCurated);
+    const gov = (govItems ?? [])
+      .filter((g) => !CURATED_DUP_IDS.has(g.i) && govMatches(g, { birthYear, gender, sgg }))
+      .map(fromGov);
+    return [...curated, ...gov];
+  }, [govItems, birthYear, gender, sido, sgg]);
+
+  // 특정 대상(장애인·임산부 등) 전용 사업은 기본으로 숨기고, '우리 구' 탭에서는 모두 보여준다.
+  const baseItems = includeSpecial ? allItems : allItems.filter((x) => !x.special);
+  const localItems = sgg ? allItems.filter((x) => x.sgg === sgg) : [];
+
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [tab, query, sort, showBookmarkedOnly, includeSpecial]);
+
+  const handleOpenDetail = (item: ListItem) => {
     // 전환지표: 지원금을 눌러 자세히 보는 것이 이 앱의 서비스 가치 완료 시점(신청 사이트 이동은 subsidy_apply_click)
-    logClick('subsidy_click', { subsidy_id: item.id, category: item.category });
+    logClick('subsidy_click', { subsidy_id: item.key, category: item.category, kind: item.kind });
     setDetailItem(item);
     if (!fromBenefitMission) return;
     void grantSubsidyDetailReward().then((outcome) => {
@@ -85,12 +119,6 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
   };
 
   useEffect(() => {
-    setLoading(true);
-    setSubsidies(filterSubsidies(ageGroup, gender));
-    setLoading(false);
-  }, [ageGroup, gender]);
-
-  useEffect(() => {
     const el = bannerRef.current;
     if (!el) return;
     let result: { destroy: () => void } | undefined;
@@ -103,33 +131,24 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     };
   }, []);
 
-  const categoryFiltered = activeCategory
-    ? subsidies.filter((s) => s.category === activeCategory)
-    : subsidies;
-  const regionFiltered = activeRegion
-    ? categoryFiltered.filter((s) => s.regions.includes('전국') || s.regions.includes(activeRegion))
-    : categoryFiltered;
-  const bookmarkFiltered = showBookmarkedOnly
-    ? regionFiltered.filter((s) => isBookmarked(s.id))
-    : regionFiltered;
+  const tabItems =
+    tab === 'all' ? baseItems : tab === 'local' ? localItems : baseItems.filter((x) => x.category === tab);
+  const bookmarkFiltered = showBookmarkedOnly ? tabItems.filter((x) => isBookmarked(x.key)) : tabItems;
   const trimmedQuery = query.trim().toLowerCase();
   const searchFiltered = trimmedQuery
-    ? bookmarkFiltered.filter((s) => {
-        const d = getSubsidyDetail(s.id);
-        return [s.title, s.description, d?.headline, d?.target]
-          .filter(Boolean)
-          .some((text) => text!.toLowerCase().includes(trimmedQuery));
-      })
+    ? bookmarkFiltered.filter((x) => x.searchText.includes(trimmedQuery))
     : bookmarkFiltered;
   const sorted = [...searchFiltered].sort((a, b) => {
-    if (sort === 'amount') return parseAmount(b.amount) - parseAmount(a.amount);
+    if (sort === 'amount') return parseAmount(b.amountText) - parseAmount(a.amountText);
     if (sort === 'deadline') return deadlineRank(a.deadline) - deadlineRank(b.deadline);
-    return (b.isUrgent ? 1 : 0) - (a.isUrgent ? 1 : 0);
+    return (b.isUrgent ? 1 : 0) - (a.isUrgent ? 1 : 0) || b.rank - a.rank;
   });
+  const shown = sorted.slice(0, visible);
 
-  const urgentCount = subsidies.filter((s) => s.isUrgent).length;
+  const urgentCount = baseItems.filter((x) => x.isUrgent).length;
+  const specialCount = allItems.length - allItems.filter((x) => !x.special).length;
 
-  const handleToggleBookmark = (id: number) => {
+  const handleToggleBookmark = (id: string) => {
     if (isBookmarked(id) || !isLimitReached) {
       toggleBookmark(id);
       return;
@@ -138,17 +157,17 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     setConfirmUnlockId(id);
   };
 
-  const handleShare = (item: Subsidy) => {
-    const d = getSubsidyDetail(item.id);
+  const handleShare = (item: ListItem) => {
+    const url = item.curated?.url ?? (item.gov ? govPageUrl(item.gov.i) : '');
+    const title = item.curated?.title ?? item.headline;
+    const line = item.curated ? item.headline : (item.gov?.a ?? item.gov?.s ?? '');
     import('@apps-in-toss/web-framework')
-      .then(({ share }) =>
-        share({ message: `[${item.title}]\n${d?.headline ?? item.amount}\n${item.url}` })
-      )
+      .then(({ share }) => share({ message: `[${title}]\n${line}\n${url}` }))
       .catch(() => {});
   };
 
   // 사용자가 안내에서 "광고 보고 무제한 북마크"를 선택한 경우: 리워드 광고 시청 후 무제한 해제 + 해당 항목 북마크
-  const startBookmarkUnlock = (id: number) => {
+  const startBookmarkUnlock = (id: string) => {
     setUnlockingId(id);
     import('@apps-in-toss/web-framework')
       .then(({ loadFullScreenAd, showFullScreenAd }) => {
@@ -180,6 +199,16 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       .catch(() => setUnlockingId(null));
   };
 
+  const loading = govItems === null;
+  const condition = [
+    birthYear ? `${String(birthYear).slice(2)}년생` : '전체 연령',
+    sgg ?? sidoName ?? '전국',
+    gender === '전체' ? null : gender,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const tabTitle = tab === 'all' ? '전체' : tab === 'local' ? `우리 ${sgg}` : tab;
+
   return (
     <div style={s.container}>
       {confirmUnlockId !== null && (
@@ -197,10 +226,9 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       {detailItem && (
         <DetailPage
           item={detailItem}
-          detail={getSubsidyDetail(detailItem.id)}
-          bookmarked={isBookmarked(detailItem.id)}
-          unlocking={unlockingId === detailItem.id}
-          onToggleBookmark={() => handleToggleBookmark(detailItem.id)}
+          bookmarked={isBookmarked(detailItem.key)}
+          unlocking={unlockingId === detailItem.key}
+          onToggleBookmark={() => handleToggleBookmark(detailItem.key)}
           onShare={() => handleShare(detailItem)}
           onClose={closeDetail}
         />
@@ -210,16 +238,13 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
           자체 헤더/뒤로가기 버튼 없이 본문 상단에만 표기) */}
       <div style={s.hero}>
         <p style={s.heroSub}>
-          <span style={s.heroCond}>
-            {ageGroup ?? '전체 연령'} · {gender}
-          </span>{' '}
-          조건으로 골랐어요
+          <span style={s.heroCond}>{condition}</span> 조건으로 골랐어요
         </p>
         <h1 style={s.heroTitle}>
-          {loading ? '지원금을 고르고 있어요' : `놓치면 아까운 지원금 ${subsidies.length}개`}
+          {loading ? '지원금을 고르고 있어요' : `놓치면 아까운 지원금 ${baseItems.length}개`}
         </h1>
         <p style={s.heroNote}>
-          {LAST_UPDATED} 업데이트
+          {govFailed ? '정부24 정보를 불러오지 못해 대표 지원금만 보여드려요' : '정부24 공공서비스 정보 기준'}
           {urgentCount > 0 && <span style={s.heroUrgent}> · 🔥 마감 임박 {urgentCount}개</span>}
         </p>
       </div>
@@ -251,26 +276,21 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       {/* 배너 광고 */}
       <div ref={bannerRef} style={s.banner} />
 
-      {/* 카테고리 탭 (스크롤해도 상단에 고정) */}
+      {/* 탭 (스크롤해도 상단에 고정) */}
       <div style={s.tabsWrap}>
         <div style={s.tabs} role="tablist">
-          <Tab label="전체" active={activeCategory === null} onClick={() => setActiveCategory(null)} />
+          <Tab label="전체" active={tab === 'all'} onClick={() => setTab('all')} />
+          {localItems.length > 0 && (
+            <Tab label={`📍 ${sgg}`} active={tab === 'local'} onClick={() => setTab('local')} />
+          )}
           {CATEGORIES.map((cat) => {
-            const count = subsidies.filter((item) => item.category === cat).length;
-            if (count === 0) return null;
-            return (
-              <Tab
-                key={cat}
-                label={cat}
-                active={activeCategory === cat}
-                onClick={() => setActiveCategory(cat)}
-              />
-            );
+            if (!baseItems.some((x) => x.category === cat)) return null;
+            return <Tab key={cat} label={cat} active={tab === cat} onClick={() => setTab(cat)} />;
           })}
         </div>
       </div>
 
-      {/* 지역·찜 필터 */}
+      {/* 찜·대상 필터 + 검색 */}
       <div style={s.filterPanel}>
         <div style={s.pillRow}>
           <Pill
@@ -278,16 +298,13 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
             active={showBookmarkedOnly}
             onClick={() => setShowBookmarkedOnly((v) => !v)}
           />
-          <span style={s.pillDivider} />
-          <Pill label="전체 지역" active={activeRegion === null} onClick={() => setActiveRegion(null)} />
-          {REGIONS.map((region) => (
+          {specialCount > 0 && (
             <Pill
-              key={region}
-              label={region}
-              active={activeRegion === region}
-              onClick={() => setActiveRegion(activeRegion === region ? null : region)}
+              label={`장애인·임산부 등 특정 대상 ${specialCount}개도 보기`}
+              active={includeSpecial}
+              onClick={() => setIncludeSpecial((v) => !v)}
             />
-          ))}
+          )}
         </div>
         <div style={s.searchWrap}>
           <TextField.Clearable
@@ -308,7 +325,7 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
       <div style={s.listPanel}>
         <div style={s.sortRow}>
           <span style={s.listTitle}>
-            {activeCategory ?? '전체'} <span style={s.listCount}>{sorted.length}</span>
+            {tabTitle} <span style={s.listCount}>{sorted.length}</span>
           </span>
           <div style={s.sortBtns}>
             {(['default', 'amount', 'deadline'] as SortKey[]).map((key) => (
@@ -323,32 +340,38 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
             ))}
           </div>
         </div>
+        {tab === 'local' && (
+          <p style={s.localHint}>{sgg}에서 직접 운영하는 사업이에요. 특정 대상 사업도 함께 보여드려요.</p>
+        )}
 
-        {sorted.length === 0 ? (
+        {sorted.length === 0 && !loading ? (
           <EmptyState onBack={onBack} />
         ) : (
-          sorted.map((item, index) => (
-            <Fragment key={item.id}>
+          shown.map((item, index) => (
+            <Fragment key={item.key}>
               <SubsidyRow
                 item={item}
-                bookmarked={isBookmarked(item.id)}
-                unlocking={unlockingId === item.id}
-                onToggleBookmark={() => handleToggleBookmark(item.id)}
+                bookmarked={isBookmarked(item.key)}
+                unlocking={unlockingId === item.key}
+                onToggleBookmark={() => handleToggleBookmark(item.key)}
                 onOpen={() => handleOpenDetail(item)}
               />
-              {(index + 1) % INFEED_BANNER_INTERVAL === 0 && index !== sorted.length - 1 && (
-                <InFeedBanner key={`banner-${item.id}`} />
-              )}
+              {(index + 1) % INFEED_BANNER_INTERVAL === 0 &&
+                (index + 1) / INFEED_BANNER_INTERVAL <= MAX_INFEED_BANNERS &&
+                index !== shown.length - 1 && <InFeedBanner key={`banner-${item.key}`} />}
             </Fragment>
           ))
+        )}
+        {loading && <p style={s.localHint}>우리 동네 지원금까지 불러오고 있어요…</p>}
+        {sorted.length > visible && (
+          <button type="button" style={s.loadMoreBtn} onClick={() => setVisible((v) => v + PAGE_SIZE)}>
+            {`더 보기 (${sorted.length - visible}개 남음)`}
+          </button>
         )}
       </div>
 
       {/* 더보기 */}
       <div style={s.moreWrap}>
-        <button type="button" style={s.moreBtn} onClick={() => openExternal('https://www.bokjiro.go.kr')}>
-          복지로에서 더 많은 지원금 보기 ›
-        </button>
         <button type="button" style={s.moreBtn} onClick={onBack}>
           다른 조건으로 다시 찾기 ›
         </button>
@@ -402,7 +425,7 @@ function InFeedBanner() {
 
 // ── 지원금 한 줄 ──
 interface SubsidyRowProps {
-  item: Subsidy;
+  item: ListItem;
   bookmarked: boolean;
   unlocking: boolean;
   onToggleBookmark: () => void;
@@ -411,18 +434,15 @@ interface SubsidyRowProps {
 }
 
 function SubsidyRow({ item, bookmarked, unlocking, onToggleBookmark, onOpen }: SubsidyRowProps) {
-  const detail = getSubsidyDetail(item.id);
   const icon = CATEGORY_ICON[item.category];
   const dday = item.isUrgent ? getDday(item.deadline) : null;
-  const regionLabel = item.regions.includes('전국') ? null : item.regions.join('·');
-  const sub = [regionLabel, detail?.target ?? item.description].filter(Boolean).join(' · ');
 
   return (
     <div style={s.row}>
       <div
         role="button"
         tabIndex={0}
-        aria-label={`${item.title} 자세히 보기`}
+        aria-label={`${item.headline} 자세히 보기`}
         style={s.rowMain}
         onClick={onOpen}
         onKeyDown={(e) => {
@@ -437,14 +457,18 @@ function SubsidyRow({ item, bookmarked, unlocking, onToggleBookmark, onOpen }: S
         </div>
         <div style={s.rowTexts}>
           <div style={s.rowProgram}>
-            <span style={s.ellipsis}>{item.title}</span>
+            <span style={s.ellipsis}>{item.label}</span>
             {item.isUrgent && <span style={s.ddayBadge}>{dday ?? '마감 임박'}</span>}
+            {item.sgg && <span style={s.localBadge}>우리 동네</span>}
           </div>
-          <p style={{ ...s.rowHeadline, ...s.ellipsis }}>{detail?.headline ?? item.amount}</p>
-          <p style={{ ...s.rowSub, ...s.ellipsis }}>{sub}</p>
-          <p style={{ ...s.rowMeta, ...s.ellipsis }}>
-            {item.source} · 신청 {item.deadline}
-          </p>
+          <p style={{ ...s.rowHeadline, ...s.ellipsis }}>{item.headline}</p>
+          <p style={{ ...s.rowSub, ...s.ellipsis }}>{item.sub}</p>
+          {(item.meta || item.tags.length > 0) && (
+            <p style={{ ...s.rowMeta, ...s.ellipsis }}>
+              {item.tags.length > 0 && <span style={s.tagText}>{item.tags.join('·')} 대상 · </span>}
+              {item.meta}
+            </p>
+          )}
         </div>
       </div>
       <button
@@ -615,6 +639,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   tab: {
     flexShrink: 0,
+    outline: 'none',
     padding: '14px 10px 12px',
     border: 'none',
     borderBottom: '2px solid transparent',
@@ -776,6 +801,37 @@ const s: Record<string, React.CSSProperties> = {
   rowSub: {
     fontSize: '15px',
     color: '#6B7684',
+  },
+  localBadge: {
+    flexShrink: 0,
+    fontSize: '12px',
+    fontWeight: 700,
+    color: '#1B64DA',
+    backgroundColor: '#EBF3FE',
+    borderRadius: '6px',
+    padding: '2px 6px',
+  },
+  tagText: {
+    color: '#7C3AED',
+    fontWeight: 600,
+  },
+  localHint: {
+    padding: '4px 20px 10px',
+    fontSize: '14px',
+    color: '#8B95A1',
+  },
+  loadMoreBtn: {
+    display: 'block',
+    width: 'calc(100% - 40px)',
+    margin: '8px 20px 12px',
+    padding: '14px',
+    border: 'none',
+    borderRadius: '12px',
+    backgroundColor: '#F2F4F6',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#4E5968',
+    cursor: 'pointer',
   },
   rowMeta: {
     marginTop: '2px',
