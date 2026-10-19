@@ -4,7 +4,7 @@ import { logImpression } from './analytics';
 const LIVE_PROMOTION_CODE = '01M47Z5JVPP9E9W49HAWYYX9FP';
 const IS_PROMOTION_TEST = import.meta.env.VITE_PROMOTION_TEST === '1';
 const PROMOTION_CODE = IS_PROMOTION_TEST ? `TEST_${LIVE_PROMOTION_CODE}` : LIVE_PROMOTION_CODE;
-const REWARD_AMOUNT = 10;
+const REWARD_AMOUNT = 5;
 const BENEFIT_TAB_SRC = 'benefit_tab';
 
 /** 혜택탭 카드의 landingUrl(`?src=benefit_tab`)로 들어온 진입인지. 테스트 번들은 카드가 안 보이므로 항상 true. */
@@ -28,8 +28,8 @@ function toErrorToken(error: unknown): string {
 }
 
 /**
- * 혜택탭으로 들어와 결과(내 소득 순위) 화면까지 본 사람에게 10원을 지급한다.
- * 하루 1인 10원 한도는 서버가 지킨다. 결과는 로그 이름에 담는다(promo_grant_ok / promo_grant_err_<코드>).
+ * 혜택탭으로 들어와 결과(내 소득 순위) 화면까지 본 사람에게 5원을 지급한다.
+ * 하루 1인 한도는 서버가 지킨다(콘솔 한도 10원, 지급 5원). 결과는 로그 이름에 담는다(promo_grant_ok / promo_grant_err_<코드>).
  */
 export async function grantBenefitTabReward(): Promise<void> {
   if (state !== 'idle' || !isFromBenefitTab()) return;

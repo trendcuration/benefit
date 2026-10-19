@@ -1,7 +1,7 @@
 import { logClick } from './analytics';
 
 /**
- * 콘솔 프로모션 코드(id 59049, '지원금 자세히 보고 10원 받기', 예산 3,000원 / 1인 1일 10원).
+ * 콘솔 프로모션 코드(id 59049, '지원금 자세히 보고 10원 받기'(10/20부터 지급액 5원으로 축소), 1인 1일 한도 10원).
  * 혜택탭 미션 카드의 landingUrl이 `intoss://benefit/?src=benefit_mission`으로 등록돼 있고,
  * referrer.ts의 BENEFIT_MISSION_SRC가 그 값과 일치해야 지급이 일어난다.
  * ⚠️ 프로모션을 새로 만들면 반드시 이 값을 교체한다 — 코드가 어긋나면 지급이 전부 실패한다.
@@ -29,7 +29,7 @@ const PROMOTION_CODE = IS_PROMOTION_TEST
  * 1회 지급액. 콘솔의 maxSingleRewardAmount·benefitTabSpec.rewardAmount와 반드시 일치해야 한다.
  * (혜택탭을 켠 프로모션은 1인 1회 최대 지급액이 benefitTabSpec.rewardAmount로 저장된다)
  */
-const REWARD_AMOUNT = 10;
+const REWARD_AMOUNT = 5;
 
 export type GrantOutcome = 'ok' | 'failed' | 'skipped';
 

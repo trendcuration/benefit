@@ -170,11 +170,11 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
       {/* 하단 CTA */}
       <div style={s.footer}>
         {/* 혜택탭 미션으로 들어온 경우, 유저가 검색을 시작하기 전에 지급 조건을 먼저 밝힌다.
-            혜택탭 카드는 '10원'만 보여주므로 여기서 '무엇을 해야 받는지'를 분명히 해둔다. */}
+            혜택탭 카드는 금액만 보여주므로 여기서 '무엇을 해야 받는지'를 분명히 해둔다. */}
         {cameFromBenefitMission && (
           <div style={s.missionNotice}>
             <Paragraph typography="t5" style={s.missionNoticeText}>
-              {'💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 10원을 받아요'}
+              {'💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 5원을 받아요'}
             </Paragraph>
           </div>
         )}
