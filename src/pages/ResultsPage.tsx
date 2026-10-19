@@ -299,8 +299,8 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
         <div style={s.missionNotice}>
           <p style={s.missionNoticeText}>
             {rewardGranted
-              ? '✅ 10원을 지급했어요! 토스 혜택탭에서 확인할 수 있어요'
-              : '💰 지원금 1개를 눌러 자세히 보면 10원을 받아요'}
+              ? '✅ 5원을 지급했어요! 토스 혜택탭에서 확인할 수 있어요'
+              : '💰 지원금 1개를 눌러 자세히 보면 5원을 받아요'}
           </p>
         </div>
       )}
