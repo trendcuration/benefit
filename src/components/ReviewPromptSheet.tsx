@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Button } from '@toss/tds-mobile';
+import { Review } from '@apps-in-toss/web-framework';
 import { EmojiIcon } from './EmojiIcon';
 import { logClick } from '../lib/analytics';
 import { pushBackHandler } from '../lib/backStack';
@@ -16,15 +17,23 @@ export function ReviewPromptSheet({ onClose }: ReviewPromptSheetProps) {
     logClick('review_prompt_view');
   }, []);
 
+  /**
+   * 토스 별점 화면을 여는 네이티브 호출이라, 시트를 닫고 비동기로 불러오지 않고 버튼을 누른 그 자리에서
+   * 정적 import한 Review.request()를 바로 부른다(비동기 지연이 끼면 화면이 안 열리는 경우가 있었다).
+   * 실패는 사용자에게 보이지 않지만 로그 이름(review_request_unsupported / review_request_error)에 남긴다.
+   */
   const handleRate = () => {
     logClick('review_prompt_click');
+    try {
+      if (Review.request.isSupported()) {
+        Review.request().catch(() => logClick('review_request_error'));
+      } else {
+        logClick('review_request_unsupported');
+      }
+    } catch {
+      logClick('review_request_error');
+    }
     onClose();
-    import('@apps-in-toss/web-framework')
-      .then(({ Review }) => {
-        if (Review.request.isSupported()) return Review.request();
-        return undefined;
-      })
-      .catch(() => {});
   };
 
   const handleLater = () => {
