@@ -13,8 +13,8 @@ import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { EmojiIcon } from '../components/EmojiIcon';
 import { CrossPromoSheet, PROMO_APPS, type PromoApp } from '../components/CrossPromoSheet';
-import { ReviewPromptSheet } from '../components/ReviewPromptSheet';
 import { markAsked, recordDetailView, shouldAskReview } from '../lib/reviewPrompt';
+import { requestTossReview } from '../lib/review';
 import { DetailPage, govPageUrl } from './DetailPage';
 import type { SearchParams } from './FilterPage';
 import { logClick } from '../lib/analytics';
@@ -82,7 +82,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   // 상세 요약 화면에 띄운 지원금
   const [detailItem, setDetailItem] = useState<ListItem | null>(null);
   const [promoApp, setPromoApp] = useState<PromoApp | null>(null);
-  const [showReview, setShowReview] = useState(false);
   const viewedCount = useRef(0);
   const {
     isBookmarked,
@@ -164,7 +163,8 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     // 그날은 자매 앱 시트를 띄우지 않는다. 조건이 안 되면 기존대로 자매 앱 시트를 고려한다.
     if (shouldAskReview()) {
       markAsked();
-      setTimeout(() => setShowReview(true), 350);
+      // 우리 안내 시트 없이 토스 별점 화면을 바로 요청한다(토스가 안 띄울 때 버튼이 먹통처럼 보였다).
+      setTimeout(requestTossReview, 350);
     } else if (viewedCount.current === CROSS_PROMO_AFTER_VIEWS) {
       const app = pickCrossPromo();
       // 상세가 닫히고 목록이 보인 뒤에 올라오도록 살짝 늦춘다.
@@ -172,7 +172,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     }
   }, []);
   const closePromo = useCallback(() => setPromoApp(null), []);
-  const closeReview = useCallback(() => setShowReview(false), []);
 
   const open2027App = () => {
     logClick('benefit2027_banner_click');
@@ -298,7 +297,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
       )}
 
       {promoApp && !detailItem && <CrossPromoSheet app={promoApp} onClose={closePromo} />}
-      {showReview && !detailItem && <ReviewPromptSheet onClose={closeReview} />}
 
       {/* 조건 요약 (토스 네이티브 내비게이션 바의 뒤로가기 버튼과 중복되지 않도록
           자체 헤더/뒤로가기 버튼 없이 본문 상단에만 표기) */}
