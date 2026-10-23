@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge, Button, Paragraph } from '@toss/tds-mobile';
 import {
   AVERAGE,
@@ -20,10 +20,10 @@ import { logClick, logImpression } from '../lib/analytics';
 import { grantBenefitTabReward } from '../lib/promotion';
 import { markReviewAsked, recordJudge, reviewAlreadyAsked, todayString } from '../lib/history';
 import { AptGoalCard } from '../components/AptGoalCard';
-import { ReviewPromptSheet } from '../components/ReviewPromptSheet';
+import { requestTossReview } from '../lib/review';
 import type { JudgeParams } from '../App';
 
-/** 결과를 이만큼 읽은 뒤에만 별점을 묻는다(결과를 보자마자 시트가 가리지 않게). */
+/** 결과를 이만큼 읽은 뒤에만 토스 별점 화면을 요청한다(결과를 보자마자 가리지 않게). */
 const REVIEW_DELAY_MS = 8000;
 
 function formatShortDate(value: string): string {
@@ -101,18 +101,16 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
   const [prevJudge] = useState(() => recordJudge(metric, { value, pAll, date: todayString() }));
   // 상위 퍼센트는 작을수록 좋으므로, 지난번보다 작아졌으면 "올랐다"
   const rankDelta = prevJudge ? prevJudge.pAll - pAll : 0;
-  const [showReview, setShowReview] = useState(false);
 
   useEffect(() => {
     if (reviewAlreadyAsked()) return;
     const timer = setTimeout(() => {
       markReviewAsked();
-      setShowReview(true);
+      requestTossReview();
     }, REVIEW_DELAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
-  const closeReview = useCallback(() => setShowReview(false), []);
 
   useEffect(() => {
     // 토스 앱 안에서만 공유 버튼 노출 (웹 브라우저에서는 브릿지가 없어 숨김)
@@ -363,7 +361,6 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
         </Button>
       </div>
 
-      {showReview && <ReviewPromptSheet onClose={closeReview} />}
     </div>
   );
 }
