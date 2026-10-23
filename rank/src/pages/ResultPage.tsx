@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, Paragraph } from '@toss/tds-mobile';
 import {
   AVERAGE,
@@ -18,8 +18,18 @@ import {
 import { getTier } from '../data/tiers';
 import { logClick, logImpression } from '../lib/analytics';
 import { grantBenefitTabReward } from '../lib/promotion';
+import { markReviewAsked, recordJudge, reviewAlreadyAsked, todayString } from '../lib/history';
 import { AptGoalCard } from '../components/AptGoalCard';
+import { ReviewPromptSheet } from '../components/ReviewPromptSheet';
 import type { JudgeParams } from '../App';
+
+/** 결과를 이만큼 읽은 뒤에만 별점을 묻는다(결과를 보자마자 시트가 가리지 않게). */
+const REVIEW_DELAY_MS = 8000;
+
+function formatShortDate(value: string): string {
+  const [, m, d] = value.split('-').map(Number);
+  return `${m}월 ${d}일`;
+}
 
 const REGION_REWARD_AD_ID = 'ait.v2.live.75f767ef7002430e';
 
@@ -87,6 +97,22 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
   const [canShare, setCanShare] = useState(false);
   const [regionUnlocked, setRegionUnlocked] = useState(false);
   const [unlockingRegion, setUnlockingRegion] = useState(false);
+  // 결과 화면이 처음 그려질 때 한 번만 기록·비교한다(리렌더마다 다시 저장하지 않게).
+  const [prevJudge] = useState(() => recordJudge(metric, { value, pAll, date: todayString() }));
+  // 상위 퍼센트는 작을수록 좋으므로, 지난번보다 작아졌으면 "올랐다"
+  const rankDelta = prevJudge ? prevJudge.pAll - pAll : 0;
+  const [showReview, setShowReview] = useState(false);
+
+  useEffect(() => {
+    if (reviewAlreadyAsked()) return;
+    const timer = setTimeout(() => {
+      markReviewAsked();
+      setShowReview(true);
+    }, REVIEW_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const closeReview = useCallback(() => setShowReview(false), []);
 
   useEffect(() => {
     // 토스 앱 안에서만 공유 버튼 노출 (웹 브라우저에서는 브릿지가 없어 숨김)
@@ -178,6 +204,25 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
           <DistributionBar p={pAll} />
           <span style={s.watermark}>내소득은 상위 몇프로 · 토스 앱인토스</span>
         </div>
+
+        {/* 다시 방문: 지난번 판정과 비교 (같은 지표, 다른 날짜일 때만) */}
+        {prevJudge && (
+          <div style={s.card}>
+            <Paragraph typography="t3" fontWeight="bold" style={s.cardTitle}>
+              지난번과 비교하면
+            </Paragraph>
+            <Paragraph typography="t4" color="#4E5968">
+              {`${formatShortDate(prevJudge.date)}엔 상위 ${formatPercentile(prevJudge.pAll)}였어요`}
+            </Paragraph>
+            <Paragraph typography="t3" fontWeight="bold" color={rankDelta > 0 ? '#3182F6' : '#4E5968'}>
+              {rankDelta > 0.05
+                ? `${rankDelta.toFixed(1)}%p 올라 상위 ${formatPercentile(pAll)}가 됐어요 🎉`
+                : rankDelta < -0.05
+                  ? `${Math.abs(rankDelta).toFixed(1)}%p 내려 상위 ${formatPercentile(pAll)}예요`
+                  : `지난번과 거의 같은 상위 ${formatPercentile(pAll)}예요`}
+            </Paragraph>
+          </div>
+        )}
 
         {/* 비교해보면 */}
         <div style={s.card}>
@@ -317,6 +362,8 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
           다른 항목도 판정하기
         </Button>
       </div>
+
+      {showReview && <ReviewPromptSheet onClose={closeReview} />}
     </div>
   );
 }

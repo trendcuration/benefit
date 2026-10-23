@@ -22,6 +22,7 @@ import { attachTossBanner } from '../lib/banner';
 import { openExternal } from '../lib/links';
 import { grantSubsidyDetailReward, IS_PROMOTION_TEST } from '../lib/promotion';
 import { isFromBenefitMission } from '../lib/referrer';
+import { loadSeenKeys, saveSeenKeys } from '../lib/seenItems';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
@@ -66,6 +67,10 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   const [tab, setTab] = useState<TabKey>('all');
   const [query, setQuery] = useState('');
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
+  const [showNewOnly, setShowNewOnly] = useState(false);
+  // 지난 방문까지 본 지원금. 첫 방문(빈 집합)이면 '새로 올라옴'을 표시하지 않는다.
+  const [seenBefore] = useState(loadSeenKeys);
+  const [newKeys, setNewKeys] = useState<Set<string>>(() => new Set());
   const [includeSpecial, setIncludeSpecial] = useState(false);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [govItems, setGovItems] = useState<GovItem[] | null>(null);
@@ -118,13 +123,28 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     return [...curated, ...gov];
   }, [govItems, birthYear, gender, sido, sgg]);
 
+  // 정부24 목록이 다 온 뒤에 한 번: 지난 방문 이후 새로 올라온 지원금을 고르고, 이번에 본 목록을 저장한다.
+  // 불러오기에 실패한 날은 비교하지 않는다(대표 지원금만 보여 전부 '새로 올라옴'처럼 보이는 것 방지).
+  const seenSaved = useRef(false);
+  useEffect(() => {
+    if (govItems === null || govFailed || seenSaved.current) return;
+    seenSaved.current = true;
+    const keys = allItems.map((x) => x.key);
+    if (seenBefore.size > 0) {
+      const fresh = keys.filter((k) => !seenBefore.has(k));
+      setNewKeys(new Set(fresh));
+      if (fresh.length > 0) logClick('new_items_view', { count: fresh.length });
+    }
+    saveSeenKeys(seenBefore, keys);
+  }, [govItems, govFailed, allItems, seenBefore]);
+
   // 특정 대상(소상공인·장애인·임산부 등) 전용 사업은 기본으로 숨기고, '우리 구' 탭에서는 모두 보여준다.
   const baseItems = includeSpecial ? allItems : allItems.filter((x) => !x.special);
   const localItems = sgg ? allItems.filter((x) => x.sgg === sgg) : [];
 
   useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [tab, query, sort, showBookmarkedOnly, includeSpecial]);
+  }, [tab, query, sort, showBookmarkedOnly, showNewOnly, includeSpecial]);
 
   const handleOpenDetail = (item: ListItem) => {
     // 전환지표: 지원금을 눌러 자세히 보는 것이 이 앱의 서비스 가치 완료 시점(신청 사이트 이동은 subsidy_apply_click)
@@ -174,7 +194,9 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
 
   const tabItems =
     tab === 'all' ? baseItems : tab === 'local' ? localItems : baseItems.filter((x) => x.category === tab);
-  const bookmarkFiltered = showBookmarkedOnly ? tabItems.filter((x) => isBookmarked(x.key)) : tabItems;
+  const newFiltered = showNewOnly ? tabItems.filter((x) => newKeys.has(x.key)) : tabItems;
+  const bookmarkFiltered = showBookmarkedOnly ? newFiltered.filter((x) => isBookmarked(x.key)) : newFiltered;
+  const newCount = baseItems.filter((x) => newKeys.has(x.key)).length;
   const trimmedQuery = query.trim().toLowerCase();
   const searchFiltered = trimmedQuery
     ? bookmarkFiltered.filter((x) => x.searchText.includes(trimmedQuery))
@@ -291,6 +313,18 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           {govFailed ? '정부24 정보를 불러오지 못해 대표 지원금만 보여드려요' : '정부24 공공서비스 정보 기준'}
           {urgentCount > 0 && <span style={s.heroUrgent}> · 🔥 마감 임박 {urgentCount}개</span>}
         </p>
+        {newCount > 0 && (
+          <button
+            type="button"
+            style={s.newBadgeBtn}
+            onClick={() => {
+              logClick('new_items_click', { count: newCount });
+              setShowNewOnly(true);
+            }}
+          >
+            {`🆕 지난번 확인 이후 새로 올라온 지원금 ${newCount}개 보기 ›`}
+          </button>
+        )}
       </div>
 
       {/* 혜택탭 미션 안내: 유저가 노력을 들이기 전에 지급 조건을 먼저 밝힌다.
@@ -342,6 +376,13 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
             active={showBookmarkedOnly}
             onClick={() => setShowBookmarkedOnly((v) => !v)}
           />
+          {newCount > 0 && (
+            <Pill
+              label={`🆕 새로 올라옴 ${newCount}`}
+              active={showNewOnly}
+              onClick={() => setShowNewOnly((v) => !v)}
+            />
+          )}
           {specialCount > 0 && (
             <Pill
               label={`소상공인·장애인 등 특정 대상 ${specialCount}개도 보기`}
@@ -618,6 +659,18 @@ const s: Record<string, React.CSSProperties> = {
   heroUrgent: {
     color: '#D97706',
     fontWeight: 600,
+  },
+  newBadgeBtn: {
+    marginTop: '10px',
+    padding: '8px 12px',
+    border: 'none',
+    borderRadius: '10px',
+    backgroundColor: '#EBF3FE',
+    color: '#1B64DA',
+    fontSize: '14px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    textAlign: 'left',
   },
   missionNotice: {
     backgroundColor: '#EEF3FF',
