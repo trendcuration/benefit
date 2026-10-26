@@ -23,7 +23,8 @@ import { openExternal } from '../lib/links';
 import { grantSubsidyDetailReward, IS_PROMOTION_TEST } from '../lib/promotion';
 import { isFromBenefitMission } from '../lib/referrer';
 import { loadSeenKeys, saveSeenKeys } from '../lib/seenItems';
-import { isPushAgreed, pushSupported, requestWeeklyPush } from '../lib/push';
+import { canShowPushPopup, isPushAgreed, markPushPopupShown, pushSupported, requestWeeklyPush } from '../lib/push';
+import { PushAskSheet } from '../components/PushAskSheet';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
@@ -36,6 +37,9 @@ const BENEFIT_2027_APP_URL = 'intoss://benefit-2027';
 
 /** 지원금 상세를 이만큼 보고 목록으로 돌아오면 자매 앱 안내 시트를 띄운다(하루 한 번). */
 const CROSS_PROMO_AFTER_VIEWS = 3;
+/** 상세를 이만큼 보거나 결과 화면에 이만큼 머물면 매주 알림 팝업을 권한다(자매 앱 시트보다 먼저). */
+const PUSH_POPUP_AFTER_VIEWS = 2;
+const PUSH_POPUP_AFTER_MS = 30_000;
 const CROSS_PROMO_DATE_KEY = 'benefit:cross-promo-date';
 const CROSS_PROMO_NEXT_KEY = 'benefit:cross-promo-next';
 
@@ -101,13 +105,23 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   const [pushCard, setPushCard] = useState<'hidden' | 'ask' | 'agreed'>(() =>
     pushSupported() && !isPushAgreed() ? 'ask' : 'hidden',
   );
-  const handleAskPush = () => {
-    logClick('weekly_push_click');
+  const handleAskPush = (from: 'card' | 'popup' = 'card') => {
+    logClick('weekly_push_click', { from });
     void requestWeeklyPush().then((result) => {
-      logClick('weekly_push_result', { result });
+      logClick('weekly_push_result', { result, from });
       if (result === 'agreed') setPushCard('agreed');
     });
   };
+  // 팝업은 조건(상세 2개 또는 30초)이 되면 '대기'로 두고, 다른 화면·시트가 다 닫혔을 때 띄운다.
+  const [pushDue, setPushDue] = useState<'views' | 'dwell' | null>(null);
+  const [pushPopup, setPushPopup] = useState<'views' | 'dwell' | null>(null);
+  const pushPopupDone = useRef(!canShowPushPopup());
+  useEffect(() => {
+    if (pushPopupDone.current) return;
+    const timer = setTimeout(() => setPushDue((d) => d ?? 'dwell'), PUSH_POPUP_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
 
   // 정부24 데이터: 전국 + 고른 시도. 실패해도 직접 정리한 지원금만으로 화면이 동작한다.
   useEffect(() => {
@@ -177,6 +191,8 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
       markAsked();
       // 우리 안내 시트 없이 토스 별점 화면을 바로 요청한다(토스가 안 띄울 때 버튼이 먹통처럼 보였다).
       setTimeout(requestTossReview, 350);
+    } else if (viewedCount.current === PUSH_POPUP_AFTER_VIEWS && !pushPopupDone.current) {
+      setPushDue('views');
     } else if (viewedCount.current === CROSS_PROMO_AFTER_VIEWS) {
       const app = pickCrossPromo();
       // 상세가 닫히고 목록이 보인 뒤에 올라오도록 살짝 늦춘다.
@@ -184,6 +200,23 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     }
   }, []);
   const closePromo = useCallback(() => setPromoApp(null), []);
+  const closePushPopup = useCallback(() => setPushPopup(null), []);
+
+  useEffect(() => {
+    if (!pushDue || pushPopupDone.current) return;
+    if (detailItem || promoApp || confirmUnlockId !== null || unlockingId !== null) return;
+    if (pushCard !== 'ask') {
+      pushPopupDone.current = true;
+      return;
+    }
+    // 상세가 닫히는 애니메이션 뒤에 올라오도록 살짝 늦춘다. 그 사이 다른 화면이 열리면 다음 기회로 미룬다.
+    const timer = setTimeout(() => {
+      pushPopupDone.current = true;
+      markPushPopupShown();
+      setPushPopup(pushDue);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [pushDue, detailItem, promoApp, confirmUnlockId, unlockingId, pushCard]);
 
   const open2027App = () => {
     logClick('benefit2027_banner_click');
@@ -310,6 +343,17 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
 
       {promoApp && !detailItem && <CrossPromoSheet app={promoApp} onClose={closePromo} />}
 
+      {pushPopup && !detailItem && (
+        <PushAskSheet
+          trigger={pushPopup}
+          onAgree={() => {
+            setPushPopup(null);
+            handleAskPush('popup');
+          }}
+          onClose={closePushPopup}
+        />
+      )}
+
       {/* 조건 요약 (토스 네이티브 내비게이션 바의 뒤로가기 버튼과 중복되지 않도록
           자체 헤더/뒤로가기 버튼 없이 본문 상단에만 표기) */}
       <div style={s.hero}>
@@ -341,7 +385,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
       {pushCard !== 'hidden' && (
         <div style={s.infoCardWrap}>
           {pushCard === 'ask' ? (
-            <button type="button" style={s.pushCard} onClick={handleAskPush}>
+            <button type="button" style={s.pushCard} onClick={() => handleAskPush('card')}>
               <EmojiIcon codepoint="1F514" fallback="🔔" size={32} />
               <span style={s.infoCardTexts}>
                 <span style={s.pushCardTitle}>새 지원금 알림 받기</span>

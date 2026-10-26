@@ -33,6 +33,34 @@ function markAgreed(): void {
   }
 }
 
+const POPUP_KEY = 'benefit:weekly-push-popup';
+/** 팝업은 일주일에 한 번까지, 모두 3번까지만 띄운다(매번 뜨면 피로해서 이탈한다). */
+const POPUP_GAP_MS = 7 * 24 * 60 * 60 * 1000;
+const POPUP_MAX_TIMES = 3;
+
+/** 알림 안내 팝업을 지금 띄워도 되는지. 저장소를 못 쓰면 매번 뜨는 걸 막기 위해 띄우지 않는다. */
+export function canShowPushPopup(): boolean {
+  if (!pushSupported() || isPushAgreed()) return false;
+  try {
+    const raw = localStorage.getItem(POPUP_KEY);
+    if (!raw) return true;
+    const { at, times } = JSON.parse(raw) as { at: number; times: number };
+    return times < POPUP_MAX_TIMES && Date.now() - at >= POPUP_GAP_MS;
+  } catch {
+    return false;
+  }
+}
+
+export function markPushPopupShown(): void {
+  try {
+    const raw = localStorage.getItem(POPUP_KEY);
+    const times = raw ? ((JSON.parse(raw) as { times?: number }).times ?? 0) : 0;
+    localStorage.setItem(POPUP_KEY, JSON.stringify({ at: Date.now(), times: times + 1 }));
+  } catch {
+    /* 저장 실패는 무시 */
+  }
+}
+
 /** 동의 화면을 띄우고 결과를 돌려준다. 실패하면 'error'. */
 export function requestWeeklyPush(): Promise<'agreed' | 'rejected' | 'error'> {
   return new Promise((resolve) => {
