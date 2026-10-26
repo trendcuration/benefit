@@ -175,7 +175,7 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
           <div style={s.missionNotice}>
             <Paragraph typography="t5" style={s.missionNoticeText}>
               {mission === 'max'
-                ? '💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 최대 1,000원을 받아요\n(대부분 1~10원, 하루 한 번)'
+                ? '💰 지원금을 검색하고 최대 1,000원을 받아보세요!\n지원금 1개를 자세히 보면 지급돼요 (대부분 1~10원, 하루 한 번)'
                 : '💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 5원을 받아요'}
             </Paragraph>
           </div>
