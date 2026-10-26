@@ -23,6 +23,7 @@ import { openExternal } from '../lib/links';
 import { grantSubsidyDetailReward, IS_PROMOTION_TEST } from '../lib/promotion';
 import { isFromBenefitMission } from '../lib/referrer';
 import { loadSeenKeys, saveSeenKeys } from '../lib/seenItems';
+import { isPushAgreed, pushSupported, requestWeeklyPush } from '../lib/push';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
@@ -96,6 +97,17 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   // 테스트 번들에서만 진입 경로 판정을 건너뛴다(카드가 RUNNING 전에는 안 보이기 때문).
   const [fromBenefitMission] = useState(() => IS_PROMOTION_TEST || isFromBenefitMission());
   const [rewardGranted, setRewardGranted] = useState(false);
+  // 매주 월요일 새 지원금 알림: 지원하는 기기이고 아직 동의 전일 때만 카드를 보여준다.
+  const [pushCard, setPushCard] = useState<'hidden' | 'ask' | 'agreed'>(() =>
+    pushSupported() && !isPushAgreed() ? 'ask' : 'hidden',
+  );
+  const handleAskPush = () => {
+    logClick('weekly_push_click');
+    void requestWeeklyPush().then((result) => {
+      logClick('weekly_push_result', { result });
+      if (result === 'agreed') setPushCard('agreed');
+    });
+  };
 
   // 정부24 데이터: 전국 + 고른 시도. 실패해도 직접 정리한 지원금만으로 화면이 동작한다.
   useEffect(() => {
@@ -324,6 +336,24 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           </button>
         )}
       </div>
+
+      {/* 매주 월요일 새 지원금 알림 동의 (정부24 데이터는 매주 토요일 갱신) */}
+      {pushCard !== 'hidden' && (
+        <div style={s.infoCardWrap}>
+          {pushCard === 'ask' ? (
+            <button type="button" style={s.pushCard} onClick={handleAskPush}>
+              <EmojiIcon codepoint="1F514" fallback="🔔" size={32} />
+              <span style={s.infoCardTexts}>
+                <span style={s.pushCardTitle}>새 지원금 알림 받기</span>
+                <span style={s.infoCardSub}>매주 월요일 12시, 새로 올라온 지원금을 알려드려요</span>
+              </span>
+              <span style={s.chevron}>›</span>
+            </button>
+          ) : (
+            <p style={s.pushDone}>✅ 매주 월요일 12시에 새 지원금을 알려드릴게요</p>
+          )}
+        </div>
+      )}
 
       {/* 혜택탭 미션 안내: 유저가 노력을 들이기 전에 지급 조건을 먼저 밝힌다.
           지급이 실제로 성공했을 때만 완료 문구로 바꾼다(주지 않은 걸 줬다고 말하지 않기 위함). */}
@@ -709,6 +739,29 @@ const s: Record<string, React.CSSProperties> = {
   infoCardSub: {
     fontSize: '14px',
     color: '#4E5968',
+  },
+  pushCard: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    padding: '16px 18px',
+    border: '1px solid #D6E4FB',
+    borderRadius: '16px',
+    backgroundColor: '#FFFFFF',
+    textAlign: 'left',
+    cursor: 'pointer',
+  },
+  pushCardTitle: {
+    fontSize: '17px',
+    fontWeight: 700,
+    color: '#191F28',
+  },
+  pushDone: {
+    padding: '14px 4px 2px',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#1B64DA',
   },
   chevron: {
     fontSize: '24px',
