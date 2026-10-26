@@ -6,6 +6,22 @@ import { getSchemeUri } from '@apps-in-toss/web-framework';
  * 으로 등록돼 있어야 하며, 두 값이 어긋나면 지급이 전혀 일어나지 않는다.
  */
 const BENEFIT_MISSION_SRC = 'benefit_mission';
+/** 2026-10-26 추가: '숨은 지원금 찾기 · 최대 1,000원' 카드(프로모션 144597)의 landingUrl src */
+const BENEFIT_MISSION_MAX_SRC = 'benefit_mission_max';
+
+/** 어떤 혜택탭 미션 카드로 들어왔는지. fixed=5원 고정(59049), max=최대 1,000원(144597) */
+export type BenefitMission = 'fixed' | 'max' | null;
+
+export function benefitMission(): BenefitMission {
+  try {
+    const src = new URL(getSchemeUri()).searchParams.get('src');
+    if (src === BENEFIT_MISSION_SRC) return 'fixed';
+    if (src === BENEFIT_MISSION_MAX_SRC) return 'max';
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * 혜택탭 미션 카드를 눌러 들어온 진입인지 확인한다.
@@ -20,9 +36,5 @@ const BENEFIT_MISSION_SRC = 'benefit_mission';
  * 앱 기능은 그대로 쓸 수 있다).
  */
 export function isFromBenefitMission(): boolean {
-  try {
-    return new URL(getSchemeUri()).searchParams.get('src') === BENEFIT_MISSION_SRC;
-  } catch {
-    return false;
-  }
+  return benefitMission() !== null;
 }

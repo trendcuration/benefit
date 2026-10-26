@@ -3,7 +3,7 @@ import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
 import { GENDERS, type Gender } from '../data/subsidies';
 import { loadMeta, type GovMeta } from '../data/gov24';
 import { IS_PROMOTION_TEST } from '../lib/promotion';
-import { isFromBenefitMission } from '../lib/referrer';
+import { benefitMission, type BenefitMission } from '../lib/referrer';
 
 export interface SearchParams {
   birthYear: number | null;
@@ -39,9 +39,9 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
   // 리워드는 혜택탭 미션 카드로 들어와 '지원금 상세보기'까지 한 사람에게만 지급되므로
   // (ResultsPage 참고), 그 경우에만 조건을 미리 안내한다 — 다른 경로로 들어온 사람에게
   // 실제로 안 주는 리워드를 약속하지 않기 위함.
-  const [cameFromBenefitMission] = useState(
-    () => IS_PROMOTION_TEST || isFromBenefitMission()
-  );
+  // 테스트 번들은 새 '최대 1,000원' 프로모션(144597)을 시험한다.
+  const [mission] = useState<BenefitMission>(() => (IS_PROMOTION_TEST ? 'max' : benefitMission()));
+  const cameFromBenefitMission = mission !== null;
 
   useEffect(() => {
     loadMeta()
@@ -174,7 +174,9 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
         {cameFromBenefitMission && (
           <div style={s.missionNotice}>
             <Paragraph typography="t5" style={s.missionNoticeText}>
-              {'💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 5원을 받아요'}
+              {mission === 'max'
+                ? '💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 최대 1,000원을 받아요\n(대부분 1~10원, 하루 한 번)'
+                : '💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 5원을 받아요'}
             </Paragraph>
           </div>
         )}

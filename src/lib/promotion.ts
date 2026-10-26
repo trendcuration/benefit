@@ -9,6 +9,13 @@ import { logClick } from './analytics';
 const LIVE_PROMOTION_CODE = '01M43MSF4HJAWJ89CW7H0TES8D';
 
 /**
+ * 2026-10-26 추가: '숨은 지원금 찾고 최대 1,000원 받기'(id 144597, 혜택탭 '숨은 지원금 찾기 · 최대 1,000원',
+ * landingUrl `intoss://benefit/?src=benefit_mission_max`, 예산 2,700원, 1인 1일 한도 1,000원).
+ * 지급액은 pickMaxMissionAmount()가 정한다.
+ */
+const LIVE_MAX_PROMOTION_CODE = '01M5V3Y3Z4GW7Q4YB0CXD63ATK';
+
+/**
  * 테스트 번들 여부. `VITE_PROMOTION_TEST=1 npm run build` 로만 true가 되고,
  * 플래그 없이 빌드하면 항상 false다 — 테스트 설정이 라이브에 섞일 일이 없다.
  *
@@ -21,9 +28,10 @@ const LIVE_PROMOTION_CODE = '01M43MSF4HJAWJ89CW7H0TES8D';
 export const IS_PROMOTION_TEST = import.meta.env.VITE_PROMOTION_TEST === '1';
 
 /** 테스트 번들에서는 'TEST_' 를 붙인 코드로 호출해야 콘솔 isTested가 기록된다. */
-const PROMOTION_CODE = IS_PROMOTION_TEST
-  ? `TEST_${LIVE_PROMOTION_CODE}`
-  : LIVE_PROMOTION_CODE;
+function codeFor(mission: 'fixed' | 'max'): string {
+  const live = mission === 'max' ? LIVE_MAX_PROMOTION_CODE : LIVE_PROMOTION_CODE;
+  return IS_PROMOTION_TEST ? `TEST_${live}` : live;
+}
 
 /**
  * 1회 지급액. 콘솔의 maxSingleRewardAmount·benefitTabSpec.rewardAmount와 반드시 일치해야 한다.
@@ -31,7 +39,38 @@ const PROMOTION_CODE = IS_PROMOTION_TEST
  */
 const REWARD_AMOUNT = 5;
 
-export type GrantOutcome = 'ok' | 'failed' | 'skipped';
+/**
+ * '최대 1,000원' 미션의 지급액. 95% 1원, 4.9% 10원, 0.1% 1,000원(기댓값 약 2.4원).
+ * 1,000원은 콘솔 maxSingleRewardAmount·benefitTabSpec.rewardAmount와 같아야 한다(넘으면 지급 실패).
+ * 앱 화면에서도 "대부분 1~10원"이라고 미리 밝힌다.
+ */
+export const MAX_MISSION_TIERS: { amount: number; chance: number }[] = [
+  { amount: 1000, chance: 0.001 },
+  { amount: 10, chance: 0.049 },
+  { amount: 1, chance: 0.95 },
+];
+
+/** r은 [0,1) 난수. 테스트에서 고정값을 넣을 수 있게 분리했다. */
+export function pickMaxMissionAmount(r: number): number {
+  let acc = 0;
+  for (const t of MAX_MISSION_TIERS) {
+    acc += t.chance;
+    if (r < acc) return t.amount;
+  }
+  return 1;
+}
+
+function random01(): number {
+  try {
+    const a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    return a[0] / 2 ** 32;
+  } catch {
+    return Math.random();
+  }
+}
+
+export type GrantOutcome = { status: 'ok'; amount: number } | { status: 'failed' } | { status: 'skipped' };
 
 /**
  * 같은 세션에서 중복 호출을 막는 상태.
@@ -56,8 +95,8 @@ function toErrorToken(error: unknown): string {
  * 콘솔은 로그 파라미터의 값은 보여주지 않고 로그 이름 목록과 건수는 보여주기 때문에,
  * 이렇게 해두면 배포 후 실제로 지급이 되는지/어떤 코드로 막히는지 콘솔에서 바로 확인할 수 있다.
  */
-export function grantSubsidyDetailReward(): Promise<GrantOutcome> {
-  if (state !== 'idle') return Promise.resolve('skipped');
+export function grantSubsidyDetailReward(mission: 'fixed' | 'max'): Promise<GrantOutcome> {
+  if (state !== 'idle') return Promise.resolve({ status: 'skipped' } as GrantOutcome);
   state = 'pending';
 
   return import('@apps-in-toss/web-framework')
@@ -66,24 +105,26 @@ export function grantSubsidyDetailReward(): Promise<GrantOutcome> {
         // 토스 앱 버전이 낮아 지급 API 자체를 쓸 수 없는 경우(Android/iOS 5.232.0 미만).
         state = 'done';
         logClick('promo_grant_unsupported');
-        return 'skipped' as GrantOutcome;
+        return { status: 'skipped' } as GrantOutcome;
       }
 
       try {
-        await Promotion.grantReward({ promotionCode: PROMOTION_CODE, amount: REWARD_AMOUNT });
+        const amount = mission === 'max' ? pickMaxMissionAmount(random01()) : REWARD_AMOUNT;
+        await Promotion.grantReward({ promotionCode: codeFor(mission), amount });
         state = 'done';
-        logClick('promo_grant_ok');
-        return 'ok' as GrantOutcome;
+        // 'max' 미션은 금액대별로 로그 이름을 나눠 콘솔에서 당첨 분포를 볼 수 있게 한다.
+        logClick(mission === 'max' ? `promo_max_grant_ok_${amount}` : 'promo_grant_ok');
+        return { status: 'ok', amount } as GrantOutcome;
       } catch (error) {
         // 이미 받음·한도 초과·예산 소진 등은 정상적으로 발생할 수 있어 사용자에게 노출하지 않는다.
         state = 'idle';
-        logClick(`promo_grant_err_${toErrorToken(error)}`);
-        return 'failed' as GrantOutcome;
+        logClick(`${mission === 'max' ? 'promo_max' : 'promo'}_grant_err_${toErrorToken(error)}`);
+        return { status: 'failed' } as GrantOutcome;
       }
     })
     .catch(() => {
       state = 'idle';
       logClick('promo_grant_err_import');
-      return 'failed' as GrantOutcome;
+      return { status: 'failed' } as GrantOutcome;
     });
 }
