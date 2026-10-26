@@ -409,7 +409,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
             {rewardGranted !== null
               ? `✅ ${rewardGranted.toLocaleString('ko-KR')}원을 지급했어요! 토스 혜택탭에서 확인할 수 있어요`
               : mission === 'max'
-                ? '💰 지원금 1개를 눌러 자세히 보면 최대 1,000원을 받아요 (대부분 1~10원)'
+                ? '💰 지원금 1개를 눌러 자세히 보면 최대 1,000원을 받아요'
                 : '💰 지원금 1개를 눌러 자세히 보면 5원을 받아요'}
           </p>
         </div>

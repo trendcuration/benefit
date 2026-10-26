@@ -42,7 +42,6 @@ const REWARD_AMOUNT = 5;
 /**
  * '최대 1,000원' 미션의 지급액. 95% 1원, 4.9% 10원, 0.1% 1,000원(기댓값 약 2.4원).
  * 1,000원은 콘솔 maxSingleRewardAmount·benefitTabSpec.rewardAmount와 같아야 한다(넘으면 지급 실패).
- * 앱 화면에서도 "대부분 1~10원"이라고 미리 밝힌다.
  */
 export const MAX_MISSION_TIERS: { amount: number; chance: number }[] = [
   { amount: 1000, chance: 0.001 },
