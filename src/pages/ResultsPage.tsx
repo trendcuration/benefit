@@ -20,8 +20,6 @@ import type { SearchParams } from './FilterPage';
 import { logClick } from '../lib/analytics';
 import { attachTossBanner } from '../lib/banner';
 import { openExternal } from '../lib/links';
-import { grantSubsidyDetailReward, IS_PROMOTION_TEST } from '../lib/promotion';
-import { benefitMission, type BenefitMission } from '../lib/referrer';
 import { loadSeenKeys, saveSeenKeys } from '../lib/seenItems';
 import { canShowPushPopup, isPushAgreed, markPushPopupShown, pushSupported, requestWeeklyPush } from '../lib/push';
 import { PushAskSheet } from '../components/PushAskSheet';
@@ -96,13 +94,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     isLimitReached,
     unlockUnlimited,
   } = useBookmarks();
-  // 리워드 대상은 혜택탭 미션 카드 경유자뿐이다. 화면 진입만으로는 주지 않고,
-  // 아래 handleOpenDetail에서 '지원금 상세보기를 실제로 1건 이상'했을 때 지급한다.
-  // 테스트 번들에서만 진입 경로 판정을 건너뛴다(카드가 RUNNING 전에는 안 보이기 때문).
-  // 테스트 번들은 새 '최대 1,000원' 프로모션(144597)을 시험한다.
-  const [mission] = useState<BenefitMission>(() => (IS_PROMOTION_TEST ? 'max' : benefitMission()));
-  const fromBenefitMission = mission !== null;
-  const [rewardGranted, setRewardGranted] = useState<number | null>(null);
   // 매주 월요일 새 지원금 알림: 지원하는 기기이고 아직 동의 전일 때만 카드를 보여준다.
   const [pushCard, setPushCard] = useState<'hidden' | 'ask' | 'agreed'>(() =>
     pushSupported() && !isPushAgreed() ? 'ask' : 'hidden',
@@ -178,10 +169,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     logClick('subsidy_click', { subsidy_id: item.key, category: item.category, kind: item.kind });
     recordDetailView();
     setDetailItem(item);
-    if (!mission) return;
-    void grantSubsidyDetailReward(mission).then((outcome) => {
-      if (outcome.status === 'ok') setRewardGranted(outcome.amount);
-    });
   };
 
   const closeDetail = useCallback(() => {
@@ -398,20 +385,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           ) : (
             <p style={s.pushDone}>✅ 매주 월요일 12시에 새 지원금을 알려드릴게요</p>
           )}
-        </div>
-      )}
-
-      {/* 혜택탭 미션 안내: 유저가 노력을 들이기 전에 지급 조건을 먼저 밝힌다.
-          지급이 실제로 성공했을 때만 완료 문구로 바꾼다(주지 않은 걸 줬다고 말하지 않기 위함). */}
-      {fromBenefitMission && (
-        <div style={s.missionNotice}>
-          <p style={s.missionNoticeText}>
-            {rewardGranted !== null
-              ? `✅ ${rewardGranted.toLocaleString('ko-KR')}원을 지급했어요! 토스 혜택탭에서 확인할 수 있어요`
-              : mission === 'max'
-                ? '💰 지원금 1개를 눌러 자세히 보면 최대 1,000원을 받아요'
-                : '💰 지원금 1개를 눌러 자세히 보면 5원을 받아요'}
-          </p>
         </div>
       )}
 
@@ -747,15 +720,6 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     cursor: 'pointer',
     textAlign: 'left',
-  },
-  missionNotice: {
-    backgroundColor: '#EEF3FF',
-    padding: '12px 16px',
-  },
-  missionNoticeText: {
-    textAlign: 'center',
-    color: '#1B64DA',
-    fontSize: '14px',
   },
   infoCardWrap: {
     backgroundColor: '#FFFFFF',

@@ -17,7 +17,6 @@ import {
 } from '../data/rank';
 import { getTier } from '../data/tiers';
 import { logClick, logImpression } from '../lib/analytics';
-import { grantBenefitTabReward } from '../lib/promotion';
 import { markReviewAsked, recordJudge, reviewAlreadyAsked, todayString } from '../lib/history';
 import { AptGoalCard } from '../components/AptGoalCard';
 import { requestTossReview } from '../lib/review';
@@ -130,8 +129,6 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
     // 전환지표용: 판정 결과까지 실제로 확인했는지가 이 앱의 서비스 가치 완료 시점
     logImpression('result_view', { metric, age_group: ageGroup, region });
     logImpression('cross_promo_view', { metric });
-    // 혜택탭 진입자만(내부에서 판정) 결과 화면 도달 시 5원 지급.
-    void grantBenefitTabReward();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

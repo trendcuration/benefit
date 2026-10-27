@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
 import { GENDERS, type Gender } from '../data/subsidies';
 import { loadMeta, type GovMeta } from '../data/gov24';
-import { IS_PROMOTION_TEST } from '../lib/promotion';
-import { benefitMission, type BenefitMission } from '../lib/referrer';
 
 export interface SearchParams {
   birthYear: number | null;
@@ -36,12 +34,6 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
   const [sido, setSido] = useState<string | null>(initial.sido);
   const [sgg, setSgg] = useState<string | null>(initial.sgg);
   const [sidos, setSidos] = useState<GovMeta['sidos']>(FALLBACK_SIDOS);
-  // 리워드는 혜택탭 미션 카드로 들어와 '지원금 상세보기'까지 한 사람에게만 지급되므로
-  // (ResultsPage 참고), 그 경우에만 조건을 미리 안내한다 — 다른 경로로 들어온 사람에게
-  // 실제로 안 주는 리워드를 약속하지 않기 위함.
-  // 테스트 번들은 새 '최대 1,000원' 프로모션(144597)을 시험한다.
-  const [mission] = useState<BenefitMission>(() => (IS_PROMOTION_TEST ? 'max' : benefitMission()));
-  const cameFromBenefitMission = mission !== null;
 
   useEffect(() => {
     loadMeta()
@@ -169,17 +161,6 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
 
       {/* 하단 CTA */}
       <div style={s.footer}>
-        {/* 혜택탭 미션으로 들어온 경우, 유저가 검색을 시작하기 전에 지급 조건을 먼저 밝힌다.
-            혜택탭 카드는 금액만 보여주므로 여기서 '무엇을 해야 받는지'를 분명히 해둔다. */}
-        {cameFromBenefitMission && (
-          <div style={s.missionNotice}>
-            <Paragraph typography="t5" style={s.missionNoticeText}>
-              {mission === 'max'
-                ? '💰 지원금을 검색하고 최대 1,000원을 받아보세요!\n지원금 1개를 자세히 보면 지급돼요 (하루 한 번)'
-                : '💰 지원금을 검색한 뒤\n마음에 드는 지원금 1개를 자세히 보면 5원을 받아요'}
-            </Paragraph>
-          </div>
-        )}
         <div style={s.adNotice}>
           <Paragraph typography="t5" color="#8B95A1" style={s.adNoticeText}>
             {'📺 아래 버튼을 누르면\n결과를 보기 전 잠깐 광고가 표시돼요'}
@@ -314,20 +295,6 @@ const s: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     whiteSpace: 'pre-line',
     lineHeight: 1.6,
-  },
-  missionNotice: {
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-    padding: '10px 12px',
-    marginBottom: '8px',
-    backgroundColor: '#EEF3FF',
-    borderRadius: '10px',
-  },
-  missionNoticeText: {
-    textAlign: 'center',
-    whiteSpace: 'pre-line',
-    color: '#1B64DA',
   },
   adNotice: {
     width: '100%',
