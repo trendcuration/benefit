@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Analytics, openURL } from '@apps-in-toss/web-framework';
+import { Analytics, getSchemeUri, grantPromotionReward, openURL } from '@apps-in-toss/web-framework';
 import { Badge, Button, Paragraph } from '@toss/tds-mobile';
 import { attachBanner } from '../lib/ads';
 import {
@@ -13,6 +13,48 @@ import {
 import { fetchSubsidiesFallback } from '../data/api';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
+
+// 지원금 조회 리워드 프로모션. amount는 콘솔의 maxSingleRewardAmount(10원)와 반드시 일치해야 한다.
+const SUBSIDY_VIEW_PROMOTION_CODE = '01M3HN5DNBKXTKFQZPJ3J3KZ3V';
+const SUBSIDY_VIEW_PROMOTION_AMOUNT = 10;
+
+/**
+ * 이 프로모션의 광고 타겟은 혜택탭 진입자이므로, 최초 진입 스킴의 referrer가
+ * benefit_tab일 때만 리워드를 지급한다.
+ * (참고: https://developers-apps-in-toss.toss.im/documentation/common/growth/analytics/referrer.md)
+ */
+function isFromBenefitTab(): boolean {
+  try {
+    return new URL(getSchemeUri()).searchParams.get('referrer') === 'benefit_tab';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 지원금 목록이 실제로 화면에 표시될 때, 혜택탭으로 진입한 경우에 한해 1회 리워드 지급을 시도한다.
+ * 4113(이미 지급됨)·4109(미실행 상태) 등은 반복 호출 시 정상적으로 발생할 수 있으므로
+ * 사용자에게 노출하지 않고 조용히 무시한다. 하루 1회 한도는 서버가 막아주므로
+ * 클라이언트에서 별도 중복 호출 방지 로직은 두지 않는다(실패해도 무해).
+ */
+function grantSubsidyViewReward(): void {
+  if (!isFromBenefitTab()) return;
+
+  grantPromotionReward({
+    params: {
+      promotionCode: SUBSIDY_VIEW_PROMOTION_CODE,
+      amount: SUBSIDY_VIEW_PROMOTION_AMOUNT,
+    },
+  })
+    .then((result) => {
+      if (result && typeof result === 'object' && 'errorCode' in result) {
+        console.warn('[promotion] grantPromotionReward 실패:', result.errorCode, result.message);
+      }
+    })
+    .catch((error) => {
+      console.warn('[promotion] grantPromotionReward 예외:', error);
+    });
+}
 
 /**
  * 정부 사이트 등 외부 링크는 기기 기본 브라우저로 연다(openURL).
@@ -45,6 +87,11 @@ export function ResultsPage({ ageGroup, gender, onBack }: ResultsPageProps) {
     setSubsidies(fetchSubsidiesFallback(ageGroup, gender));
     setLoading(false);
   }, [ageGroup, gender]);
+
+  // 지원금 목록이 표시되는 화면이 마운트될 때 조회 리워드 지급을 1회 시도한다.
+  useEffect(() => {
+    grantSubsidyViewReward();
+  }, []);
 
   useEffect(() => {
     const el = bannerRef.current;

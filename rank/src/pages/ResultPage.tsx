@@ -16,10 +16,8 @@ import {
   TOP_CAP,
 } from '../data/rank';
 import { getTier } from '../data/tiers';
+import { attachBanner, BANNER_AD_ID } from '../lib/ads';
 import type { JudgeParams } from '../App';
-
-// TODO: 토스 개발자센터에서 rank 앱 등록 후 실제 광고 그룹 ID로 교체
-const BANNER_AD_ID = 'ait.v2.live.RANK_BANNER_TODO';
 
 interface ResultPageProps {
   params: JudgeParams;
@@ -37,12 +35,16 @@ export function ResultPage({ params, onBack }: ResultPageProps) {
   useEffect(() => {
     const el = bannerRef.current;
     if (!el) return;
-    let result: { destroy: () => void } | undefined;
-    import('@apps-in-toss/web-framework').then(({ TossAds }) => {
-      if (!TossAds.attachBanner.isSupported()) return;
-      result = TossAds.attachBanner(BANNER_AD_ID, el);
-    }).catch(() => {});
-    return () => result?.destroy();
+    let destroy: (() => void) | undefined;
+    let cancelled = false;
+    attachBanner(BANNER_AD_ID, el).then((d) => {
+      if (cancelled) d();
+      else destroy = d;
+    });
+    return () => {
+      cancelled = true;
+      destroy?.();
+    };
   }, []);
 
   useEffect(() => {
