@@ -23,6 +23,10 @@ import { openExternal } from '../lib/links';
 import { loadSeenKeys, saveSeenKeys } from '../lib/seenItems';
 import { canShowPushPopup, isPushAgreed, markPushPopupShown, pushSupported, requestWeeklyPush } from '../lib/push';
 import { PushAskSheet } from '../components/PushAskSheet';
+import { tagsOf } from '../lib/situations';
+import { appliedKeys } from '../lib/applyProgress';
+import { ddayLabel } from '../lib/deadline';
+import { parseAmount, totalAmount, type BenefitType } from '../lib/benefitType';
 
 const BANNER_AD_ID = 'ait.v2.live.d197bbbda78c417c';
 const INFEED_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
@@ -30,6 +34,7 @@ const REWARDED_AD_ID = 'ait.v2.live.327ced0813c8420f';
 const INFEED_BANNER_INTERVAL = 6;
 const MAX_INFEED_BANNERS = 4;
 const PAGE_SIZE = 30;
+const TOP_AMOUNT_CAP = 50_000_000;
 /** 부록 미니앱 '2027 바뀌는 지원금'(miniApp 85249) */
 const BENEFIT_2027_APP_URL = 'intoss://benefit-2027';
 
@@ -56,6 +61,8 @@ function pickCrossPromo(): PromoApp | null {
 }
 
 type SortKey = 'default' | 'amount' | 'deadline';
+/** 요약 카드에서 고른 지원 형태 */
+type TypeFilter = 'cash' | 'loan' | 'other' | null;
 /** 탭: 전체 | 우리 구 | 카테고리 */
 type TabKey = 'all' | 'local' | Category;
 
@@ -66,6 +73,11 @@ interface ResultsPageProps {
 
 export function ResultsPage({ params, onBack }: ResultsPageProps) {
   const { birthYear, gender, sido, sidoName, sgg } = params;
+  const situationTags = useMemo(() => tagsOf(params.situations ?? []), [params.situations]);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>(null);
+  const [showAppliedOnly, setShowAppliedOnly] = useState(false);
+  const [applied, setApplied] = useState<Set<string>>(appliedKeys);
+  const listTopRef = useRef<HTMLDivElement>(null);
   const [sort, setSort] = useState<SortKey>('default');
   const [tab, setTab] = useState<TabKey>('all');
   const [query, setQuery] = useState('');
@@ -156,13 +168,19 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     saveSeenKeys(seenBefore, keys);
   }, [govItems, govFailed, allItems, seenBefore]);
 
-  // 특정 대상(소상공인·장애인·임산부 등) 전용 사업은 기본으로 숨기고, '우리 구' 탭에서는 모두 보여준다.
-  const baseItems = includeSpecial ? allItems : allItems.filter((x) => !x.special);
+  // 특정 대상(소상공인·장애인·임산부 등) 전용 사업은 기본으로 숨기되, '지금 내 상황'에서 고른 대상이면 넣는다.
+  // '우리 구' 탭에서는 모두 보여준다.
+  const isMine = useCallback(
+    (x: ListItem) => x.special && x.tags.some((t) => situationTags.has(t)),
+    [situationTags],
+  );
+  const baseItems = includeSpecial ? allItems : allItems.filter((x) => !x.special || isMine(x));
+  const mineCount = baseItems.filter(isMine).length;
   const localItems = sgg ? allItems.filter((x) => x.sgg === sgg) : [];
 
   useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [tab, query, sort, showBookmarkedOnly, showNewOnly, includeSpecial]);
+  }, [tab, query, sort, showBookmarkedOnly, showNewOnly, includeSpecial, typeFilter, showAppliedOnly]);
 
   const handleOpenDetail = (item: ListItem) => {
     // 전환지표: 지원금을 눌러 자세히 보는 것이 이 앱의 서비스 가치 완료 시점(신청 사이트 이동은 subsidy_apply_click)
@@ -173,6 +191,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
 
   const closeDetail = useCallback(() => {
     setDetailItem(null);
+    setApplied(appliedKeys());
     viewedCount.current += 1;
     // 앱을 잘 쓰고 있다는 신호(상세 5번 이상 + 신청 이동 경험)가 있는 사용자에게만 별점을 묻고,
     // 그날은 자매 앱 시트를 띄우지 않는다. 조건이 안 되면 기존대로 자매 앱 시트를 고려한다.
@@ -225,10 +244,16 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     };
   }, []);
 
+  // 찜·신청함만 볼 때는 특정 대상 사업도 빠짐없이 보이도록 전체에서 고른다.
+  const pool = showBookmarkedOnly || showAppliedOnly ? allItems : baseItems;
   const tabItems =
-    tab === 'all' ? baseItems : tab === 'local' ? localItems : baseItems.filter((x) => x.category === tab);
-  const newFiltered = showNewOnly ? tabItems.filter((x) => newKeys.has(x.key)) : tabItems;
-  const bookmarkFiltered = showBookmarkedOnly ? newFiltered.filter((x) => isBookmarked(x.key)) : newFiltered;
+    tab === 'all' ? pool : tab === 'local' ? localItems : pool.filter((x) => x.category === tab);
+  const typeFiltered = typeFilter ? tabItems.filter((x) => typeGroup(x.type) === typeFilter) : tabItems;
+  const newFiltered = showNewOnly ? typeFiltered.filter((x) => newKeys.has(x.key)) : typeFiltered;
+  const appliedFiltered = showAppliedOnly ? newFiltered.filter((x) => applied.has(x.key)) : newFiltered;
+  const bookmarkFiltered = showBookmarkedOnly
+    ? appliedFiltered.filter((x) => isBookmarked(x.key))
+    : appliedFiltered;
   const newCount = baseItems.filter((x) => newKeys.has(x.key)).length;
   const trimmedQuery = query.trim().toLowerCase();
   const searchFiltered = trimmedQuery
@@ -236,12 +261,55 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     : bookmarkFiltered;
   const sorted = [...searchFiltered].sort((a, b) => {
     if (sort === 'amount') return parseAmount(b.amountText) - parseAmount(a.amountText);
-    if (sort === 'deadline') return deadlineRank(a.deadline) - deadlineRank(b.deadline);
-    return (b.isUrgent ? 1 : 0) - (a.isUrgent ? 1 : 0) || b.rank - a.rank;
+    if (sort === 'deadline') return (a.daysLeft ?? Infinity) - (b.daysLeft ?? Infinity);
+    return (
+      (b.isUrgent ? 1 : 0) - (a.isUrgent ? 1 : 0) ||
+      (b.kind === 'curated' ? 1 : 0) - (a.kind === 'curated' ? 1 : 0) ||
+      (isMine(b) ? 1 : 0) - (isMine(a) ? 1 : 0) ||
+      b.rank - a.rank
+    );
   });
   const shown = sorted.slice(0, visible);
 
   const urgentCount = baseItems.filter((x) => x.isUrgent).length;
+  const typeCounts = {
+    cash: baseItems.filter((x) => typeGroup(x.type) === 'cash').length,
+    loan: baseItems.filter((x) => typeGroup(x.type) === 'loan').length,
+    other: baseItems.filter((x) => typeGroup(x.type) === 'other').length,
+  };
+  // 금액이 큰 지원금 3개: 갚아야 하는 대출은 빼고, '총 ○○원'이 있으면 그 금액으로 비교한다.
+  // 5천만 원이 넘는 건 대개 창업·시설 사업비라 개인이 받는 돈과 거리가 멀어 뺀다.
+  const topCash = useMemo(
+    () =>
+      baseItems
+        // 직접 확인해 정리한 지원금 중 혜택 줄에 금액이 있는 것만(정부24 원문 금액은 사업비·한도가 섞여 있다)
+        .filter((x) => x.kind === 'curated' && x.type === 'cash' && /\d/.test(x.headline))
+        .map((x) => ({ x, won: totalAmount(x.amountText || x.headline) }))
+        .filter((t) => t.won > 0 && t.won <= TOP_AMOUNT_CAP)
+        .sort((a, b) => b.won - a.won)
+        .slice(0, 3)
+        .map((t) => t.x),
+    [baseItems],
+  );
+  const bookmarkedItems = allItems.filter((x) => isBookmarked(x.key));
+  const nextDeadline = bookmarkedItems
+    .filter((x) => x.daysLeft != null && !applied.has(x.key))
+    .sort((a, b) => (a.daysLeft ?? 0) - (b.daysLeft ?? 0))[0];
+  const appliedCount = allItems.filter((x) => applied.has(x.key)).length;
+
+  const scrollToList = () => listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const pickType = (t: TypeFilter) => {
+    logClick('summary_type_click', { type: t ?? 'all' });
+    setTypeFilter((cur) => (cur === t ? null : t));
+    setTab('all');
+    scrollToList();
+  };
+  const openMyList = () => {
+    logClick('my_bookmarks_card_click', { count: bookmarkedItems.length });
+    setShowBookmarkedOnly(true);
+    setTab('all');
+    scrollToList();
+  };
   const specialCount = allItems.length - allItems.filter((x) => !x.special).length;
 
   const handleToggleBookmark = (id: string) => {
@@ -356,6 +424,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           {govFailed ? '정부24 정보를 불러오지 못해 대표 지원금만 보여드려요' : '정부24 공공서비스 정보 기준'}
           {urgentCount > 0 && <span style={s.heroUrgent}> · 🔥 마감 임박 {urgentCount}개</span>}
         </p>
+        {mineCount > 0 && <p style={s.heroMine}>✨ 내 상황에 맞춘 지원금 {mineCount}개를 함께 골랐어요</p>}
         {newCount > 0 && (
           <button
             type="button"
@@ -369,6 +438,83 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           </button>
         )}
       </div>
+
+      {/* 한눈에 보기: 지원 형태별 개수 + 금액이 큰 지원금 */}
+      {!loading && baseItems.length > 0 && (
+        <div style={s.summaryWrap}>
+          <div style={s.summaryCard}>
+            <p style={s.summaryTitle}>한눈에 보기</p>
+            <div style={s.typeTiles}>
+              {(
+                [
+                  ['cash', '💵', '받는 돈', '수당·바우처'],
+                  ['loan', '🏦', '빌리는 돈', '저금리 대출'],
+                  ['other', '🧾', '아끼는 돈', '감면·서비스'],
+                ] as const
+              ).map(([key, emoji, title, sub]) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={typeFilter === key}
+                  style={typeFilter === key ? { ...s.typeTile, ...s.typeTileOn } : s.typeTile}
+                  onClick={() => pickType(key)}
+                >
+                  <span style={s.typeEmoji} aria-hidden>
+                    {emoji}
+                  </span>
+                  <span style={s.typeTitle}>{title}</span>
+                  <span style={s.typeCount}>{typeCounts[key]}개</span>
+                  <span style={s.typeSub}>{sub}</span>
+                </button>
+              ))}
+            </div>
+            {topCash.length > 0 && (
+              <div style={s.topList}>
+                <p style={s.topTitle}>금액이 큰 지원금</p>
+                {topCash.map((x, i) => (
+                  <button
+                    key={x.key}
+                    type="button"
+                    style={s.topRow}
+                    onClick={() => {
+                      logClick('top_amount_click', { subsidy_id: x.key, rank: i + 1 });
+                      handleOpenDetail(x);
+                    }}
+                  >
+                    <span style={s.topRank}>{i + 1}</span>
+                    <span style={s.topTexts}>
+                      <span style={s.topName}>{x.curated ? x.curated.title : x.headline}</span>
+                      <span style={s.topAmount}>{x.curated ? x.headline : x.amountText}</span>
+                    </span>
+                    <span style={s.chevronSmall}>›</span>
+                  </button>
+                ))}
+                <p style={s.topNote}>자격 조건에 따라 받을 수 있는 금액은 달라요</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 내 찜·신청 관리 */}
+      {bookmarkedItems.length > 0 && (
+        <div style={s.infoCardWrap}>
+          <button type="button" style={s.myCard} onClick={openMyList}>
+            <EmojiIcon codepoint="1F499" fallback="💙" size={32} />
+            <span style={s.infoCardTexts}>
+              <span style={s.pushCardTitle}>
+                찜한 지원금 {bookmarkedItems.length}개{appliedCount > 0 ? ` · 신청함 ${appliedCount}개` : ''}
+              </span>
+              <span style={s.infoCardSub}>
+                {nextDeadline
+                  ? `${nextDeadline.curated ? nextDeadline.curated.title : nextDeadline.headline} 마감 ${ddayLabel(nextDeadline.daysLeft)}`
+                  : '신청 준비 체크리스트로 하나씩 챙겨 보세요'}
+              </span>
+            </span>
+            <span style={s.chevron}>›</span>
+          </button>
+        </div>
+      )}
 
       {/* 매주 월요일 새 지원금 알림 동의 (정부24 데이터는 매주 토요일 갱신) */}
       {pushCard !== 'hidden' && (
@@ -425,6 +571,20 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
             active={showBookmarkedOnly}
             onClick={() => setShowBookmarkedOnly((v) => !v)}
           />
+          {appliedCount > 0 && (
+            <Pill
+              label={`✅ 신청함 ${appliedCount}`}
+              active={showAppliedOnly}
+              onClick={() => setShowAppliedOnly((v) => !v)}
+            />
+          )}
+          {typeFilter && (
+            <Pill
+              label={`${typeFilter === 'cash' ? '💵 받는 돈' : typeFilter === 'loan' ? '🏦 빌리는 돈' : '🧾 아끼는 돈'} ✕`}
+              active
+              onClick={() => setTypeFilter(null)}
+            />
+          )}
           {newCount > 0 && (
             <Pill
               label={`🆕 새로 올라옴 ${newCount}`}
@@ -434,7 +594,11 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           )}
           {specialCount > 0 && (
             <Pill
-              label={`소상공인·장애인 등 특정 대상 ${specialCount}개도 보기`}
+              label={
+                mineCount > 0
+                  ? `다른 특정 대상 ${specialCount - mineCount}개도 보기`
+                  : `소상공인·장애인 등 특정 대상 ${specialCount}개도 보기`
+              }
               active={includeSpecial}
               onClick={() => setIncludeSpecial((v) => !v)}
             />
@@ -456,7 +620,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
       </div>
 
       {/* 결과 목록 */}
-      <div style={s.listPanel}>
+      <div ref={listTopRef} style={s.listPanel}>
         <div style={s.sortRow}>
           <span style={s.listTitle}>
             {tabTitle} <span style={s.listCount}>{sorted.length}</span>
@@ -486,6 +650,8 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
               <SubsidyRow
                 item={item}
                 bookmarked={isBookmarked(item.key)}
+                mine={isMine(item)}
+                applied={applied.has(item.key)}
                 unlocking={unlockingId === item.key}
                 onToggleBookmark={() => handleToggleBookmark(item.key)}
                 onOpen={() => handleOpenDetail(item)}
@@ -561,15 +727,18 @@ function InFeedBanner() {
 interface SubsidyRowProps {
   item: ListItem;
   bookmarked: boolean;
+  /** '지금 내 상황'에 맞는 특정 대상 사업 */
+  mine: boolean;
+  applied: boolean;
   unlocking: boolean;
   onToggleBookmark: () => void;
-  /** 상세 요약 화면을 연다 — 리워드 지급 조건(상세보기 1건)이다. */
+  /** 상세 요약 화면을 연다. */
   onOpen: () => void;
 }
 
-function SubsidyRow({ item, bookmarked, unlocking, onToggleBookmark, onOpen }: SubsidyRowProps) {
+function SubsidyRow({ item, bookmarked, mine, applied, unlocking, onToggleBookmark, onOpen }: SubsidyRowProps) {
   const icon = CATEGORY_ICON[item.category];
-  const dday = item.isUrgent ? getDday(item.deadline) : null;
+  const dday = item.isUrgent ? ddayLabel(item.daysLeft) : null;
 
   return (
     <div style={s.row}>
@@ -594,12 +763,14 @@ function SubsidyRow({ item, bookmarked, unlocking, onToggleBookmark, onOpen }: S
             <span style={s.ellipsis}>{item.label}</span>
             {item.isUrgent && <span style={s.ddayBadge}>{dday ?? '마감 임박'}</span>}
             {item.sgg && <span style={s.localBadge}>우리 동네</span>}
+            {mine && <span style={s.mineBadge}>내 상황</span>}
+            {applied && <span style={s.appliedBadge}>신청함</span>}
           </div>
-          <p style={{ ...s.rowHeadline, ...s.ellipsis }}>{item.headline}</p>
-          <p style={{ ...s.rowSub, ...s.ellipsis }}>{item.sub}</p>
+          <p style={{ ...s.rowHeadline, ...s.clamp2 }}>{item.headline}</p>
+          <p style={{ ...s.rowSub, ...s.clamp2 }}>{item.sub}</p>
           {(item.meta || item.tags.length > 0) && (
             <p style={{ ...s.rowMeta, ...s.ellipsis }}>
-              {item.tags.length > 0 && <span style={s.tagText}>{item.tags.join('·')} 대상 · </span>}
+              {item.tags.length > 0 && <span style={s.tagText}>{item.tags.slice(0, 2).join('·')} 대상 · </span>}
               {item.meta}
             </p>
           )}
@@ -633,34 +804,9 @@ function EmptyState({ onBack }: { onBack: () => void }) {
 }
 
 // ── 유틸 ──
-function getDday(deadline: string): string | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return null;
-  const diffMs = new Date(`${deadline}T23:59:59`).getTime() - Date.now();
-  const days = Math.ceil(diffMs / 86_400_000);
-  if (days < 0) return null;
-  return days === 0 ? 'D-day' : `D-${days}`;
-}
-
-/** 마감임박순 정렬용 순위값. 유효한 날짜면 오늘로부터 남은 일수, 날짜가 아니면(상시 등) 맨 뒤로 보냅니다. */
-function deadlineRank(deadline: string): number {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return Number.POSITIVE_INFINITY;
-  const diffMs = new Date(`${deadline}T23:59:59`).getTime() - Date.now();
-  return Math.ceil(diffMs / 86_400_000);
-}
-
-function parseAmount(str: string): number {
-  const eokMatch = str.match(/([\d,.]+)\s*억/);
-  if (eokMatch) return parseFloat(eokMatch[1].replace(/,/g, '')) * 100_000_000;
-
-  const manMatch = str.match(/([\d,]+)\s*만(?:\s*([\d,]+))?/);
-  if (manMatch) {
-    const manPart = parseInt(manMatch[1].replace(/,/g, ''), 10) || 0;
-    const restPart = manMatch[2] ? parseInt(manMatch[2].replace(/,/g, ''), 10) || 0 : 0;
-    return manPart * 10_000 + restPart;
-  }
-
-  const nums = str.replace(/[^0-9]/g, '');
-  return nums ? parseInt(nums, 10) : 0;
+/** 요약 카드의 세 묶음: 받는 돈 / 빌리는 돈 / 아끼는 돈(감면·서비스) */
+function typeGroup(t: BenefitType): Exclude<TypeFilter, null> {
+  return t === 'cash' ? 'cash' : t === 'loan' ? 'loan' : 'other';
 }
 
 const SORT_LABEL: Record<SortKey, string> = {
@@ -804,7 +950,7 @@ const s: Record<string, React.CSSProperties> = {
     border: 'none',
     borderBottom: '2px solid transparent',
     background: 'none',
-    fontSize: '16px',
+    fontSize: '17px',
     fontWeight: 600,
     color: '#8B95A1',
     whiteSpace: 'nowrap',
@@ -832,11 +978,11 @@ const s: Record<string, React.CSSProperties> = {
   },
   pill: {
     flexShrink: 0,
-    padding: '7px 12px',
+    padding: '9px 14px',
     borderRadius: '999px',
     border: '1px solid #E5E8EB',
     backgroundColor: '#FFFFFF',
-    fontSize: '14px',
+    fontSize: '15px',
     color: '#4E5968',
     whiteSpace: 'nowrap',
     cursor: 'pointer',
@@ -889,8 +1035,8 @@ const s: Record<string, React.CSSProperties> = {
   sortBtn: {
     border: 'none',
     background: 'none',
-    padding: '6px 6px',
-    fontSize: '13px',
+    padding: '8px 7px',
+    fontSize: '15px',
     color: '#8B95A1',
     cursor: 'pointer',
   },
@@ -938,7 +1084,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
-    fontSize: '14px',
+    fontSize: '15px',
     color: '#6B7684',
     minWidth: 0,
   },
@@ -959,8 +1105,9 @@ const s: Record<string, React.CSSProperties> = {
     lineHeight: 1.4,
   },
   rowSub: {
-    fontSize: '15px',
-    color: '#6B7684',
+    fontSize: '16px',
+    lineHeight: 1.5,
+    color: '#4E5968',
   },
   localBadge: {
     flexShrink: 0,
@@ -977,7 +1124,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   localHint: {
     padding: '4px 20px 10px',
-    fontSize: '14px',
+    fontSize: '15px',
     color: '#8B95A1',
   },
   loadMoreBtn: {
@@ -994,8 +1141,8 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
   },
   rowMeta: {
-    marginTop: '2px',
-    fontSize: '13px',
+    marginTop: '4px',
+    fontSize: '14px',
     color: '#8B95A1',
   },
   ellipsis: {
@@ -1006,15 +1153,15 @@ const s: Record<string, React.CSSProperties> = {
   },
   heartBtn: {
     flexShrink: 0,
-    width: '40px',
-    height: '40px',
+    width: '48px',
+    height: '48px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '18px',
+    fontSize: '22px',
     padding: 0,
     WebkitTapHighlightColor: 'transparent',
   },
@@ -1045,10 +1192,178 @@ const s: Record<string, React.CSSProperties> = {
   moreBtn: {
     border: 'none',
     background: 'none',
-    padding: '10px 12px',
-    fontSize: '14px',
+    padding: '12px 14px',
+    fontSize: '16px',
     fontWeight: 600,
     color: '#4E5968',
+    cursor: 'pointer',
+  },
+  clamp2: {
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+    wordBreak: 'keep-all',
+    overflowWrap: 'anywhere',
+    minWidth: 0,
+  },
+  mineBadge: {
+    flexShrink: 0,
+    fontSize: '12px',
+    fontWeight: 700,
+    color: '#7C3AED',
+    backgroundColor: '#F3EEFF',
+    borderRadius: '6px',
+    padding: '2px 6px',
+  },
+  appliedBadge: {
+    flexShrink: 0,
+    fontSize: '12px',
+    fontWeight: 700,
+    color: '#0A8754',
+    backgroundColor: '#E6F7EF',
+    borderRadius: '6px',
+    padding: '2px 6px',
+  },
+  heroMine: {
+    marginTop: '8px',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#7C3AED',
+  },
+  summaryWrap: {
+    backgroundColor: '#FFFFFF',
+    padding: '0 16px 12px',
+  },
+  summaryCard: {
+    border: '1px solid #E5E8EB',
+    borderRadius: '16px',
+    padding: '16px',
+  },
+  summaryTitle: {
+    fontSize: '17px',
+    fontWeight: 700,
+    color: '#191F28',
+    marginBottom: '12px',
+  },
+  typeTiles: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '8px',
+  },
+  typeTile: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '2px',
+    padding: '12px 10px',
+    border: '1px solid transparent',
+    borderRadius: '12px',
+    backgroundColor: '#F2F4F6',
+    textAlign: 'left',
+    cursor: 'pointer',
+    minWidth: 0,
+    WebkitTapHighlightColor: 'transparent',
+  },
+  typeTileOn: {
+    border: '1px solid #3182F6',
+    backgroundColor: '#EBF3FE',
+  },
+  typeEmoji: {
+    fontSize: '20px',
+    marginBottom: '2px',
+  },
+  typeTitle: {
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#4E5968',
+  },
+  typeCount: {
+    fontSize: '20px',
+    fontWeight: 700,
+    color: '#191F28',
+  },
+  typeSub: {
+    fontSize: '12px',
+    color: '#8B95A1',
+  },
+  topList: {
+    marginTop: '14px',
+    paddingTop: '12px',
+    borderTop: '1px solid #F2F4F6',
+  },
+  topTitle: {
+    fontSize: '15px',
+    fontWeight: 700,
+    color: '#4E5968',
+    marginBottom: '4px',
+  },
+  topRow: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '10px 0',
+    border: 'none',
+    background: 'none',
+    textAlign: 'left',
+    cursor: 'pointer',
+    WebkitTapHighlightColor: 'transparent',
+  },
+  topRank: {
+    flexShrink: 0,
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    backgroundColor: '#EBF3FE',
+    color: '#3182F6',
+    fontSize: '14px',
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topTexts: {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1px',
+  },
+  topName: {
+    fontSize: '14px',
+    color: '#6B7684',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  topAmount: {
+    fontSize: '17px',
+    fontWeight: 700,
+    color: '#1B64DA',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  topNote: {
+    marginTop: '4px',
+    fontSize: '13px',
+    color: '#8B95A1',
+  },
+  chevronSmall: {
+    fontSize: '20px',
+    color: '#B0B8C1',
+  },
+  myCard: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    padding: '16px 18px',
+    border: 'none',
+    borderRadius: '16px',
+    backgroundColor: '#F3F7FF',
+    textAlign: 'left',
     cursor: 'pointer',
   },
 };

@@ -5,11 +5,12 @@ import { FilterPage, type SearchParams } from './pages/FilterPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { preloadInterstitial, shouldShowInterstitial } from './lib/ads';
 import { popBackHandler } from './lib/backStack';
+import { logClick } from './lib/analytics';
 
 type Page = 'filter' | 'ad' | 'results';
 
 const PARAMS_KEY = 'benefit:search-params';
-const EMPTY_PARAMS: SearchParams = { birthYear: null, gender: '전체', sido: null, sidoName: null, sgg: null };
+const EMPTY_PARAMS: SearchParams = { birthYear: null, gender: '전체', sido: null, sidoName: null, sgg: null, situations: [] };
 
 /** 다시 들어왔을 때 같은 조건을 바로 고를 수 있도록 마지막 검색 조건을 기억한다. */
 function readSavedParams(): SearchParams {
@@ -57,6 +58,11 @@ export function App() {
   }, []);
 
   const handleSearch = (next: SearchParams) => {
+    logClick('search_submit', {
+      situations: next.situations.join(',') || 'none',
+      has_sgg: !!next.sgg,
+      has_birth: next.birthYear != null,
+    });
     setParams(next);
     try {
       localStorage.setItem(PARAMS_KEY, JSON.stringify(next));

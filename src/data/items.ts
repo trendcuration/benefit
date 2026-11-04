@@ -1,6 +1,8 @@
 import { ageRange, isCategory, type Category, type Gender, type Subsidy } from './subsidies';
 import { CURATED_GOV24_IDS, getSubsidyDetail } from './subsidyDetails';
 import type { GovItem } from './gov24';
+import { daysLeft, parseDeadline, URGENT_DAYS } from '../lib/deadline';
+import { benefitTypeOf, type BenefitType } from '../lib/benefitType';
 
 /** 목록 한 줄 — 직접 정리한 지원금(curated)과 정부24 데이터(gov)를 같은 모양으로 맞춘다. */
 export interface ListItem {
@@ -17,7 +19,11 @@ export interface ListItem {
   meta: string;
   category: Category;
   deadline: string;
+  /** 마감까지 남은 날(마감일을 알 때만) */
+  daysLeft: number | null;
   isUrgent: boolean;
+  /** 지원 형태(현금·대출·감면·서비스) */
+  type: BenefitType;
   /** 금액순 정렬용 문구 */
   amountText: string;
   /** 정부24 조회수(직접 정리 항목은 맨 앞에 오도록 큰 값) */
@@ -49,6 +55,7 @@ export function deadlineLabel(d: string): string {
 
 export function fromCurated(s: Subsidy): ListItem {
   const d = getSubsidyDetail(s.id);
+  const left = daysLeft(parseDeadline(s.deadline));
   return {
     key: `c${s.id}`,
     kind: 'curated',
@@ -58,7 +65,9 @@ export function fromCurated(s: Subsidy): ListItem {
     meta: `${s.source} · ${deadlineLabel(s.deadline)}`,
     category: s.category,
     deadline: s.deadline,
-    isUrgent: !!s.isUrgent,
+    daysLeft: left,
+    isUrgent: !!s.isUrgent || (left != null && left <= URGENT_DAYS),
+    type: benefitTypeOf(`${d?.headline ?? ''} ${s.amount}`),
     amountText: s.amount,
     rank: CURATED_RANK,
     sgg: null,
@@ -71,6 +80,7 @@ export function fromCurated(s: Subsidy): ListItem {
 
 export function fromGov(g: GovItem): ListItem {
   const category = isCategory(g.c) ? g.c : '생활·금융';
+  const left = daysLeft(parseDeadline(g.d));
   return {
     key: `g${g.i}`,
     kind: 'gov',
@@ -80,7 +90,9 @@ export function fromGov(g: GovItem): ListItem {
     meta: deadlineLabel(g.d),
     category,
     deadline: g.d,
-    isUrgent: false,
+    daysLeft: left,
+    isUrgent: left != null && left <= URGENT_DAYS,
+    type: benefitTypeOf(`${g.n} ${g.a ?? ''}`),
     amountText: g.a ?? '',
     rank: g.v,
     sgg: g.g,

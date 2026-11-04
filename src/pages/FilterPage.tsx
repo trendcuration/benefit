@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
 import { GENDERS, type Gender } from '../data/subsidies';
 import { loadMeta, type GovMeta } from '../data/gov24';
+import { SITUATIONS } from '../lib/situations';
 
 export interface SearchParams {
   birthYear: number | null;
@@ -10,6 +11,8 @@ export interface SearchParams {
   sido: string | null;
   sidoName: string | null;
   sgg: string | null;
+  /** '지금 내 상황'(lib/situations.ts의 id). 고른 상황에 맞는 특정 대상 사업도 목록에 넣는다. */
+  situations: string[];
 }
 
 interface FilterPageProps {
@@ -34,6 +37,9 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
   const [sido, setSido] = useState<string | null>(initial.sido);
   const [sgg, setSgg] = useState<string | null>(initial.sgg);
   const [sidos, setSidos] = useState<GovMeta['sidos']>(FALLBACK_SIDOS);
+  const [situations, setSituations] = useState<string[]>(initial.situations ?? []);
+  const toggleSituation = (id: string) =>
+    setSituations((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
 
   useEffect(() => {
     loadMeta()
@@ -49,6 +55,7 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
     birthYear ? `${String(birthYear).slice(2)}년생` : '전체 연령',
     sido ? (sgg ? `${sido} ${sgg}` : sido) : '전국',
     gender === '전체' ? null : gender,
+    situations.length ? `상황 ${situations.length}개` : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -151,6 +158,33 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
           </SegmentedControl>
         </section>
 
+        {/* 지금 내 상황 */}
+        <section style={s.section}>
+          <div style={s.sectionHeader}>
+            <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
+              지금 내 상황
+            </Paragraph>
+            <span style={s.optionalBadge}>여러 개 골라도 돼요</span>
+          </div>
+          <p style={s.sectionHint}>해당하는 걸 고르면 그 상황에만 주는 지원금까지 찾아드려요. 없으면 넘어가세요.</p>
+          <div style={s.chipGrid}>
+            {SITUATIONS.map((x) => {
+              const on = situations.includes(x.id);
+              return (
+                <button
+                  key={x.id}
+                  type="button"
+                  aria-pressed={on}
+                  style={on ? { ...s.chip, ...s.chipOn } : s.chip}
+                  onClick={() => toggleSituation(x.id)}
+                >
+                  <span aria-hidden>{x.emoji}</span> {x.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         {/* 선택 요약 */}
         <div style={s.summaryBox}>
           <Paragraph typography="t4" color="#3182F6">
@@ -172,7 +206,7 @@ export function FilterPage({ initial, onSearch }: FilterPageProps) {
           color="primary"
           variant="fill"
           onClick={() =>
-            onSearch({ birthYear, gender, sido, sidoName: sidoInfo?.name ?? null, sgg })
+            onSearch({ birthYear, gender, sido, sidoName: sidoInfo?.name ?? null, sgg, situations })
           }
         >
           지원금 찾기
@@ -276,6 +310,34 @@ const s: Record<string, React.CSSProperties> = {
       "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B95A1' stroke-width='2' fill='none'/%3E%3C/svg%3E\")",
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'right 14px center',
+  },
+  sectionHint: {
+    marginTop: '-6px',
+    marginBottom: '14px',
+    fontSize: '15px',
+    lineHeight: 1.55,
+    color: '#6B7684',
+  },
+  chipGrid: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+  },
+  chip: {
+    padding: '11px 14px',
+    borderRadius: '12px',
+    border: '1px solid #E5E8EB',
+    backgroundColor: '#FFFFFF',
+    fontSize: '16px',
+    fontWeight: 600,
+    color: '#4E5968',
+    cursor: 'pointer',
+    WebkitTapHighlightColor: 'transparent',
+  },
+  chipOn: {
+    border: '1px solid #3182F6',
+    backgroundColor: '#EBF3FE',
+    color: '#1B64DA',
   },
   summaryBox: {
     backgroundColor: '#EBF3FE',

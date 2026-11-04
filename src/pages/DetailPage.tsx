@@ -10,6 +10,8 @@ import { pushBackHandler } from '../lib/backStack';
 import { attachTossBanner } from '../lib/banner';
 import { openExternal } from '../lib/links';
 import { recordApplyClick } from '../lib/reviewPrompt';
+import { ddayLabel } from '../lib/deadline';
+import { ApplyChecklist } from '../components/ApplyChecklist';
 
 const DETAIL_BANNER_AD_ID = 'ait.v2.live.ee27252f33184337';
 
@@ -113,6 +115,7 @@ export function DetailPage({
             {item.deadline && (
               <span style={item.isUrgent ? { ...s.chip, ...s.chipUrgent } : s.chip}>
                 ⏰ {item.deadline}
+                {item.daysLeft != null && ` · ${ddayLabel(item.daysLeft)}`}
               </span>
             )}
             {item.tags.map((t) => (
@@ -125,9 +128,18 @@ export function DetailPage({
 
         <div style={s.divider} />
 
-        {item.curated && <CuratedBody item={item.curated} regionLabel={regionLabel} onCall={handleCall} />}
+        {item.curated && (
+          <CuratedBody item={item.curated} itemKey={item.key} regionLabel={regionLabel} onCall={handleCall} />
+        )}
         {item.gov && (
-          <GovBody item={item.gov} detail={gov} error={govError} regionLabel={regionLabel} onCall={handleCall} />
+          <GovBody
+            item={item.gov}
+            itemKey={item.key}
+            detail={gov}
+            error={govError}
+            regionLabel={regionLabel}
+            onCall={handleCall}
+          />
         )}
 
         <div ref={bannerRef} style={s.banner} />
@@ -176,10 +188,12 @@ function isNationalOrg(g: GovItem): boolean {
 // ── 직접 정리한 지원금 ──
 function CuratedBody({
   item,
+  itemKey,
   regionLabel,
   onCall,
 }: {
   item: Subsidy;
+  itemKey: string;
   regionLabel: string;
   onCall: (tel: string) => void;
 }) {
@@ -206,11 +220,10 @@ function CuratedBody({
         </dl>
       </Section>
 
-      {detail && (
-        <Section codepoint="1F4DD" fallback="📝" title="신청방법">
-          <Steps items={detail.how} />
-        </Section>
-      )}
+      <Section codepoint="1F4DD" fallback="📝" title="신청방법">
+        <p style={s.checkHint}>순서대로 하나씩 체크해 보세요. 이 휴대폰에만 저장돼요.</p>
+        <ApplyChecklist itemKey={itemKey} lines={detail?.how ?? []} kind="steps" />
+      </Section>
 
       <Section codepoint="23F0" fallback="⏰" title="신청기간">
         <p style={s.bodyText}>
@@ -240,12 +253,14 @@ function CuratedBody({
 // ── 정부24 지원금 ──
 function GovBody({
   item,
+  itemKey,
   detail,
   error,
   regionLabel,
   onCall,
 }: {
   item: GovItem;
+  itemKey: string;
   detail: GovDetail | null;
   error: boolean;
   regionLabel: string;
@@ -292,11 +307,20 @@ function GovBody({
           <Section codepoint="1F4DD" fallback="📝" title="신청방법">
             <Steps items={detail.how.slice(0, 8)} />
             {detail.receipt && <p style={s.subText}>접수 기관 · {detail.receipt}</p>}
-            {detail.docs.length > 0 && (
-              <Fold title="구비서류 보기">
-                <Lines items={detail.docs} limit={20} />
-              </Fold>
-            )}
+          </Section>
+
+          <Section codepoint="2705" fallback="✅" title="신청 준비 체크리스트">
+            <p style={s.checkHint}>
+              {docLines(detail.docs).length > 0
+                ? '필요한 서류를 하나씩 체크해 보세요. 이 휴대폰에만 저장돼요.'
+                : '서류 안내가 따로 없어요. 신청 순서대로 체크해 보세요.'}
+            </p>
+            <ApplyChecklist
+              itemKey={itemKey}
+              lines={docLines(detail.docs).length > 0 ? docLines(detail.docs) : detail.how.slice(0, 8)}
+              notes={detail.docs.filter((l) => l.startsWith('※')).slice(0, 3)}
+              kind={docLines(detail.docs).length > 0 ? 'docs' : 'steps'}
+            />
           </Section>
 
           <Section codepoint="23F0" fallback="⏰" title="신청기간">
@@ -325,6 +349,14 @@ function GovBody({
       )}
     </>
   );
+}
+
+/** 구비서류 중 체크할 줄(※ 참고 문구·빈 줄·'없음' 제외). */
+function docLines(docs: string[]): string[] {
+  return docs
+    .map((l) => l.replace(/^[-·•○◦▪*]\s*/, '').trim())
+    .filter((l) => l.length > 1 && !l.startsWith('※') && !/^(없음|해당\s*없음|-)$/.test(l))
+    .slice(0, 15);
 }
 
 /** ※ 로 시작하는 줄은 참고 문구로 흐리게, 나머지는 점 목록으로. limit을 넘으면 '더 보기'. */
@@ -694,15 +726,22 @@ const s: Record<string, React.CSSProperties> = {
     color: '#191F28',
     marginTop: '2px',
   },
+  checkHint: {
+    fontSize: '15px',
+    lineHeight: 1.55,
+    color: '#6B7684',
+    marginTop: '-4px',
+    marginBottom: '12px',
+  },
   callBtn: {
     flexShrink: 0,
     border: 'none',
     borderRadius: '10px',
     backgroundColor: '#F2F4F6',
     color: '#333D4B',
-    fontSize: '15px',
+    fontSize: '16px',
     fontWeight: 600,
-    padding: '10px 16px',
+    padding: '12px 18px',
     cursor: 'pointer',
   },
   banner: {

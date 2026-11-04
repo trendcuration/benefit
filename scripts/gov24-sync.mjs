@@ -127,7 +127,7 @@ function conditionInfo(c) {
         ...(householdGeneral ? [] : HOUSEHOLD.filter(y)),
       ]
         .map((k) => SPECIAL[k])
-        .slice(0, 3);
+        .slice(0, 6);
   const male = y('JA0101');
   const female = y('JA0102');
   return {
@@ -303,7 +303,7 @@ async function main() {
     // 소상공인 전용 사업은 '특정 대상'으로 묶어 기본 목록에서는 숨기고 태그를 단다.
     if (!forPerson) {
       cond.gen = false;
-      cond.tags = ['소상공인', ...cond.tags.filter((t) => t !== '소상공인')].slice(0, 3);
+      cond.tags = ['소상공인', ...cond.tags.filter((t) => t !== '소상공인')].slice(0, 6);
     }
     const item = {
       i: id,
