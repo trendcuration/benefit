@@ -12,14 +12,12 @@ import { CURATED_DUP_IDS, fromCurated, fromGov, govMatches, type ListItem } from
 import { FREE_BOOKMARK_LIMIT, useBookmarks } from '../hooks/useBookmarks';
 import { RewardUnlockDialog } from '../components/RewardUnlockDialog';
 import { EmojiIcon } from '../components/EmojiIcon';
-import { CrossPromoSheet, PROMO_APPS, type PromoApp } from '../components/CrossPromoSheet';
 import { markAsked, recordDetailView, shouldAskReview } from '../lib/reviewPrompt';
 import { requestTossReview } from '../lib/review';
 import { DetailPage, govPageUrl } from './DetailPage';
 import type { SearchParams } from './FilterPage';
 import { logClick } from '../lib/analytics';
 import { attachTossBanner } from '../lib/banner';
-import { openExternal } from '../lib/links';
 import { loadSeenKeys, saveSeenKeys } from '../lib/seenItems';
 import { canShowPushPopup, isPushAgreed, markPushPopupShown, pushSupported, requestWeeklyPush } from '../lib/push';
 import { PushAskSheet } from '../components/PushAskSheet';
@@ -35,30 +33,11 @@ const INFEED_BANNER_INTERVAL = 6;
 const MAX_INFEED_BANNERS = 4;
 const PAGE_SIZE = 30;
 const TOP_AMOUNT_CAP = 50_000_000;
-/** 부록 미니앱 '2027 바뀌는 지원금'(miniApp 85249) */
-const BENEFIT_2027_APP_URL = 'intoss://benefit-2027';
 
-/** 지원금 상세를 이만큼 보고 목록으로 돌아오면 자매 앱 안내 시트를 띄운다(하루 한 번). */
-const CROSS_PROMO_AFTER_VIEWS = 3;
-/** 상세를 이만큼 보거나 결과 화면에 이만큼 머물면 매주 알림 팝업을 권한다(자매 앱 시트보다 먼저). */
+/** 상세를 이만큼 보거나 결과 화면에 이만큼 머물면 매주 알림 팝업을 권한다. */
 const PUSH_POPUP_AFTER_VIEWS = 2;
 const PUSH_POPUP_AFTER_MS = 30_000;
-const CROSS_PROMO_DATE_KEY = 'benefit:cross-promo-date';
-const CROSS_PROMO_NEXT_KEY = 'benefit:cross-promo-next';
 
-/** 오늘 아직 안 보여줬으면 이번에 보여줄 앱(두 앱을 번갈아)을 고르고 '오늘 보여줌'으로 기록한다. */
-function pickCrossPromo(): PromoApp | null {
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-    if (localStorage.getItem(CROSS_PROMO_DATE_KEY) === today) return null;
-    const next = Number(localStorage.getItem(CROSS_PROMO_NEXT_KEY)) || 0;
-    localStorage.setItem(CROSS_PROMO_DATE_KEY, today);
-    localStorage.setItem(CROSS_PROMO_NEXT_KEY, String((next + 1) % PROMO_APPS.length));
-    return PROMO_APPS[next % PROMO_APPS.length];
-  } catch {
-    return null; // 저장소를 못 쓰면 매번 뜨는 걸 막기 위해 아예 띄우지 않는다
-  }
-}
 
 type SortKey = 'default' | 'amount' | 'deadline';
 /** 요약 카드에서 고른 지원 형태 */
@@ -96,7 +75,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   const [confirmUnlockId, setConfirmUnlockId] = useState<string | null>(null);
   // 상세 요약 화면에 띄운 지원금
   const [detailItem, setDetailItem] = useState<ListItem | null>(null);
-  const [promoApp, setPromoApp] = useState<PromoApp | null>(null);
   const viewedCount = useRef(0);
   const {
     isBookmarked,
@@ -194,25 +172,19 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     setApplied(appliedKeys());
     viewedCount.current += 1;
     // 앱을 잘 쓰고 있다는 신호(상세 5번 이상 + 신청 이동 경험)가 있는 사용자에게만 별점을 묻고,
-    // 그날은 자매 앱 시트를 띄우지 않는다. 조건이 안 되면 기존대로 자매 앱 시트를 고려한다.
     if (shouldAskReview()) {
       markAsked();
       // 우리 안내 시트 없이 토스 별점 화면을 바로 요청한다(토스가 안 띄울 때 버튼이 먹통처럼 보였다).
       setTimeout(requestTossReview, 350);
     } else if (viewedCount.current === PUSH_POPUP_AFTER_VIEWS && !pushPopupDone.current) {
       setPushDue('views');
-    } else if (viewedCount.current === CROSS_PROMO_AFTER_VIEWS) {
-      const app = pickCrossPromo();
-      // 상세가 닫히고 목록이 보인 뒤에 올라오도록 살짝 늦춘다.
-      if (app) setTimeout(() => setPromoApp(app), 350);
     }
   }, []);
-  const closePromo = useCallback(() => setPromoApp(null), []);
   const closePushPopup = useCallback(() => setPushPopup(null), []);
 
   useEffect(() => {
     if (!pushDue || pushPopupDone.current) return;
-    if (detailItem || promoApp || confirmUnlockId !== null || unlockingId !== null) return;
+    if (detailItem || confirmUnlockId !== null || unlockingId !== null) return;
     if (pushCard !== 'ask') {
       pushPopupDone.current = true;
       return;
@@ -224,12 +196,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
       setPushPopup(pushDue);
     }, 350);
     return () => clearTimeout(timer);
-  }, [pushDue, detailItem, promoApp, confirmUnlockId, unlockingId, pushCard]);
-
-  const open2027App = () => {
-    logClick('benefit2027_banner_click');
-    openExternal(BENEFIT_2027_APP_URL);
-  };
+  }, [pushDue, detailItem, confirmUnlockId, unlockingId, pushCard]);
 
   useEffect(() => {
     const el = bannerRef.current;
@@ -398,7 +365,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
         />
       )}
 
-      {promoApp && !detailItem && <CrossPromoSheet app={promoApp} onClose={closePromo} />}
 
       {pushPopup && !detailItem && (
         <PushAskSheet
@@ -533,18 +499,6 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
           )}
         </div>
       )}
-
-      {/* 부록 미니앱 '2027 바뀌는 지원금'으로 연결 */}
-      <div style={s.infoCardWrap}>
-        <button type="button" style={s.infoCard} onClick={open2027App}>
-          <EmojiIcon codepoint="1F4C5" fallback="📅" size={32} />
-          <span style={s.infoCardTexts}>
-            <span style={s.infoCardTitle}>2027 바뀌는 지원금</span>
-            <span style={s.infoCardSub}>내년에 달라지는 지원금 미리 보기</span>
-          </span>
-          <span style={s.chevron}>›</span>
-        </button>
-      </div>
 
       {/* 배너 광고 */}
       <div ref={bannerRef} style={s.banner} />
