@@ -1,260 +1,25 @@
-import { useState } from 'react';
-import { Button, SegmentedControl, Paragraph } from '@toss/tds-mobile';
-import { AGE_GROUPS, METRIC_META, REGIONS, type AgeGroup, type Metric, type Region } from '../data/percentiles';
+import { useEffect, useState } from 'react';
+import { Button } from '@toss/tds-mobile';
 import { formatManwon } from '../data/rank';
+import { logClick, logImpression } from '../lib/analytics';
+import { chip, color, font, footer } from '../lib/ui';
+import type { Metric } from '../data/percentiles';
 import type { JudgeParams } from '../App';
 
-type IncomePeriod = 'monthly' | 'annual';
+export type InputMode = 'monthly' | 'annual' | 'asset';
 
 interface InputPageProps {
+  initialMode: InputMode;
   onSubmit: (params: JudgeParams) => void;
 }
 
-export function InputPage({ onSubmit }: InputPageProps) {
-  const [metric, setMetric] = useState<Metric>('income');
-  const [period, setPeriod] = useState<IncomePeriod>('monthly');
-  const [amountStr, setAmountStr] = useState('');
-  const [ageGroup, setAgeGroup] = useState<AgeGroup>('전체');
-  const [region, setRegion] = useState<Region>('전국');
+const MODES: { id: InputMode; label: string; hint: string }[] = [
+  { id: 'monthly', label: '월급', hint: '세금 떼기 전 금액을 만원 단위로 넣어요' },
+  { id: 'annual', label: '연봉', hint: '세금 떼기 전 금액을 만원 단위로 넣어요' },
+  { id: 'asset', label: '순자산', hint: '우리 집 재산에서 빚을 뺀 금액이에요' },
+];
 
-  const amount = amountStr ? parseInt(amountStr, 10) : 0;
-  const canSubmit = amount > 0;
-
-  const handleAmountChange = (raw: string) => {
-    const digits = raw.replace(/[^0-9]/g, '').slice(0, 9);
-    setAmountStr(digits.replace(/^0+(?=\d)/, ''));
-  };
-
-  const handlePeriodChange = (next: IncomePeriod) => {
-    if (next === period) return;
-    // 월급 ↔ 연봉 전환 시 금액도 함께 환산
-    if (amount > 0) {
-      const converted = next === 'annual' ? amount * 12 : Math.round(amount / 12);
-      setAmountStr(String(Math.min(converted, 999_999_999)));
-    }
-    setPeriod(next);
-  };
-
-  const handleMetricChange = (next: Metric) => {
-    if (next === metric) return;
-    setMetric(next);
-    setAmountStr('');
-  };
-
-  const addAmount = (delta: number) => {
-    setAmountStr(String(Math.min(amount + delta, 999_999_999)));
-  };
-
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    const isMonthly = metric === 'income' && period === 'monthly';
-    const value = isMonthly ? amount * 12 : amount;
-    const prefix = metric === 'asset' ? '순자산' : period === 'monthly' ? '월급' : '연봉';
-    onSubmit({
-      metric,
-      ageGroup,
-      region,
-      value,
-      inputLabel: `${prefix} ${formatManwon(amount)}`,
-    });
-  };
-
-  const chips = CHIPS[metric === 'income' ? period : 'asset'];
-
-  return (
-    <div style={s.container}>
-      {/* 헤더 */}
-      <header style={s.header}>
-        <div style={s.iconWrap}>📊</div>
-        <Paragraph as="h1" typography="t1" fontWeight="bold" style={s.title}>
-          나는 상위 몇 %?
-        </Paragraph>
-        <Paragraph typography="t4" color="#6B7684" style={s.subtitle}>
-          {'월급이나 순자산을 입력하면\n대한민국에서 내 위치를 알려드려요'}
-        </Paragraph>
-      </header>
-
-      <div style={s.body}>
-        {/* 판정 항목 */}
-        <section style={s.section}>
-          <div style={s.sectionHeader}>
-            <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
-              무엇을 판정할까요?
-            </Paragraph>
-          </div>
-          <SegmentedControl
-            value={metric}
-            onChange={(v) => handleMetricChange(v as Metric)}
-            size="large"
-          >
-            {(['income', 'asset'] as Metric[]).map((m) => (
-              <SegmentedControl.Item key={m} value={m}>
-                {METRIC_META[m].emoji} {METRIC_META[m].label}
-              </SegmentedControl.Item>
-            ))}
-          </SegmentedControl>
-          <Paragraph typography="t5" color="#8B95A1" style={s.metricHelp}>
-            {metric === 'income'
-              ? '세전 금액 기준이에요'
-              : '순자산 = 우리 집 자산 − 부채 (가구 기준)'}
-          </Paragraph>
-        </section>
-
-        {/* 금액 입력 */}
-        <section style={s.section}>
-          <div style={s.sectionHeader}>
-            <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
-              금액
-            </Paragraph>
-            <span style={s.requiredBadge}>필수</span>
-          </div>
-
-          {metric === 'income' && (
-            <div style={s.periodRow}>
-              {(['monthly', 'annual'] as IncomePeriod[]).map((key) => (
-                <Button
-                  key={key}
-                  size="small"
-                  color="primary"
-                  variant={period === key ? 'fill' : 'weak'}
-                  onClick={() => handlePeriodChange(key)}
-                >
-                  {key === 'monthly' ? '월급' : '연봉'}
-                </Button>
-              ))}
-            </div>
-          )}
-
-          <div style={s.inputRow}>
-            <input
-              style={s.input}
-              inputMode="numeric"
-              placeholder="0"
-              value={amount > 0 ? amount.toLocaleString('ko-KR') : ''}
-              onChange={(e) => handleAmountChange(e.target.value)}
-              aria-label="금액 입력 (만원)"
-            />
-            <span style={s.inputSuffix}>만원</span>
-          </div>
-
-          {amount > 0 && (
-            <Paragraph typography="t4" color="#3182F6" style={s.preview}>
-              {formatManwon(amount)}
-              {metric === 'income' && period === 'monthly' && (
-                <span style={s.previewSub}> · 연봉 환산 {formatManwon(amount * 12)}</span>
-              )}
-            </Paragraph>
-          )}
-
-          <div style={s.chipRow}>
-            {chips.map((chip) => (
-              <Button
-                key={chip.label}
-                size="small"
-                color="primary"
-                variant="weak"
-                onClick={() => addAmount(chip.delta)}
-                style={s.chipBtn}
-              >
-                +{chip.label}
-              </Button>
-            ))}
-            <Button
-              size="small"
-              color="dark"
-              variant="weak"
-              onClick={() => setAmountStr('')}
-              style={s.chipBtn}
-            >
-              초기화
-            </Button>
-          </div>
-        </section>
-
-        {/* 연령대 */}
-        <section style={s.section}>
-          <div style={s.sectionHeader}>
-            <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
-              연령대
-            </Paragraph>
-            <Paragraph typography="t5" color="#B0B8C1">
-              동년배 비교에 사용돼요
-            </Paragraph>
-          </div>
-          <div style={s.ageGrid}>
-            {AGE_GROUPS.map((age) => {
-              const isActive = ageGroup === age;
-              return (
-                <Button
-                  key={age}
-                  size="large"
-                  color="primary"
-                  variant={isActive ? 'fill' : 'weak'}
-                  onClick={() => setAgeGroup(age)}
-                  style={s.ageBtn}
-                >
-                  {age}
-                </Button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* 지역 */}
-        <section style={s.section}>
-          <div style={s.sectionHeader}>
-            <Paragraph typography="t3" fontWeight="bold" style={s.sectionTitle}>
-              지역
-            </Paragraph>
-            <Paragraph typography="t5" color="#B0B8C1">
-              우리 동네 비교에 사용돼요
-            </Paragraph>
-          </div>
-          <div style={s.regionGrid}>
-            {REGIONS.map((r) => {
-              const isActive = region === r;
-              return (
-                <Button
-                  key={r}
-                  size="medium"
-                  color="primary"
-                  variant={isActive ? 'fill' : 'weak'}
-                  onClick={() => setRegion(r)}
-                  style={s.regionBtn}
-                >
-                  {r}
-                </Button>
-              );
-            })}
-          </div>
-        </section>
-      </div>
-
-      {/* 하단 CTA */}
-      <div style={s.footer}>
-        {/* 광고가 나오기 전에 유저가 미리 알 수 있도록 버튼을 누르기 '전'에 보이는 안내 */}
-        <Paragraph typography="t6" color="#8B95A1" style={{ textAlign: 'center', whiteSpace: 'pre-line', marginBottom: '8px' }}>
-          {'📺 아래 버튼을 누르면\n결과를 보기 전 잠깐 광고가 표시돼요'}
-        </Paragraph>
-        <Button
-          display="full"
-          size="xlarge"
-          color="primary"
-          variant="fill"
-          disabled={!canSubmit}
-          onClick={handleSubmit}
-        >
-          내 순위 확인하기
-        </Button>
-        <Paragraph typography="t5" color="#B0B8C1" style={s.footerNote}>
-          국세청 · 통계청 가계금융복지조사 기반 추정
-        </Paragraph>
-      </div>
-    </div>
-  );
-}
-
-const CHIPS: Record<'monthly' | 'annual' | 'asset', { label: string; delta: number }[]> = {
+const CHIPS: Record<InputMode, { label: string; delta: number }[]> = {
   monthly: [
     { label: '50만', delta: 50 },
     { label: '100만', delta: 100 },
@@ -272,146 +37,259 @@ const CHIPS: Record<'monthly' | 'annual' | 'asset', { label: string; delta: numb
   ],
 };
 
+const MAX_AMOUNT = 999_999_999;
+
+export function InputPage({ initialMode, onSubmit }: InputPageProps) {
+  const [mode, setMode] = useState<InputMode>(initialMode);
+  const [amountStr, setAmountStr] = useState('');
+
+  const amount = amountStr ? parseInt(amountStr, 10) : 0;
+  const canSubmit = amount > 0;
+  const current = MODES.find((m) => m.id === mode) ?? MODES[0];
+  const metric: Metric = mode === 'asset' ? 'asset' : 'income';
+
+  useEffect(() => {
+    // 입력 화면을 본 사람 수. submit_click과 비교해 입력 단계 이탈을 본다.
+    logImpression('input_view', { mode: initialMode });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAmountChange = (raw: string) => {
+    const digits = raw.replace(/[^0-9]/g, '').slice(0, 9);
+    setAmountStr(digits.replace(/^0+(?=\d)/, ''));
+  };
+
+  const handleModeChange = (next: InputMode) => {
+    if (next === mode) return;
+    logClick('mode_click', { mode: next });
+    if (next === 'asset' || mode === 'asset') {
+      // 소득 ↔ 순자산은 전혀 다른 금액이라 비운다.
+      setAmountStr('');
+    } else if (amount > 0) {
+      // 월급 ↔ 연봉은 금액도 함께 환산한다.
+      const converted = next === 'annual' ? amount * 12 : Math.round(amount / 12);
+      setAmountStr(String(Math.min(converted, MAX_AMOUNT)));
+    }
+    setMode(next);
+  };
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    onSubmit({
+      metric,
+      mode,
+      value: mode === 'monthly' ? amount * 12 : amount,
+      inputLabel: `${current.label} ${formatManwon(amount)}`,
+    });
+  };
+
+  const display = amount > 0 ? amount.toLocaleString('ko-KR') : '';
+  // 자릿수가 늘면 글씨를 줄여 한 줄에 담는다.
+  const amountSize = display.length > 9 ? 30 : display.length > 7 ? 36 : 44;
+  const amountFont: React.CSSProperties = {
+    fontSize: `${amountSize}px`,
+    fontWeight: 700,
+    letterSpacing: '-1px',
+    lineHeight: 1.2,
+    fontFamily: 'inherit',
+  };
+
+  const helper =
+    amount <= 0
+      ? current.hint
+      : mode === 'monthly'
+        ? `연봉으로 ${formatManwon(amount * 12)} · 세전`
+        : mode === 'annual'
+          ? `한 달에 약 ${formatManwon(Math.round(amount / 12))} · 세전`
+          : formatManwon(amount);
+
+  return (
+    <div style={s.container}>
+      <main style={s.main}>
+        {/* 무엇을 볼지: 월급 · 연봉 · 순자산 */}
+        <div style={s.tabs} role="tablist">
+          {MODES.map((m) => {
+            const active = m.id === mode;
+            return (
+              <button
+                key={m.id}
+                role="tab"
+                aria-selected={active}
+                style={{ ...s.tab, ...(active ? s.tabActive : {}) }}
+                onClick={() => handleModeChange(m.id)}
+              >
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <h1 style={s.headline}>
+          {current.label}이 얼마인가요?
+        </h1>
+        <p style={s.lead}>대한민국에서 상위 몇 %인지 알려드려요</p>
+
+        {/* 금액 */}
+        <label style={{ ...s.amountRow, borderBottomColor: canSubmit ? color.blue : color.line }}>
+          <span style={s.amountGrid}>
+            <span aria-hidden style={{ ...amountFont, ...s.amountMirror }}>
+              {display || '0'}
+            </span>
+            <input
+              style={{ ...amountFont, ...s.amountInput }}
+              size={1}
+              inputMode="numeric"
+              placeholder="0"
+              value={display}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              aria-label="금액 입력 (만원)"
+            />
+          </span>
+          <span style={{ ...amountFont, color: canSubmit ? color.text : '#B0B8C1' }}>만원</span>
+        </label>
+        <p style={{ ...s.helper, color: canSubmit ? color.blue : color.textWeak }}>{helper}</p>
+
+        <div style={s.chipRow}>
+          {CHIPS[mode].map((c) => (
+            <button
+              key={c.label}
+              style={chip()}
+              onClick={() => setAmountStr(String(Math.min(amount + c.delta, MAX_AMOUNT)))}
+            >
+              +{c.label}
+            </button>
+          ))}
+          {canSubmit && (
+            <button style={s.clearBtn} onClick={() => setAmountStr('')}>
+              지우기
+            </button>
+          )}
+        </div>
+      </main>
+
+      <div style={footer}>
+        {/* 광고가 나오기 전에 미리 알 수 있도록 버튼을 누르기 '전'에 보이는 안내 */}
+        <p style={s.adNotice}>버튼을 누르면 결과를 보기 전에 잠깐 광고가 나와요</p>
+        <Button
+          display="block"
+          size="xlarge"
+          color="primary"
+          variant="fill"
+          disabled={!canSubmit}
+          onClick={handleSubmit}
+        >
+          내 순위 확인하기
+        </Button>
+        <p style={s.source}>국세청 · 통계청 가계금융복지조사 기반 추정</p>
+      </div>
+    </div>
+  );
+}
+
 const s: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex',
     flexDirection: 'column',
     minHeight: '100dvh',
-    backgroundColor: '#F2F4F6',
+    backgroundColor: color.surface,
   },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '48px 24px 28px',
-    backgroundColor: '#FFFFFF',
-  },
-  iconWrap: {
-    width: '64px',
-    height: '64px',
-    backgroundColor: '#EBF3FE',
-    borderRadius: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '30px',
-    marginBottom: '4px',
-  },
-  title: {
-    letterSpacing: '-0.5px',
-  },
-  subtitle: {
-    textAlign: 'center',
-    lineHeight: 1.7,
-    whiteSpace: 'pre-line',
-  },
-  body: {
+  main: {
     flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    padding: '12px 16px',
+    padding: '20px 20px 24px',
   },
-  section: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: '16px',
-    padding: '20px',
+  tabs: {
+    display: 'inline-flex',
+    gap: '4px',
+    padding: '4px',
+    borderRadius: '999px',
+    backgroundColor: color.chip,
   },
-  sectionHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '16px',
-  },
-  sectionTitle: {
-    letterSpacing: '-0.3px',
-  },
-  requiredBadge: {
-    fontSize: '11px',
+  tab: {
+    height: '40px',
+    padding: '0 18px',
+    border: 'none',
+    borderRadius: '999px',
+    backgroundColor: 'transparent',
+    color: color.textWeak,
+    fontSize: '16px',
     fontWeight: 600,
-    color: '#3182F6',
-    backgroundColor: '#EBF3FE',
-    padding: '2px 7px',
-    borderRadius: '6px',
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    WebkitTapHighlightColor: 'transparent',
   },
-  metricHelp: {
-    marginTop: '10px',
+  tabActive: {
+    backgroundColor: color.surface,
+    color: color.text,
+    boxShadow: '0 1px 4px rgba(0, 23, 51, 0.12)',
   },
-  periodRow: {
+  headline: {
+    ...font.headline,
+    marginTop: '32px',
+  },
+  lead: {
+    ...font.body,
+    marginTop: '8px',
+    wordBreak: 'keep-all',
+  },
+  amountRow: {
     display: 'flex',
+    alignItems: 'baseline',
     gap: '6px',
-    marginBottom: '12px',
+    marginTop: '40px',
+    paddingBottom: '10px',
+    borderBottom: '2px solid',
+    cursor: 'text',
   },
-  inputRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    backgroundColor: '#F2F4F6',
-    borderRadius: '12px',
-    padding: '14px 16px',
+  amountGrid: {
+    display: 'inline-grid',
+    minWidth: '28px',
+    maxWidth: '100%',
   },
-  input: {
-    flex: 1,
+  amountMirror: {
+    gridArea: '1 / 1',
+    visibility: 'hidden',
+    whiteSpace: 'pre',
+  },
+  amountInput: {
+    gridArea: '1 / 1',
+    width: '100%',
     minWidth: 0,
+    padding: 0,
     border: 'none',
     outline: 'none',
     background: 'transparent',
-    fontSize: '24px',
-    fontWeight: 700,
-    color: '#191F28',
-    textAlign: 'right',
-    caretColor: '#3182F6',
+    color: color.text,
+    caretColor: color.blue,
   },
-  inputSuffix: {
-    fontSize: '18px',
-    fontWeight: 600,
-    color: '#6B7684',
-    flexShrink: 0,
-  },
-  preview: {
+  helper: {
+    ...font.sub,
     marginTop: '10px',
-    textAlign: 'right',
-  },
-  previewSub: {
-    color: '#8B95A1',
-    fontWeight: 400,
   },
   chipRow: {
     display: 'flex',
-    gap: '6px',
-    marginTop: '12px',
     flexWrap: 'wrap',
-  },
-  chipBtn: {
-    flexShrink: 0,
-  },
-  ageGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '8px',
-  },
-  ageBtn: {
-    width: '100%',
-  },
-  regionGrid: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-  },
-  regionBtn: {
-    flexShrink: 0,
-  },
-  footer: {
-    padding: '16px 16px 32px',
-    display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
-    gap: '10px',
-    backgroundColor: '#FFFFFF',
-    borderTop: '1px solid #F2F4F6',
+    gap: '8px',
+    marginTop: '24px',
   },
-  footerNote: {
+  clearBtn: {
+    height: '40px',
+    padding: '0 8px',
+    border: 'none',
+    background: 'transparent',
+    color: color.textWeak,
+    fontSize: '15px',
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+  },
+  adNotice: {
+    ...font.caption,
     textAlign: 'center',
+  },
+  source: {
+    ...font.caption,
+    textAlign: 'center',
+    color: '#B0B8C1',
   },
 };

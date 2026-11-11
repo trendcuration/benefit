@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Paragraph } from '@toss/tds-mobile';
 import { showInterstitialAndWait } from '../lib/ads';
+import { logImpression } from '../lib/analytics';
 
 interface AdNoticePageProps {
   onDone: () => void;
@@ -19,6 +20,7 @@ export function AdNoticePage({ onDone }: AdNoticePageProps) {
   useEffect(() => {
     if (calledRef.current) return;
     calledRef.current = true;
+    logImpression('ad_notice_view');
     new Promise<void>((r) => setTimeout(r, NOTICE_MIN_MS))
       .then(() => showInterstitialAndWait())
       .then(onDone);
@@ -29,7 +31,7 @@ export function AdNoticePage({ onDone }: AdNoticePageProps) {
       <div style={s.spinner} aria-hidden />
       <span style={s.adBadge}>광고</span>
       <Paragraph typography="t3" fontWeight="bold" style={s.title}>
-        내 순위를 보기 전, 잠깐 광고가 나와요
+        {'내 순위를 보기 전,\n잠깐 광고가 나와요'}
       </Paragraph>
       <Paragraph typography="t5" color="#6B7684" style={s.subtitle}>
         광고가 끝나면 바로 결과를 보여드릴게요
@@ -47,12 +49,12 @@ const s: Record<string, React.CSSProperties> = {
     gap: '12px',
     minHeight: '100dvh',
     padding: '24px',
-    backgroundColor: '#F2F4F6',
+    backgroundColor: '#FFFFFF',
     textAlign: 'center',
   },
   spinner: {
-    width: '36px',
-    height: '36px',
+    width: '44px',
+    height: '44px',
     borderRadius: '50%',
     border: '3px solid #DDE3EC',
     borderTopColor: '#3182F6',
@@ -69,6 +71,8 @@ const s: Record<string, React.CSSProperties> = {
   },
   title: {
     letterSpacing: '-0.3px',
+    whiteSpace: 'pre-line',
+    lineHeight: 1.4,
   },
   subtitle: {
     textAlign: 'center',

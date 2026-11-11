@@ -308,8 +308,8 @@ function AptTrendChart({ matched, budgetManwon }: { matched: MatchedComplex[]; b
 const s: Record<string, React.CSSProperties> = {
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: '16px',
-    padding: '20px',
+    borderRadius: '24px',
+    padding: '24px 20px',
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
