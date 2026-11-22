@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { graniteEvent, Screen } from '@apps-in-toss/web-framework';
 import { AdNoticePage } from './pages/AdNoticePage';
 import { FilterPage, type SearchParams } from './pages/FilterPage';
@@ -6,6 +6,15 @@ import { ResultsPage } from './pages/ResultsPage';
 import { preloadInterstitial, shouldShowInterstitial } from './lib/ads';
 import { popBackHandler } from './lib/backStack';
 import { logClick } from './lib/analytics';
+import { PushAskSheet } from './components/PushAskSheet';
+import {
+  cameFromAlarmMission,
+  IS_PROMOTION_TEST,
+  isPushAgreed,
+  pushRewardAvailable,
+  pushSupported,
+  requestWeeklyPush,
+} from './lib/push';
 
 type Page = 'filter' | 'ad' | 'results';
 
@@ -25,6 +34,30 @@ function readSavedParams(): SearchParams {
 export function App() {
   const [page, setPage] = useState<Page>('filter');
   const [params, setParams] = useState<SearchParams>(readSavedParams);
+
+  // 혜택탭 미션 '알림 동의하기'로 들어오면 첫 화면 위에 알림 시트를 바로 띄운다.
+  const [missionSheet, setMissionSheet] = useState(() => {
+    if (!cameFromAlarmMission()) return false;
+    logClick('alarm_mission_enter');
+    return pushSupported() && (IS_PROMOTION_TEST || !isPushAgreed());
+  });
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+  const closeMissionSheet = useCallback(() => setMissionSheet(false), []);
+  const agreeFromMission = () => {
+    setMissionSheet(false);
+    logClick('weekly_push_click', { from: 'mission' });
+    void requestWeeklyPush().then((result) => {
+      logClick('weekly_push_result', { result, from: 'mission' });
+      if (result === 'rewarded') setToast('토스포인트 3원을 드렸어요');
+      else if (result === 'agreed') setToast('매주 월요일 12시에 새 지원금을 알려드릴게요');
+      else if (result === 'error') setToast('잠시 후 다시 시도해 주세요');
+    });
+  };
 
   // 필터 화면에 있는 동안 전면광고를 미리 로드해 둔다.
   useEffect(() => {
@@ -81,6 +114,26 @@ export function App() {
       {page === 'results' && (
         <ResultsPage params={params} onBack={() => setPage('filter')} />
       )}
+      {missionSheet && (
+        <PushAskSheet trigger="mission" reward={pushRewardAvailable()} onAgree={agreeFromMission} onClose={closeMissionSheet} />
+      )}
+      {toast && <div style={toastStyle}>{toast}</div>}
     </>
   );
 }
+
+const toastStyle: React.CSSProperties = {
+  position: 'fixed',
+  left: '50%',
+  bottom: 'calc(24px + env(safe-area-inset-bottom))',
+  transform: 'translateX(-50%)',
+  zIndex: 1000,
+  maxWidth: 'calc(100% - 32px)',
+  padding: '12px 18px',
+  borderRadius: '14px',
+  backgroundColor: 'rgba(25, 31, 40, 0.92)',
+  color: '#FFFFFF',
+  fontSize: '15px',
+  fontWeight: 600,
+  textAlign: 'center',
+};

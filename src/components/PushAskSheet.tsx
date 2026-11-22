@@ -6,13 +6,15 @@ import { pushBackHandler } from '../lib/backStack';
 
 interface PushAskSheetProps {
   /** 무엇 때문에 떴는지(조회수/체류시간) — 로그로만 쓴다. */
-  trigger: 'views' | 'dwell';
+  trigger: 'views' | 'dwell' | 'mission';
+  /** 알림을 켜면 3원을 주는지 — 버튼·문구에 붙인다. */
+  reward?: boolean;
   onAgree: () => void;
   onClose: () => void;
 }
 
 /** 지원금을 몇 개 보거나 30초 넘게 둘러본 사용자에게 매주 월요일 새 지원금 알림을 권하는 시트. */
-export function PushAskSheet({ trigger, onAgree, onClose }: PushAskSheetProps) {
+export function PushAskSheet({ trigger, reward = false, onAgree, onClose }: PushAskSheetProps) {
   useEffect(() => pushBackHandler(onClose), [onClose]);
 
   useEffect(() => {
@@ -25,10 +27,13 @@ export function PushAskSheet({ trigger, onAgree, onClose }: PushAskSheetProps) {
         <div style={s.handle} />
         <EmojiIcon codepoint="1F514" fallback="🔔" size={56} />
         <h2 style={s.title}>{'새로 올라온 지원금,\n월요일마다 알려드릴까요?'}</h2>
-        <p style={s.sub}>정부24 지원금은 매주 새로 올라와요. 매주 월요일 12시에 한 번만 알려드려요.</p>
+        <p style={s.sub}>
+          정부24 지원금은 매주 새로 올라와요. 매주 월요일 12시에 한 번만 알려드려요.
+          {reward ? ' 처음 알림을 켜면 토스포인트 3원을 드려요.' : ''}
+        </p>
         <div style={s.cta}>
           <Button display="full" size="xlarge" color="primary" variant="fill" onClick={onAgree}>
-            알림 받기
+            {reward ? '알림 받고 3원 받기' : '알림 받기'}
           </Button>
         </div>
         <button type="button" style={s.later} onClick={onClose}>

@@ -19,7 +19,14 @@ import type { SearchParams } from './FilterPage';
 import { logClick } from '../lib/analytics';
 import { attachTossBanner } from '../lib/banner';
 import { loadSeenKeys, saveSeenKeys } from '../lib/seenItems';
-import { canShowPushPopup, isPushAgreed, markPushPopupShown, pushSupported, requestWeeklyPush } from '../lib/push';
+import {
+  canShowPushPopup,
+  isPushAgreed,
+  markPushPopupShown,
+  pushRewardAvailable,
+  pushSupported,
+  requestWeeklyPush,
+} from '../lib/push';
 import { PushAskSheet } from '../components/PushAskSheet';
 import { tagsOf } from '../lib/situations';
 import { appliedKeys } from '../lib/applyProgress';
@@ -85,14 +92,15 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
     unlockUnlimited,
   } = useBookmarks();
   // 매주 월요일 새 지원금 알림: 지원하는 기기이고 아직 동의 전일 때만 카드를 보여준다.
-  const [pushCard, setPushCard] = useState<'hidden' | 'ask' | 'agreed'>(() =>
+  const [pushCard, setPushCard] = useState<'hidden' | 'ask' | 'agreed' | 'rewarded'>(() =>
     pushSupported() && !isPushAgreed() ? 'ask' : 'hidden',
   );
+  const [pushReward] = useState(pushRewardAvailable);
   const handleAskPush = (from: 'card' | 'popup' = 'card') => {
     logClick('weekly_push_click', { from });
     void requestWeeklyPush().then((result) => {
       logClick('weekly_push_result', { result, from });
-      if (result === 'agreed') setPushCard('agreed');
+      if (result === 'agreed' || result === 'rewarded') setPushCard(result);
     });
   };
   // 팝업은 조건(상세 2개 또는 30초)이 되면 '대기'로 두고, 다른 화면·시트가 다 닫혔을 때 띄운다.
@@ -369,6 +377,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
       {pushPopup && !detailItem && (
         <PushAskSheet
           trigger={pushPopup}
+          reward={pushReward}
           onAgree={() => {
             setPushPopup(null);
             handleAskPush('popup');
@@ -489,13 +498,17 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
             <button type="button" style={s.pushCard} onClick={() => handleAskPush('card')}>
               <EmojiIcon codepoint="1F514" fallback="🔔" size={32} />
               <span style={s.infoCardTexts}>
-                <span style={s.pushCardTitle}>새 지원금 알림 받기</span>
+                <span style={s.pushCardTitle}>{pushReward ? '새 지원금 알림 받고 3원 받기' : '새 지원금 알림 받기'}</span>
                 <span style={s.infoCardSub}>매주 월요일 12시, 새로 올라온 지원금을 알려드려요</span>
               </span>
               <span style={s.chevron}>›</span>
             </button>
           ) : (
-            <p style={s.pushDone}>✅ 매주 월요일 12시에 새 지원금을 알려드릴게요</p>
+            <p style={s.pushDone}>
+              {pushCard === 'rewarded'
+                ? '✅ 토스포인트 3원을 드렸어요. 매주 월요일 12시에 알려드릴게요'
+                : '✅ 매주 월요일 12시에 새 지원금을 알려드릴게요'}
+            </p>
           )}
         </div>
       )}
