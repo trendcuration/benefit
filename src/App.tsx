@@ -37,6 +37,8 @@ export function App() {
 
   // 혜택탭 미션 '알림 동의하기'로 들어오면 첫 화면 위에 알림 시트를 바로 띄운다.
   const [missionSheet, setMissionSheet] = useState(() => {
+    // 테스트 번들은 3원 지급을 바로 확인할 수 있게 열 때마다 띄운다.
+    if (IS_PROMOTION_TEST) return true;
     if (!cameFromAlarmMission()) return false;
     logClick('alarm_mission_enter');
     return pushSupported() && (IS_PROMOTION_TEST || !isPushAgreed());

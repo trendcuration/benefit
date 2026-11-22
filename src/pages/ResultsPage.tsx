@@ -21,6 +21,7 @@ import { attachTossBanner } from '../lib/banner';
 import { loadSeenKeys, saveSeenKeys } from '../lib/seenItems';
 import {
   canShowPushPopup,
+  IS_PROMOTION_TEST,
   isPushAgreed,
   markPushPopupShown,
   pushRewardAvailable,
@@ -93,7 +94,7 @@ export function ResultsPage({ params, onBack }: ResultsPageProps) {
   } = useBookmarks();
   // 매주 월요일 새 지원금 알림: 지원하는 기기이고 아직 동의 전일 때만 카드를 보여준다.
   const [pushCard, setPushCard] = useState<'hidden' | 'ask' | 'agreed' | 'rewarded'>(() =>
-    pushSupported() && !isPushAgreed() ? 'ask' : 'hidden',
+    IS_PROMOTION_TEST || (pushSupported() && !isPushAgreed()) ? 'ask' : 'hidden',
   );
   const [pushReward] = useState(pushRewardAvailable);
   const handleAskPush = (from: 'card' | 'popup' = 'card') => {
